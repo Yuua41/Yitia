@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink:       #0f1520;
+  --paper:     #f4f7fb;
+  --surface:   #ffffff;
+  --navy:      #0f1e3c;
+  --navy-mid:  #162444;
+  --cyan:      #0ea5e9;
+  --cyan-deep: #0284c7;
+  --cyan-pale: #e0f2fe;
+  --cyan-dim:  #7cc8ef;
+  --sky:       #38bdf8;
+  --gold:      #f59e0b;
+  --gold-dark: #b45309;
+  --gold-pale: #fffbeb;
+  --red:       #ef4444;
+  --red-pale:  #fef2f2;
+  --slate:     #334155;
+  --mist:      #64748b;
+  --border:    rgba(15,21,32,0.09);
+  --border-md: rgba(15,21,32,0.15);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 3px; }
+
+@layer utilities {
+  .font-mincho {
+    font-family: 'Shippori Mincho', 'Noto Serif JP', serif;
+  }
+  .font-mono-dm {
+    font-family: 'DM Mono', 'Fira Mono', monospace;
+  }
+}
