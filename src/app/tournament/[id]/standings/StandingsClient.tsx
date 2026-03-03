@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table, Result } from '@/types'
@@ -16,8 +15,8 @@ type SortKey = 'rank' | 'name' | 'total'
 type SortDir = 'asc' | 'desc'
 
 export default function StandingsClient({ tournament, players, tables }: Props) {
-  const router = useRouter()
   const supabase = createClient()
+  const [localPlayers, setLocalPlayers] = useState(players)
   const [sortKey, setSortKey] = useState<SortKey>('rank')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [adjustments, setAdjustments] = useState<Record<string, number>>(
@@ -25,7 +24,7 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
   )
   const [savingAdj, setSavingAdj] = useState(false)
 
-  const standings = players.map(player => {
+  const standings = localPlayers.map(player => {
     const roundPoints: (number | null)[] = Array(tournament.num_rounds).fill(null)
     tables.forEach(table => {
       const results = (table as any).results as Result[]
@@ -70,8 +69,8 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
     for (const [playerId, bonus] of Object.entries(adjustments)) {
       await supabase.from('players').update({ bonus }).eq('id', playerId)
     }
+    setLocalPlayers(prev => prev.map(p => ({ ...p, bonus: adjustments[p.id] ?? p.bonus })))
     setSavingAdj(false)
-    router.refresh()
   }
 
   function sortIcon(key: SortKey) {

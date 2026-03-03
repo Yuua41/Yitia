@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { calcTableResults, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table, Result } from '@/types'
@@ -22,26 +21,81 @@ const SEAT_COLORS = [
 const NUM_COLOR = { bg: 'var(--paper)', color: 'var(--slate)' }
 
 export default function ScheduleClient({ tournament, players, tables }: Props) {
-  const router = useRouter()
   const supabase = createClient()
+  const [localTables, setLocalTables] = useState(tables)
   const [activeRound, setActiveRound] = useState(1)
-  const [scores, setScores] = useState<Record<string, { value: string; negative: boolean }>>({})
   const [extraSticks, setExtraSticks] = useState<Record<string, boolean>>({})
   const [saving, setSaving] = useState<string | null>(null)
   const [swapping, setSwapping] = useState(false)
   const [dragInfo, setDragInfo] = useState<{ resultId: string; playerId: string } | null>(null)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
 
+  // Initialize scores from submitted tables
+  const initScores = () => {
+    const s: Record<string, { value: string; negative: boolean }> = {}
+    tables.forEach(t => {
+      if (t.is_submitted && !t.is_validated) {
+        const results = (t as any).results as Result[]
+        results?.forEach(r => {
+          if (r.score !== 0) {
+            s[r.id] = { value: (Math.abs(r.score) / 100).toString(), negative: r.score < 0 }
+          }
+        })
+      }
+    })
+    return s
+  }
+  const [scores, setScores] = useState<Record<string, { value: string; negative: boolean }>>(initScores)
+
   const isDraft = tournament.status === 'draft'
   const canSwap = tournament.status !== 'finished'
   const noSeat = tournament.config.seatMode === 'none'
   const rounds = Array.from({ length: tournament.num_rounds }, (_, i) => i + 1)
-  const roundTables = tables.filter(t => t.round_number === activeRound)
+  const roundTables = localTables.filter(t => t.round_number === activeRound)
+
+  // Refetch data from Supabase (client-side, no SSR roundtrip)
+  const refetchData = useCallback(async () => {
+    const { data } = await supabase
+      .from('tables')
+      .select('*, results(*, player:players(*))')
+      .eq('tournament_id', tournament.id)
+      .order('round_number')
+      .order('table_number')
+    if (data) {
+      setLocalTables(data)
+      // Pre-populate scores for newly submitted tables
+      const newScores: Record<string, { value: string; negative: boolean }> = {}
+      data.forEach(t => {
+        if (t.is_submitted && !t.is_validated) {
+          const results = (t as any).results as Result[]
+          results?.forEach(r => {
+            if (r.score !== 0) {
+              newScores[r.id] = { value: (Math.abs(r.score) / 100).toString(), negative: r.score < 0 }
+            }
+          })
+        }
+      })
+      setScores(prev => {
+        const merged = { ...prev }
+        for (const [id, val] of Object.entries(newScores)) {
+          if (!merged[id]) merged[id] = val
+        }
+        return merged
+      })
+    }
+  }, [supabase, tournament.id])
+
+  // Refetch on window focus for cross-client sync
+  useEffect(() => {
+    const handler = () => { refetchData() }
+    window.addEventListener('focus', handler)
+    return () => window.removeEventListener('focus', handler)
+  }, [refetchData])
 
   useEffect(() => {
-    const firstUnvalidated = tables.find(t => !t.is_validated)
+    const firstUnvalidated = localTables.find(t => !t.is_validated)
     if (firstUnvalidated) setActiveRound(firstUnvalidated.round_number)
-  }, [tables])
+  }, []) // Only on mount
 
   function getPlayer(id: string) {
     return players.find(p => p.id === id)
@@ -69,12 +123,11 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
       return { ...r, score: sc.negative ? -raw : raw }
     })
 
-    // 合計チェック: 持ち点×4 が正しい合計（卓外点棒がある場合はスキップ）
     const hasExtraSticks = extraSticks[table.id] ?? false
     if (!hasExtraSticks) {
       const total = scored.reduce((sum, r) => sum + r.score, 0)
       const expected = tournament.config.startingPoints * 4
-      const tolerance = 100 // 1本場分の誤差は許容
+      const tolerance = 100
       if (Math.abs(total - expected) > tolerance) {
         alert(`スコア合計が ${total.toLocaleString()} です。\n正しい合計は ${expected.toLocaleString()} のはずです。\n卓外点棒がある場合はチェックを入れてください。`)
         return
@@ -87,15 +140,28 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
     for (const r of calculated) {
       await supabase.from('results').update({ score: r.score, point: r.point, rank: r.rank }).eq('id', r.id)
     }
-    await supabase.from('tables').update({ is_validated: true, has_extra_sticks: hasExtraSticks }).eq('id', table.id)
+    await supabase.from('tables').update({ is_validated: true, is_submitted: true, has_extra_sticks: hasExtraSticks }).eq('id', table.id)
 
+    // Update local state
+    setLocalTables(prev => prev.map(t => {
+      if (t.id !== table.id) return t
+      const origResults = (t as any).results as Result[]
+      return {
+        ...t,
+        is_validated: true,
+        is_submitted: true,
+        has_extra_sticks: hasExtraSticks,
+        results: calculated.map(c => {
+          const orig = origResults?.find(r => r.id === c.id)
+          return { ...orig, ...c }
+        }),
+      }
+    }))
     setSaving(null)
-    router.refresh()
   }
 
   async function handleUnvalidate(tableId: string) {
-    // スコア修正時に既存のスコアを入力欄にセット
-    const table = tables.find(t => t.id === tableId)
+    const table = localTables.find(t => t.id === tableId)
     if (table) {
       const results = (table as any).results as Result[]
       if (results) {
@@ -112,11 +178,13 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
       setExtraSticks(s => ({ ...s, [tableId]: table.has_extra_sticks }))
     }
     await supabase.from('tables').update({ is_validated: false }).eq('id', tableId)
-    router.refresh()
+
+    setLocalTables(prev => prev.map(t =>
+      t.id === tableId ? { ...t, is_validated: false } : t
+    ))
   }
 
   async function handleSwapPlayer(resultId: string, newPlayerId: string) {
-    // 同じラウンドの全resultsからスワップ相手を探す
     const allRoundResults = roundTables.flatMap(t => ((t as any).results ?? []) as Result[])
     const currentResult = allRoundResults.find(r => r.id === resultId)
     const targetResult = allRoundResults.find(r => r.player_id === newPlayerId && r.id !== resultId)
@@ -126,15 +194,28 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
     const oldPlayerId = currentResult.player_id
     await supabase.from('results').update({ player_id: newPlayerId }).eq('id', currentResult.id)
     await supabase.from('results').update({ player_id: oldPlayerId }).eq('id', targetResult.id)
+
+    // Update local state
+    setLocalTables(prev => prev.map(t => {
+      const results = (t as any).results as Result[]
+      if (!results?.some(r => r.id === currentResult.id || r.id === targetResult.id)) return t
+      return {
+        ...t,
+        results: results.map(r => {
+          if (r.id === currentResult.id) return { ...r, player_id: newPlayerId }
+          if (r.id === targetResult.id) return { ...r, player_id: oldPlayerId }
+          return r
+        }),
+      }
+    }))
     setSwapping(false)
-    router.refresh()
   }
 
   function sortResults(results: Result[]) {
     return [...results].sort((a, b) => a.seat_index - b.seat_index)
   }
 
-  const validatedCount = tables.filter(t => t.is_validated).length
+  const validatedCount = localTables.filter(t => t.is_validated).length
 
   return (
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -150,7 +231,7 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
           display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
           fontSize: '10px', fontWeight: 700, fontFamily: 'monospace',
           background: 'var(--paper)', color: 'var(--slate)', border: '1px solid var(--border)',
-        }}>確定 {validatedCount}/{tables.length}</span>
+        }}>確定 {validatedCount}/{localTables.length}</span>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
         <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>卓組・成績入力</div>
@@ -159,7 +240,7 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
         </div>
         <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '20px' }}>
           {rounds.map(r => {
-            const allDone = tables.filter(t => t.round_number === r).every(t => t.is_validated)
+            const allDone = localTables.filter(t => t.round_number === r).every(t => t.is_validated)
             return (
               <button key={r} onClick={() => setActiveRound(r)} style={{
                 padding: '6px 15px', borderRadius: '16px',
@@ -175,22 +256,26 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
           {roundTables.map(table => {
             const results: Result[] = (table as any).results ?? []
             const isValidated = table.is_validated
+            const isSubmitted = table.is_submitted
             const hasExtra = extraSticks[table.id] ?? false
+
+            const statusLabel = isValidated ? '✓ 確定済み' : isSubmitted ? '確定待ち' : '入力中'
+            const statusBg = isValidated ? 'var(--cyan-deep)' : isSubmitted ? '#d97706' : 'var(--navy)'
 
             return (
               <div key={table.id} style={{
                 background: '#fff',
-                border: `1.5px solid ${isValidated ? 'rgba(14,165,233,0.35)' : 'var(--border)'}`,
+                border: `1.5px solid ${isValidated ? 'rgba(14,165,233,0.35)' : isSubmitted ? 'rgba(217,119,6,0.35)' : 'var(--border)'}`,
                 borderRadius: '12px', overflow: 'hidden',
                 boxShadow: '0 1px 8px rgba(15,21,32,0.07)',
               }}>
                 <div style={{
                   padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  background: isValidated ? 'var(--cyan-deep)' : 'var(--navy)', color: '#fff',
+                  background: statusBg, color: '#fff',
                 }}>
                   <span style={{ fontFamily: 'serif', fontSize: '15px', fontWeight: 800 }}>卓 {table.table_number}</span>
                   <span style={{ fontSize: '9px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.13)', padding: '2px 8px', borderRadius: '3px' }}>
-                    {isValidated ? '✓ 確定済み' : '入力中'}
+                    {statusLabel}
                   </span>
                 </div>
                 <div style={{ padding: '10px 13px' }}>

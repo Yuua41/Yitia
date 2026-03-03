@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { calcTableResults, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table, Result } from '@/types'
@@ -23,8 +22,10 @@ const SEAT_COLORS = [
 const NUM_COLOR = { bg: 'var(--paper)', color: 'var(--slate)' }
 
 export default function PlayerClient({ player, tournament, players, tables }: Props) {
-  const router = useRouter()
   const supabase = createClient()
+  const [localTables, setLocalTables] = useState(tables)
+  const [localPlayers, setLocalPlayers] = useState(players)
+  const [localPlayer, setLocalPlayer] = useState(player)
   const [scores, setScores] = useState<Record<string, { value: string; negative: boolean }>>({})
   const [submitting, setSubmitting] = useState<string | null>(null)
   const [adjustmentInput, setAdjustmentInput] = useState(Math.abs(player.bonus ?? 0).toString())
@@ -37,12 +38,46 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
   const noSeat = tournament.config.seatMode === 'none'
 
+  // Refetch data from Supabase (client-side, no SSR roundtrip)
+  const refetchData = useCallback(async () => {
+    const [{ data: t }, { data: p }] = await Promise.all([
+      supabase
+        .from('tables')
+        .select('*, results(*, player:players(name, seat_order))')
+        .eq('tournament_id', tournament.id)
+        .order('round_number')
+        .order('table_number'),
+      supabase
+        .from('players')
+        .select('*')
+        .eq('tournament_id', tournament.id)
+        .order('seat_order'),
+    ])
+    if (t) setLocalTables(t)
+    if (p) {
+      setLocalPlayers(p)
+      const me = p.find(x => x.id === player.id)
+      if (me) {
+        setLocalPlayer(me)
+        setAdjustmentInput(Math.abs(me.bonus ?? 0).toString())
+        setAdjustmentNeg((me.bonus ?? 0) < 0)
+      }
+    }
+  }, [supabase, tournament.id, player.id])
+
+  // Refetch on window focus for cross-client sync
+  useEffect(() => {
+    const handler = () => { refetchData() }
+    window.addEventListener('focus', handler)
+    return () => window.removeEventListener('focus', handler)
+  }, [refetchData])
+
   function sortResults(results: Result[]) {
     return [...results].sort((a, b) => a.seat_index - b.seat_index)
   }
 
   async function handleSwapInTable(sourceResultId: string, targetPlayerId: string) {
-    const table = tables.find(t => (t as any).results?.some((r: Result) => r.id === sourceResultId))
+    const table = localTables.find(t => (t as any).results?.some((r: Result) => r.id === sourceResultId))
     if (!table) return
     const results = (table as any).results as Result[]
     const sourceResult = results.find(r => r.id === sourceResultId)
@@ -53,22 +88,32 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
     const oldPlayerId = sourceResult.player_id
     await supabase.from('results').update({ player_id: targetPlayerId }).eq('id', sourceResult.id)
     await supabase.from('results').update({ player_id: oldPlayerId }).eq('id', targetResult.id)
+
+    // Update local state
+    setLocalTables(prev => prev.map(t => {
+      if (t.id !== table.id) return t
+      const updated = ((t as any).results as Result[])?.map(r => {
+        if (r.id === sourceResult.id) return { ...r, player_id: targetPlayerId }
+        if (r.id === targetResult.id) return { ...r, player_id: oldPlayerId }
+        return r
+      })
+      return { ...t, results: updated }
+    }))
     setSwapping(false)
     setSwapSource(null)
-    router.refresh()
   }
 
   function getMyTable(roundNum: number) {
-    return tables.find(t =>
+    return localTables.find(t =>
       t.round_number === roundNum &&
       (t as any).results?.some((r: Result) => r.player_id === player.id)
     )
   }
 
-  const standings = players.map(p => {
+  const standings = localPlayers.map(p => {
     const roundPoints: (number | null)[] = []
     for (let r = 1; r <= tournament.num_rounds; r++) {
-      const table = tables.find(t =>
+      const table = localTables.find(t =>
         t.round_number === r &&
         t.is_validated &&
         (t as any).results?.some((res: Result) => res.player_id === p.id)
@@ -95,15 +140,27 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
     const results = (table as any).results as Result[]
     if (!results) return
     setSubmitting(table.id)
-    for (const result of results) {
-      const sc = getScore(result.id)
-      if (sc.value === '') continue
+    const updatedResults = results.map(r => {
+      const sc = getScore(r.id)
+      if (sc.value === '') return r
       const raw = parseInt(sc.value) * 100
       const score = sc.negative ? -raw : raw
-      await supabase.from('results').update({ score }).eq('id', result.id)
+      return { ...r, score }
+    })
+    for (const result of updatedResults) {
+      const orig = results.find(r => r.id === result.id)
+      if (orig && result.score !== orig.score) {
+        await supabase.from('results').update({ score: result.score }).eq('id', result.id)
+      }
     }
+    await supabase.from('tables').update({ is_submitted: true }).eq('id', table.id)
+
+    // Update local state
+    setLocalTables(prev => prev.map(t => {
+      if (t.id !== table.id) return t
+      return { ...t, is_submitted: true, results: updatedResults }
+    }))
     setSubmitting(null)
-    router.refresh()
   }
 
   async function handleValidate(table: Table) {
@@ -131,9 +188,24 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
     for (const r of calculated) {
       await supabase.from('results').update({ score: r.score, point: r.point, rank: r.rank }).eq('id', r.id)
     }
-    await supabase.from('tables').update({ is_validated: true, has_extra_sticks: hasExtraSticks }).eq('id', table.id)
+    await supabase.from('tables').update({ is_validated: true, is_submitted: true, has_extra_sticks: hasExtraSticks }).eq('id', table.id)
+
+    // Update local state
+    setLocalTables(prev => prev.map(t => {
+      if (t.id !== table.id) return t
+      const origResults = (t as any).results as Result[]
+      return {
+        ...t,
+        is_validated: true,
+        is_submitted: true,
+        has_extra_sticks: hasExtraSticks,
+        results: calculated.map(c => {
+          const orig = origResults?.find(r => r.id === c.id)
+          return { ...orig, ...c }
+        }),
+      }
+    }))
     setValidating(null)
-    router.refresh()
   }
 
   async function handleUnvalidate(table: Table) {
@@ -147,7 +219,26 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
       setExtraSticks(s => ({ ...s, [table.id]: table.has_extra_sticks }))
     }
     await supabase.from('tables').update({ is_validated: false }).eq('id', table.id)
-    router.refresh()
+
+    setLocalTables(prev => prev.map(t =>
+      t.id === table.id ? { ...t, is_validated: false } : t
+    ))
+  }
+
+  async function handleRevertSubmit(table: Table) {
+    const results = (table as any).results as Result[]
+    if (results) {
+      const newScores = { ...scores }
+      results.forEach(r => {
+        newScores[r.id] = { value: (Math.abs(r.score) / 100).toString(), negative: r.score < 0 }
+      })
+      setScores(newScores)
+    }
+    await supabase.from('tables').update({ is_submitted: false }).eq('id', table.id)
+
+    setLocalTables(prev => prev.map(t =>
+      t.id === table.id ? { ...t, is_submitted: false } : t
+    ))
   }
 
   return (
@@ -166,7 +257,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
             Yitia — Player View
           </div>
           <div style={{ fontFamily: 'serif', fontSize: '22px', fontWeight: 800, color: '#fff', letterSpacing: '0.07em', marginBottom: '12px' }}>
-            {player.name}
+            {localPlayer.name}
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
             <div style={{ fontFamily: 'monospace', fontSize: '34px', fontWeight: 500, color: myTotal >= 0 ? '#7dd3fc' : '#fca5a5' }}>
@@ -193,6 +284,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
             const results: Result[] = (myTable as any).results ?? []
             const myResult = results.find(r => r.player_id === player.id)
             const isValidated = myTable.is_validated
+            const isSubmitted = myTable.is_submitted
             return (
               <div key={roundNum} style={{ padding: '11px 15px', borderBottom: '1px solid var(--paper)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -206,9 +298,9 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   </div>
                   <span style={{
                     fontSize: '9.5px', padding: '2px 7px', borderRadius: '9px', fontFamily: 'monospace',
-                    background: isValidated ? 'var(--cyan-pale)' : 'var(--gold-pale)',
-                    color: isValidated ? 'var(--cyan-deep)' : 'var(--gold-dark)',
-                  }}>{isValidated ? '確定済み' : '入力中'}</span>
+                    background: isValidated ? 'var(--cyan-pale)' : isSubmitted ? '#dcfce7' : 'var(--gold-pale)',
+                    color: isValidated ? 'var(--cyan-deep)' : isSubmitted ? '#166534' : 'var(--gold-dark)',
+                  }}>{isValidated ? '確定済み' : isSubmitted ? '送信済み' : '入力中'}</span>
                 </div>
                 {isValidated ? (
                   <div>
@@ -228,7 +320,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                         }}>スコア修正</button>
                       </div>
                       {sortResults(results).map((r, ri) => {
-                        const rPlayer = players.find(p => p.id === r.player_id)
+                        const rPlayer = localPlayers.find(p => p.id === r.player_id)
                         const isMe = r.player_id === player.id
                         const sc2 = noSeat ? NUM_COLOR : SEAT_COLORS[r.seat_index]
                         return (
@@ -237,7 +329,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                               {noSeat ? `${ri + 1}` : SEAT_LABELS[r.seat_index]}
                             </div>
                             <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
-                              {isMe ? '' : ''}{rPlayer?.name}
+                              {rPlayer?.name}
                             </div>
                             <span style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace', minWidth: '38px', textAlign: 'right' }}>{(r.score / 100).toLocaleString()}00</span>
                             <span style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(r.rank)}位</span>
@@ -249,13 +341,43 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                       })}
                     </div>
                   </div>
+                ) : isSubmitted ? (
+                  <div>
+                    <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: '#166534', marginBottom: '8px' }}>
+                      卓{myTable.table_number} 送信済みスコア
+                    </div>
+                    {sortResults(results).map((r, ri) => {
+                      const rPlayer = localPlayers.find(p => p.id === r.player_id)
+                      const isMe = r.player_id === player.id
+                      const sc2 = noSeat ? NUM_COLOR : SEAT_COLORS[r.seat_index]
+                      return (
+                        <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0', borderBottom: '1px solid var(--paper)' }}>
+                          <div style={{ width: '18px', height: '18px', borderRadius: noSeat ? '4px' : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: noSeat ? '10px' : '9px', fontWeight: 700, fontFamily: noSeat ? 'monospace' : 'serif', background: sc2.bg, color: sc2.color, flexShrink: 0 }}>
+                            {noSeat ? `${ri + 1}` : SEAT_LABELS[r.seat_index]}
+                          </div>
+                          <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
+                            {rPlayer?.name}
+                          </div>
+                          <span style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 600, color: r.score < 0 ? 'var(--red)' : 'var(--ink)' }}>
+                            {r.score < 0 ? '▲' : ''}{(Math.abs(r.score) / 100).toLocaleString()}00
+                          </span>
+                        </div>
+                      )
+                    })}
+                    <button onClick={() => handleRevertSubmit(myTable)} style={{
+                      width: '100%', marginTop: '10px', padding: '8px',
+                      background: 'var(--paper)', color: 'var(--ink)',
+                      border: '1.5px solid var(--border-md)', borderRadius: '7px',
+                      fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
+                    }}>修正する</button>
+                  </div>
                 ) : (
                   <div>
                     <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)', marginBottom: '8px' }}>
                       卓{myTable.table_number} スコア入力（全員分）
                     </div>
                     {sortResults(results).map((r, ri) => {
-                      const rPlayer = players.find(p => p.id === r.player_id)
+                      const rPlayer = localPlayers.find(p => p.id === r.player_id)
                       const isMe = r.player_id === player.id
                       const sc = getScore(r.id)
                       const sc2 = noSeat ? NUM_COLOR : SEAT_COLORS[r.seat_index]
@@ -314,16 +436,10 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
                       <button onClick={() => submitScores(myTable)} disabled={submitting === myTable.id} style={{
                         flex: 1, padding: '8px',
-                        background: submitting === myTable.id ? 'var(--mist)' : 'var(--paper)',
-                        color: 'var(--ink)', border: '1.5px solid var(--border-md)', borderRadius: '7px',
-                        fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
-                      }}>{submitting === myTable.id ? '送信中...' : 'スコアを保存'}</button>
-                      <button onClick={() => handleValidate(myTable)} disabled={validating === myTable.id} style={{
-                        flex: 1, padding: '8px',
-                        background: validating === myTable.id ? 'var(--mist)' : 'var(--cyan-deep)',
+                        background: submitting === myTable.id ? 'var(--mist)' : 'var(--cyan-deep)',
                         color: '#fff', border: 'none', borderRadius: '7px',
                         fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
-                      }}>{validating === myTable.id ? '確定中...' : 'スコア確定'}</button>
+                      }}>{submitting === myTable.id ? '送信中...' : 'スコアを送信'}</button>
                     </div>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '10.5px', color: 'var(--mist)', cursor: 'pointer' }}>
                       <input type="checkbox" checked={extraSticks[myTable.id] ?? false} onChange={e => setExtraSticks(s => ({ ...s, [myTable.id]: e.target.checked }))} />
@@ -350,7 +466,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--mist)', width: '20px', textAlign: 'center' }}>{i + 1}</div>
                   <div style={{ flex: 1, fontSize: '12.5px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
-                    {isMe ? '' : ''}{s.player.name}{isMe ? '（自分）' : ''}
+                    {s.player.name}{isMe ? '（自分）' : ''}
                   </div>
                   <div style={{ fontFamily: 'monospace', fontSize: '12.5px', fontWeight: 600, color: s.total >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
                     {formatPoint(s.total)}
@@ -419,8 +535,9 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   const val = parseFloat(adjustmentInput) || 0
                   const bonus = adjustmentNeg ? -Math.abs(val) : Math.abs(val)
                   await supabase.from('players').update({ bonus }).eq('id', player.id)
+                  setLocalPlayer(prev => ({ ...prev, bonus }))
+                  setLocalPlayers(prev => prev.map(p => p.id === player.id ? { ...p, bonus } : p))
                   setSavingAdjustment(false)
-                  router.refresh()
                 }}
                 disabled={savingAdjustment}
                 style={{
@@ -431,10 +548,10 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                 }}
               >{savingAdjustment ? '保存中...' : '保存'}</button>
             </div>
-            {(player.bonus ?? 0) !== 0 && (
+            {(localPlayer.bonus ?? 0) !== 0 && (
               <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--mist)' }}>
-                現在の調整: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: player.bonus < 0 ? 'var(--red)' : 'var(--cyan-deep)' }}>
-                  {formatPoint(player.bonus)}
+                現在の調整: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: localPlayer.bonus < 0 ? 'var(--red)' : 'var(--cyan-deep)' }}>
+                  {formatPoint(localPlayer.bonus)}
                 </span>
               </div>
             )}

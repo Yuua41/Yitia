@@ -49,6 +49,7 @@ export interface Table {
   round_number: number
   table_number: number
   has_extra_sticks: boolean
+  is_submitted: boolean
   is_validated: boolean
   created_at: string
   results?: Result[]
