@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -15,6 +16,7 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
   const router = useRouter()
   const supabase = createClient()
   const base = `/tournament/${tournament.id}`
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const navItems = [
     { label: '大会設定', href: `${base}/settings` },
@@ -31,7 +33,60 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <aside style={{
+      <style>{`
+        .tournament-hamburger { display: none; }
+        .tournament-overlay { display: none; }
+        @media (max-width: 768px) {
+          .tournament-sidebar {
+            position: fixed !important;
+            left: 0; top: 0; bottom: 0;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+          }
+          .tournament-sidebar.open {
+            transform: translateX(0);
+          }
+          .tournament-hamburger {
+            display: flex !important;
+            position: fixed;
+            top: 10px; left: 10px;
+            z-index: 999;
+            width: 40px; height: 40px;
+            align-items: center; justify-content: center;
+            background: var(--navy);
+            border: 1px solid rgba(14,165,233,0.3);
+            border-radius: 8px;
+            color: #38bdf8;
+            font-size: 22px;
+            cursor: pointer;
+          }
+          .tournament-overlay {
+            display: block;
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: rgba(0,0,0,0.5);
+          }
+          .tournament-main {
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
+
+      <button
+        className="tournament-hamburger"
+        onClick={() => setSidebarOpen(true)}
+        style={{ display: 'none' }}
+      >
+        ☰
+      </button>
+
+      {sidebarOpen && (
+        <div className="tournament-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      <aside className={`tournament-sidebar${sidebarOpen ? ' open' : ''}`} style={{
         width: '210px', flexShrink: 0,
         background: 'var(--navy)',
         display: 'flex', flexDirection: 'column',
@@ -43,7 +98,7 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
           pointerEvents: 'none',
         }} />
         <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-          <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+          <Link href="/dashboard" style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{
                 width: '30px', height: '30px',
@@ -77,7 +132,7 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
           {navItems.map(item => {
             const active = pathname === item.href
             return (
-              <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
+              <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
                   padding: '8px 10px', borderRadius: '8px', marginBottom: '1px',
@@ -94,7 +149,7 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
         </div>
         <div style={{ flex: 1 }} />
         <div style={{ padding: '10px 8px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-          <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+          <Link href="/dashboard" style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
             <div style={{ padding: '6px 10px', color: 'rgba(255,255,255,0.35)', fontSize: '11.5px' }}>
               ← 大会一覧に戻る
             </div>
@@ -105,7 +160,7 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
           }}>ログアウト</button>
         </div>
       </aside>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="tournament-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {children}
       </div>
     </div>

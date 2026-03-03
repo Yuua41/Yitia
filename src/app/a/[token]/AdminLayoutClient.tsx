@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import type { Tournament } from '@/types'
@@ -13,6 +14,7 @@ interface Props {
 export default function AdminLayoutClient({ children, tournament, token }: Props) {
   const pathname = usePathname()
   const base = `/a/${token}`
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const navItems = [
     { label: '卓組・成績入力', href: `${base}/schedule` },
@@ -22,7 +24,60 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <aside style={{
+      <style>{`
+        .admin-hamburger { display: none; }
+        .admin-overlay { display: none; }
+        @media (max-width: 768px) {
+          .admin-sidebar {
+            position: fixed !important;
+            left: 0; top: 0; bottom: 0;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+          }
+          .admin-sidebar.open {
+            transform: translateX(0);
+          }
+          .admin-hamburger {
+            display: flex !important;
+            position: fixed;
+            top: 10px; left: 10px;
+            z-index: 999;
+            width: 40px; height: 40px;
+            align-items: center; justify-content: center;
+            background: var(--navy);
+            border: 1px solid rgba(14,165,233,0.3);
+            border-radius: 8px;
+            color: #38bdf8;
+            font-size: 22px;
+            cursor: pointer;
+          }
+          .admin-overlay {
+            display: block;
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            background: rgba(0,0,0,0.5);
+          }
+          .admin-main {
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
+
+      <button
+        className="admin-hamburger"
+        onClick={() => setSidebarOpen(true)}
+        style={{ display: 'none' }}
+      >
+        ☰
+      </button>
+
+      {sidebarOpen && (
+        <div className="admin-overlay" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      <aside className={`admin-sidebar${sidebarOpen ? ' open' : ''}`} style={{
         width: '210px', flexShrink: 0,
         background: 'var(--navy)',
         display: 'flex', flexDirection: 'column',
@@ -66,7 +121,7 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
           {navItems.map(item => {
             const active = pathname === item.href
             return (
-              <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
+              <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
                   padding: '8px 10px', borderRadius: '8px', marginBottom: '1px',
@@ -88,7 +143,7 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
           </div>
         </div>
       </aside>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="admin-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {children}
       </div>
     </div>

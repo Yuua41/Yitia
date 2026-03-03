@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { formatPoint } from '@/lib/mahjong/calculator'
+import { calcTableResults, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table, Result } from '@/types'
 
 interface Props {
@@ -32,6 +32,8 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   const [savingAdjustment, setSavingAdjustment] = useState(false)
   const [swapSource, setSwapSource] = useState<{ resultId: string; playerId: string } | null>(null)
   const [swapping, setSwapping] = useState(false)
+  const [extraSticks, setExtraSticks] = useState<Record<string, boolean>>({})
+  const [validating, setValidating] = useState<string | null>(null)
 
   const noSeat = tournament.config.seatMode === 'none'
 
@@ -101,6 +103,50 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
       await supabase.from('results').update({ score }).eq('id', result.id)
     }
     setSubmitting(null)
+    router.refresh()
+  }
+
+  async function handleValidate(table: Table) {
+    const results = (table as any).results as Result[]
+    if (!results) return
+
+    const scored = results.map(r => {
+      const sc = getScore(r.id)
+      const raw = sc.value !== '' ? parseInt(sc.value) * 100 : r.score
+      return { ...r, score: sc.negative ? -raw : raw }
+    })
+
+    const hasExtraSticks = extraSticks[table.id] ?? false
+    if (!hasExtraSticks) {
+      const total = scored.reduce((sum, r) => sum + r.score, 0)
+      const expected = tournament.config.startingPoints * 4
+      if (Math.abs(total - expected) > 100) {
+        alert(`スコア合計が ${total.toLocaleString()} です。\n正しい合計は ${expected.toLocaleString()} のはずです。\n卓外点棒がある場合はチェックを入れてください。`)
+        return
+      }
+    }
+
+    const calculated = calcTableResults(scored, tournament.config)
+    setValidating(table.id)
+    for (const r of calculated) {
+      await supabase.from('results').update({ score: r.score, point: r.point, rank: r.rank }).eq('id', r.id)
+    }
+    await supabase.from('tables').update({ is_validated: true, has_extra_sticks: hasExtraSticks }).eq('id', table.id)
+    setValidating(null)
+    router.refresh()
+  }
+
+  async function handleUnvalidate(table: Table) {
+    const results = (table as any).results as Result[]
+    if (results) {
+      const newScores = { ...scores }
+      results.forEach(r => {
+        newScores[r.id] = { value: (Math.abs(r.score) / 100).toString(), negative: r.score < 0 }
+      })
+      setScores(newScores)
+      setExtraSticks(s => ({ ...s, [table.id]: table.has_extra_sticks }))
+    }
+    await supabase.from('tables').update({ is_validated: false }).eq('id', table.id)
     router.refresh()
   }
 
@@ -174,7 +220,13 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                       <div style={{ fontSize: '10px', color: 'var(--mist)', marginTop: '1px', fontFamily: 'monospace' }}>素点 {((myResult?.score ?? 0) / 100).toLocaleString()}00</div>
                     </div>
                     <div style={{ borderTop: '1px solid var(--paper)', paddingTop: '8px' }}>
-                      <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)', marginBottom: '6px' }}>卓{myTable.table_number} 全員の結果</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)' }}>卓{myTable.table_number} 全員の結果</div>
+                        <button onClick={() => handleUnvalidate(myTable)} style={{
+                          padding: '3px 10px', background: 'var(--paper)', border: '1px solid var(--border-md)',
+                          borderRadius: '5px', fontSize: '10px', fontWeight: 600, color: 'var(--mist)', cursor: 'pointer',
+                        }}>スコア修正</button>
+                      </div>
                       {sortResults(results).map((r, ri) => {
                         const rPlayer = players.find(p => p.id === r.player_id)
                         const isMe = r.player_id === player.id
@@ -259,15 +311,24 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                         </div>
                       )
                     })}
-                    <button onClick={() => submitScores(myTable)} disabled={submitting === myTable.id} style={{
-                      width: '100%', marginTop: '10px', padding: '8px',
-                      background: submitting === myTable.id ? 'var(--mist)' : 'var(--cyan-deep)',
-                      color: '#fff', border: 'none', borderRadius: '7px',
-                      fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
-                    }}>{submitting === myTable.id ? '送信中...' : 'スコアを送信'}</button>
-                    <div style={{ fontSize: '10.5px', color: 'var(--mist)', marginTop: '6px' }}>
-                      ※管理者が確定するまで仮入力扱いです
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                      <button onClick={() => submitScores(myTable)} disabled={submitting === myTable.id} style={{
+                        flex: 1, padding: '8px',
+                        background: submitting === myTable.id ? 'var(--mist)' : 'var(--paper)',
+                        color: 'var(--ink)', border: '1.5px solid var(--border-md)', borderRadius: '7px',
+                        fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
+                      }}>{submitting === myTable.id ? '送信中...' : 'スコアを保存'}</button>
+                      <button onClick={() => handleValidate(myTable)} disabled={validating === myTable.id} style={{
+                        flex: 1, padding: '8px',
+                        background: validating === myTable.id ? 'var(--mist)' : 'var(--cyan-deep)',
+                        color: '#fff', border: 'none', borderRadius: '7px',
+                        fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
+                      }}>{validating === myTable.id ? '確定中...' : 'スコア確定'}</button>
                     </div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '10.5px', color: 'var(--mist)', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={extraSticks[myTable.id] ?? false} onChange={e => setExtraSticks(s => ({ ...s, [myTable.id]: e.target.checked }))} />
+                      卓外点棒あり（合計チェックをスキップ）
+                    </label>
                   </div>
                 )}
               </div>
