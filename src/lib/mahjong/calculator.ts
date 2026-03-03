@@ -1,10 +1,26 @@
 import type { Result, RuleConfig, Table } from '@/types'
 
+function roundPoint(value: number, mode: RuleConfig['rounding'] = 'none'): number {
+  if (mode === 'none' || !mode) {
+    // 小数点以下反映: 小数1桁まで保持
+    return Math.round(value * 10) / 10
+  }
+  if (mode === 'round_half_up') {
+    // 五捨六入: 小数点以下が.5なら切り捨て、.6以上なら切り上げ（整数に丸める）
+    const abs = Math.abs(value)
+    const frac = abs - Math.floor(abs)
+    const rounded = frac > 0.5 ? Math.ceil(abs) : Math.floor(abs)
+    return value >= 0 ? rounded : -rounded
+  }
+  // 四捨五入: 小数点以下を標準の丸めで整数に
+  return Math.round(value)
+}
+
 export function calcTableResults(
   results: Result[],
   config: RuleConfig
 ): Result[] {
-  const { returnPoints, startingPoints, uma, tieBreak } = config
+  const { returnPoints, startingPoints, uma, tieBreak, rounding = 'none' } = config
   const oka = ((returnPoints - startingPoints) * 4) / 1000
 
   if (tieBreak === 'kamicha') {
@@ -17,7 +33,7 @@ export function calcTableResults(
       const rank = idx + 1
       let point = (res.score - returnPoints) / 1000 + uma[idx]
       if (rank === 1) point += oka
-      return { ...res, rank, point: Math.round(point * 10) / 10 }
+      return { ...res, rank, point: roundPoint(point, rounding) }
     })
   }
 
@@ -50,10 +66,10 @@ export function calcTableResults(
     pIds.forEach((id) => {
       const idx = final.findIndex((f) => f.player_id === id)
       final[idx].rank = avgRank
-      final[idx].point =
-        Math.round(
-          ((score - returnPoints) / 1000 + avgUma + splitOka) * 10
-        ) / 10
+      final[idx].point = roundPoint(
+        (score - returnPoints) / 1000 + avgUma + splitOka,
+        rounding
+      )
     })
     curRank += count
   })
@@ -117,5 +133,7 @@ function findBestSeatAssignment(
 }
 
 export function formatPoint(v: number): string {
-  return `${v < 0 ? '▲' : '+'}${Math.abs(v).toFixed(1)}`
+  const abs = Math.abs(v)
+  const formatted = abs.toFixed(1)
+  return `${v < 0 ? '▲' : '+'}${formatted}`
 }

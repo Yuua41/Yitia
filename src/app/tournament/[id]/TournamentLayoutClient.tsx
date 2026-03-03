@@ -17,9 +17,10 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
   const base = `/tournament/${tournament.id}`
 
   const navItems = [
-    { label: '卓組', icon: '📋', href: `${base}/schedule` },
-    { label: '成績', icon: '📊', href: `${base}/standings` },
-    { label: 'QRコード', icon: '📱', href: `${base}/qr` },
+    { label: '大会設定', href: `${base}/settings` },
+    { label: '卓組・成績入力', href: `${base}/schedule` },
+    { label: '全体成績', href: `${base}/standings` },
+    { label: 'QRコード', href: `${base}/qr` },
   ]
 
   async function handleLogout() {
@@ -47,14 +48,23 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
               <div style={{
                 width: '30px', height: '30px',
                 background: 'linear-gradient(135deg, #0ea5e9, #f59e0b 160%)',
-                borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'serif', fontSize: '16px', fontWeight: 900, color: 'var(--navy)',
-              }}>一</div>
+                borderRadius: '7px',
+                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
+                padding: '5px', gap: '1.5px',
+              }}>
+                {[1,0,1,0,1,0,1,0,1].map((show, i) => (
+                  <div key={i} style={{
+                    borderRadius: '50%',
+                    background: show ? '#0f1e3c' : 'transparent',
+                    opacity: show ? 0.82 : 0,
+                  }} />
+                ))}
+              </div>
               <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 500, color: '#fff', letterSpacing: '0.04em' }}>Yitia</span>
             </div>
           </Link>
           <div style={{ fontSize: '9px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.22)', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '4px', marginLeft: '38px' }}>
-            Tournament v1.0
+            Mahjong Taikai Manager
           </div>
         </div>
         <div style={{ padding: '12px 18px 8px' }}>
@@ -76,7 +86,6 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
                   border: active ? '1px solid rgba(14,165,233,0.25)' : '1px solid transparent',
                   fontSize: '12.5px', fontWeight: 500, transition: 'all 0.13s',
                 }}>
-                  <span style={{ fontSize: '13px', width: '16px', textAlign: 'center' }}>{item.icon}</span>
                   <span>{item.label}</span>
                 </div>
               </Link>

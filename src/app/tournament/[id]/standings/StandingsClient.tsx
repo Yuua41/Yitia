@@ -42,9 +42,10 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
 
   const ranked = standings
     .sort((a, b) => b.total - a.total)
-    .map((s, i, arr) => {
-      const rank = arr.slice(0, i).filter(x => x.total === s.total).length + i + 1
-      return { ...s, rank }
+    .map((s, _i, arr) => {
+      const rank = arr.filter(x => x.total > s.total).length + 1
+      const isTied = arr.filter(x => x.total === s.total).length > 1
+      return { ...s, rank, isTied }
     })
 
   function handleSort(key: SortKey) {
@@ -94,7 +95,7 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
       }}>
         <div>
           <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{tournament.name} › </span>
-          <span style={{ fontSize: '14px', fontWeight: 700 }}>成績</span>
+          <span style={{ fontSize: '14px', fontWeight: 700 }}>全体成績</span>
         </div>
         <button onClick={saveAdjustments} disabled={savingAdj} style={{
           padding: '6px 14px', background: 'var(--gold)', color: 'var(--navy)',
@@ -123,7 +124,7 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
               </tr>
             </thead>
             <tbody>
-              {sorted.map(({ player, roundPoints, total, rank }) => {
+              {sorted.map(({ player, roundPoints, total, rank, isTied }) => {
                 const rkBg = rank === 1 ? 'var(--gold)' : rank === 2 ? 'var(--slate)' : rank === 3 ? '#94a3b8' : 'var(--paper)'
                 const rkColor = rank <= 3 ? '#fff' : 'var(--slate)'
                 const adj = adjustments[player.id] ?? 0
@@ -132,12 +133,15 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--paper)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                     <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)' }}>
-                      <span style={{
-                        width: '22px', height: '22px', borderRadius: '50%',
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '11px', fontWeight: 800, fontFamily: 'serif',
-                        background: rkBg, color: rkColor,
-                      }}>{rank}</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                        <span style={{
+                          width: '22px', height: '22px', borderRadius: '50%',
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '11px', fontWeight: 800, fontFamily: 'serif',
+                          background: rkBg, color: rkColor,
+                        }}>{rank}</span>
+                        {isTied && <span style={{ fontSize: '9px', fontFamily: 'monospace', color: 'var(--mist)', fontWeight: 700 }}>T</span>}
+                      </span>
                     </td>
                     <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)', fontWeight: 600 }}>
                       {player.seat_order + 1}. {player.name}

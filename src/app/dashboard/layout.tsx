@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
 const NAV_ITEMS = [
-  { label: '大会一覧', icon: '🏠', href: '/dashboard' },
+  { label: '大会一覧', href: '/dashboard' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -41,16 +41,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               width: '30px', height: '30px',
               background: 'linear-gradient(135deg, #0ea5e9, #f59e0b 160%)',
               borderRadius: '7px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'serif', fontSize: '16px', fontWeight: 900, color: 'var(--navy)',
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
+              padding: '5px', gap: '1.5px',
               boxShadow: '0 2px 8px rgba(14,165,233,0.45)',
-            }}>一</div>
+            }}>
+              {[1,0,1,0,1,0,1,0,1].map((show, i) => (
+                <div key={i} style={{
+                  borderRadius: '50%',
+                  background: show ? '#0f1e3c' : 'transparent',
+                  opacity: show ? 0.82 : 0,
+                }} />
+              ))}
+            </div>
             <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 500, color: '#fff', letterSpacing: '0.04em' }}>
               Yitia
             </span>
           </div>
           <div style={{ fontSize: '9px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.22)', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '4px', marginLeft: '38px' }}>
-            Tournament v1.0
+            Mahjong Taikai Manager
           </div>
         </div>
 
@@ -71,7 +79,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 fontSize: '12.5px', fontWeight: 500,
                 transition: 'all 0.13s',
               }}>
-                <span style={{ fontSize: '13px', width: '16px', textAlign: 'center' }}>{item.icon}</span>
                 <span>{item.label}</span>
               </div>
             </Link>

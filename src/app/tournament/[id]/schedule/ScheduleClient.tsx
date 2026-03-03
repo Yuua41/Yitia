@@ -19,6 +19,7 @@ const SEAT_COLORS = [
   { bg: '#dcfce7', color: '#166534' },
   { bg: '#f3e8ff', color: '#6b21a8' },
 ]
+const NUM_COLOR = { bg: 'var(--paper)', color: 'var(--slate)' }
 
 export default function ScheduleClient({ tournament, players, tables }: Props) {
   const router = useRouter()
@@ -27,7 +28,13 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
   const [scores, setScores] = useState<Record<string, { value: string; negative: boolean }>>({})
   const [extraSticks, setExtraSticks] = useState<Record<string, boolean>>({})
   const [saving, setSaving] = useState<string | null>(null)
+  const [swapping, setSwapping] = useState(false)
+  const [dragInfo, setDragInfo] = useState<{ resultId: string; playerId: string } | null>(null)
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null)
 
+  const isDraft = tournament.status === 'draft'
+  const canSwap = tournament.status !== 'finished'
+  const noSeat = tournament.config.seatMode === 'none'
   const rounds = Array.from({ length: tournament.num_rounds }, (_, i) => i + 1)
   const roundTables = tables.filter(t => t.round_number === activeRound)
 
@@ -87,8 +94,51 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
   }
 
   async function handleUnvalidate(tableId: string) {
+    // スコア修正時に既存のスコアを入力欄にセット
+    const table = tables.find(t => t.id === tableId)
+    if (table) {
+      const results = (table as any).results as Result[]
+      if (results) {
+        const newScores = { ...scores }
+        results.forEach(r => {
+          const absScore = Math.abs(r.score)
+          newScores[r.id] = {
+            value: (absScore / 100).toString(),
+            negative: r.score < 0,
+          }
+        })
+        setScores(newScores)
+      }
+      setExtraSticks(s => ({ ...s, [tableId]: table.has_extra_sticks }))
+    }
     await supabase.from('tables').update({ is_validated: false }).eq('id', tableId)
     router.refresh()
+  }
+
+  async function handleSwapPlayer(resultId: string, newPlayerId: string) {
+    // 同じラウンドの全resultsからスワップ相手を探す
+    const allRoundResults = roundTables.flatMap(t => ((t as any).results ?? []) as Result[])
+    const currentResult = allRoundResults.find(r => r.id === resultId)
+    const targetResult = allRoundResults.find(r => r.player_id === newPlayerId && r.id !== resultId)
+    if (!currentResult || !targetResult) return
+
+    setSwapping(true)
+    const oldPlayerId = currentResult.player_id
+    await supabase.from('results').update({ player_id: newPlayerId }).eq('id', currentResult.id)
+    await supabase.from('results').update({ player_id: oldPlayerId }).eq('id', targetResult.id)
+    setSwapping(false)
+    router.refresh()
+  }
+
+  function sortResults(results: Result[]) {
+    if (noSeat) {
+      return [...results].sort((a, b) => {
+        const pA = players.find(p => p.id === a.player_id)
+        const pB = players.find(p => p.id === b.player_id)
+        return (pA?.seat_order ?? 0) - (pB?.seat_order ?? 0)
+      })
+    }
+    return [...results].sort((a, b) => a.seat_index - b.seat_index)
   }
 
   const validatedCount = tables.filter(t => t.is_validated).length
@@ -101,7 +151,7 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
       }}>
         <div>
           <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{tournament.name} › </span>
-          <span style={{ fontSize: '14px', fontWeight: 700 }}>卓組</span>
+          <span style={{ fontSize: '14px', fontWeight: 700 }}>卓組・成績入力</span>
         </div>
         <span style={{
           display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
@@ -110,7 +160,7 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
         }}>確定 {validatedCount}/{tables.length}</span>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
-        <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>卓組</div>
+        <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>卓組・成績入力</div>
         <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '18px' }}>
           {tournament.name} — R{activeRound} / {tournament.num_rounds}
         </div>
@@ -151,24 +201,68 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
                   </span>
                 </div>
                 <div style={{ padding: '10px 13px' }}>
-                  {results.sort((a, b) => a.seat_index - b.seat_index).map(result => {
+                  {sortResults(results).map(result => {
                     const player = getPlayer(result.player_id) ?? (result as any).player
                     const sc = getScore(result.id)
-                    const seatColor = SEAT_COLORS[result.seat_index]
+                    const seatColor = noSeat ? NUM_COLOR : SEAT_COLORS[result.seat_index]
+                    const seatLabel = noSeat ? `${result.seat_index + 1}` : SEAT_LABELS[result.seat_index]
                     return (
                       <div key={result.id} style={{
                         display: 'flex', alignItems: 'center', gap: '7px',
                         padding: '6px 0', borderBottom: '1px solid var(--paper)',
                       }}>
                         <div style={{
-                          width: '20px', height: '20px', borderRadius: '50%',
+                          width: '20px', height: '20px', borderRadius: noSeat ? '4px' : '50%',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '10px', fontWeight: 700, flexShrink: 0, fontFamily: 'serif',
+                          fontSize: noSeat ? '11px' : '10px', fontWeight: 700, flexShrink: 0,
+                          fontFamily: noSeat ? 'monospace' : 'serif',
                           background: seatColor.bg, color: seatColor.color,
-                        }}>{SEAT_LABELS[result.seat_index]}</div>
-                        <div style={{ flex: 1, fontSize: '12.5px', fontWeight: 600 }}>
-                          {player?.seat_order != null ? `${player.seat_order + 1}. ` : ''}{player?.name ?? '?'}
-                        </div>
+                        }}>{seatLabel}</div>
+                        {canSwap && !isValidated ? (
+                          <div
+                            draggable
+                            onDragStart={(e) => {
+                              setDragInfo({ resultId: result.id, playerId: result.player_id })
+                              e.dataTransfer.effectAllowed = 'move'
+                              e.dataTransfer.setData('text/plain', result.id)
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault()
+                              e.dataTransfer.dropEffect = 'move'
+                              if (dragInfo && dragInfo.resultId !== result.id) {
+                                setDropTargetId(result.id)
+                              }
+                            }}
+                            onDragLeave={() => setDropTargetId(null)}
+                            onDrop={(e) => {
+                              e.preventDefault()
+                              if (dragInfo && dragInfo.resultId !== result.id) {
+                                handleSwapPlayer(dragInfo.resultId, result.player_id)
+                              }
+                              setDragInfo(null)
+                              setDropTargetId(null)
+                            }}
+                            onDragEnd={() => {
+                              setDragInfo(null)
+                              setDropTargetId(null)
+                            }}
+                            style={{
+                              flex: 1, fontSize: '12.5px', fontWeight: 600,
+                              padding: '4px 8px', borderRadius: '6px', cursor: 'grab',
+                              background: dropTargetId === result.id ? 'var(--cyan-pale)' : 'var(--paper)',
+                              border: `1.5px dashed ${dropTargetId === result.id ? 'var(--cyan-deep)' : 'var(--border-md)'}`,
+                              opacity: dragInfo?.resultId === result.id ? 0.5 : 1,
+                              transition: 'background 0.1s, border-color 0.1s',
+                              userSelect: 'none',
+                            }}
+                          >
+                            {player?.seat_order != null ? `${player.seat_order + 1}. ` : ''}{player?.name ?? '?'}
+                          </div>
+                        ) : (
+                          <div style={{ flex: 1, fontSize: '12.5px', fontWeight: 600 }}>
+                            {player?.seat_order != null ? `${player.seat_order + 1}. ` : ''}{player?.name ?? '?'}
+                          </div>
+                        )}
                         {isValidated ? (
                           <div style={{ textAlign: 'right', minWidth: '68px' }}>
                             <div style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace' }}>{result.rank}位</div>
@@ -190,7 +284,7 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
                               type="number"
                               value={sc.value}
                               onChange={e => setScore(result.id, e.target.value)}
-                              placeholder="0"
+                              placeholder={(tournament.config.startingPoints / 100).toString()}
                               style={{
                                 width: '72px', padding: '4px 7px',
                                 background: 'var(--paper)', border: '1.5px solid var(--border-md)',
@@ -207,11 +301,18 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
                 </div>
                 <div style={{ padding: '7px 13px 11px', display: 'flex', flexDirection: 'column', gap: '7px' }}>
                   {isValidated ? (
-                    <button onClick={() => handleUnvalidate(table.id)} style={{
-                      width: '100%', padding: '6px', background: 'transparent',
-                      border: '1.5px solid var(--border-md)', borderRadius: '7px',
-                      fontSize: '11.5px', fontWeight: 600, cursor: 'pointer', color: 'var(--slate)',
-                    }}>スコア修正</button>
+                    <>
+                      {table.has_extra_sticks && (
+                        <div style={{ fontSize: '10.5px', color: 'var(--mist)', padding: '2px 4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ color: 'var(--cyan-deep)' }}>✓</span> 卓外点棒あり
+                        </div>
+                      )}
+                      <button onClick={() => handleUnvalidate(table.id)} style={{
+                        width: '100%', padding: '6px', background: 'transparent',
+                        border: '1.5px solid var(--border-md)', borderRadius: '7px',
+                        fontSize: '11.5px', fontWeight: 600, cursor: 'pointer', color: 'var(--slate)',
+                      }}>スコア修正</button>
+                    </>
                   ) : (
                     <>
                       <label style={{

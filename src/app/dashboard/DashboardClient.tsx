@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { Tournament, RuleTemplate, RuleConfig } from '@/types'
+import { calcTableResults } from '@/lib/mahjong/calculator'
+import type { Tournament, RuleConfig, Result } from '@/types'
 import { nanoid } from 'nanoid'
 
 interface Props {
   tournaments: Tournament[]
-  templates: RuleTemplate[]
 }
 
 const DEFAULT_CONFIG: RuleConfig = {
@@ -18,43 +18,23 @@ const DEFAULT_CONFIG: RuleConfig = {
   tieBreak: 'split',
   seatMode: 'random',
   umaMode: 'simple',
+  rounding: 'none',
 }
 
-export default function DashboardClient({ tournaments, templates }: Props) {
+export default function DashboardClient({ tournaments }: Props) {
   const router = useRouter()
   const supabase = createClient()
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Tournament | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [seeding, setSeeding] = useState(false)
 
   const [name, setName] = useState('')
   const [heldOn, setHeldOn] = useState(new Date().toISOString().split('T')[0])
   const [notes, setNotes] = useState('')
   const [playerText, setPlayerText] = useState('')
   const [numRounds, setNumRounds] = useState(4)
-  const [config, setConfig] = useState<RuleConfig>(DEFAULT_CONFIG)
-  const [umaMode, setUmaMode] = useState<'simple' | 'detail'>('simple')
-  const [uma1, setUma1] = useState(30)
-  const [uma4, setUma4] = useState(-30)
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('')
-
-  function applyTemplate(tplId: string) {
-    setSelectedTemplate(tplId)
-    const tpl = templates.find(t => t.id === tplId)
-    if (!tpl) return
-    setConfig(tpl.config)
-    setUma1(tpl.config.uma[0])
-    setUma4(tpl.config.uma[3])
-  }
-
-  function getUma(): [number, number, number, number] {
-    if (umaMode === 'simple') {
-      const u2 = Math.round(Math.abs(uma1) / 3)
-      return [uma1, u2, -u2, uma4]
-    }
-    return config.uma
-  }
 
   async function handleCreate() {
     if (!name.trim()) return alert('大会名を入力してください')
@@ -65,8 +45,6 @@ export default function DashboardClient({ tournaments, templates }: Props) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const finalConfig: RuleConfig = { ...config, uma: getUma(), umaMode }
-
     const { data: tournament, error } = await supabase
       .from('tournaments')
       .insert({
@@ -75,8 +53,8 @@ export default function DashboardClient({ tournaments, templates }: Props) {
         held_on: heldOn || null,
         notes: notes || null,
         num_rounds: numRounds,
-        config: finalConfig,
-        status: 'ongoing',
+        config: DEFAULT_CONFIG,
+        status: 'draft',
       })
       .select()
       .single()
@@ -145,7 +123,7 @@ export default function DashboardClient({ tournaments, templates }: Props) {
       }
     }
 
-    router.push(`/tournament/${tournament.id}/schedule`)
+    router.push(`/tournament/${tournament.id}/settings`)
     router.refresh()
   }
 
@@ -153,7 +131,6 @@ export default function DashboardClient({ tournaments, templates }: Props) {
     if (!deleteTarget) return
     setDeleting(true)
 
-    // resultsを削除（tablesに紐づく）
     const { data: tables } = await supabase
       .from('tables')
       .select('id')
@@ -170,6 +147,151 @@ export default function DashboardClient({ tournaments, templates }: Props) {
 
     setDeleting(false)
     setDeleteTarget(null)
+    router.refresh()
+  }
+
+  async function handleCreateSample() {
+    setSeeding(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setSeeding(false); return }
+
+    const sampleConfig: RuleConfig = {
+      startingPoints: 25000,
+      returnPoints: 30000,
+      uma: [30, 10, -10, -30],
+      tieBreak: 'split',
+      seatMode: 'random',
+      umaMode: 'simple',
+      rounding: 'none',
+    }
+
+    // --- 完了済み大会 ---
+    const { data: t1, error: e1 } = await supabase
+      .from('tournaments')
+      .insert({
+        owner_id: user.id,
+        name: '第42回 春季麻雀大会',
+        held_on: '2026-03-01',
+        notes: 'サンプルデータ。25000点持ち30000点返し、ウマ30-10。',
+        num_rounds: 4,
+        config: sampleConfig,
+        status: 'finished',
+      })
+      .select()
+      .single()
+
+    if (e1 || !t1) {
+      alert('作成失敗: ' + e1?.message)
+      setSeeding(false)
+      return
+    }
+
+    const names8 = ['佐藤', '田中', '鈴木', '山田', '渡辺', '高橋', '伊藤', '中村']
+    const { data: p1 } = await supabase
+      .from('players')
+      .insert(names8.map((n, i) => ({
+        tournament_id: t1.id, name: n, seat_order: i, token: nanoid(12),
+        bonus: i === 2 ? -20 : 0, // 鈴木にチョンボ -20
+      })))
+      .select()
+
+    if (!p1) { setSeeding(false); return }
+
+    // 卓割り + スコア (各卓の合計 = 100000)
+    const rounds1: { r: number; t: number; pi: number[]; sc: number[] }[] = [
+      { r: 1, t: 1, pi: [0,1,2,3], sc: [35000,28000,22000,15000] },
+      { r: 1, t: 2, pi: [4,5,6,7], sc: [42000,25000,18000,15000] },
+      { r: 2, t: 1, pi: [0,4,1,5], sc: [30000,30000,25000,15000] },
+      { r: 2, t: 2, pi: [2,6,3,7], sc: [38000,32000,20000,10000] },
+      { r: 3, t: 1, pi: [0,6,3,5], sc: [45000,22000,18000,15000] },
+      { r: 3, t: 2, pi: [1,7,2,4], sc: [33000,27000,23000,17000] },
+      { r: 4, t: 1, pi: [0,7,2,5], sc: [28000,28000,28000,16000] },
+      { r: 4, t: 2, pi: [1,6,3,4], sc: [40000,30000,20000,10000] },
+    ]
+
+    for (const rd of rounds1) {
+      const { data: tbl } = await supabase
+        .from('tables')
+        .insert({ tournament_id: t1.id, round_number: rd.r, table_number: rd.t, has_extra_sticks: false, is_validated: true })
+        .select().single()
+      if (!tbl) continue
+
+      const initResults = rd.pi.map((pIdx, seat) => ({
+        table_id: tbl.id, player_id: p1[pIdx].id, seat_index: seat,
+        score: rd.sc[seat], point: 0, rank: 0, is_negative_mode: false,
+      }))
+      const { data: rows } = await supabase.from('results').insert(initResults).select()
+      if (!rows) continue
+
+      const calc = calcTableResults(rows as Result[], sampleConfig)
+      for (const c of calc) {
+        await supabase.from('results').update({ point: c.point, rank: c.rank }).eq('id', c.id)
+      }
+    }
+
+    // --- 進行中大会 ---
+    const { data: t2 } = await supabase
+      .from('tournaments')
+      .insert({
+        owner_id: user.id,
+        name: '月例大会 3月',
+        held_on: '2026-03-15',
+        notes: null,
+        num_rounds: 3,
+        config: sampleConfig,
+        status: 'ongoing',
+      })
+      .select().single()
+
+    if (t2) {
+      const { data: p2 } = await supabase
+        .from('players')
+        .insert(names8.map((n, i) => ({
+          tournament_id: t2.id, name: n, seat_order: i, token: nanoid(12), bonus: 0,
+        })))
+        .select()
+
+      if (p2) {
+        const rounds2: { r: number; t: number; pi: number[]; sc: number[]; validated: boolean }[] = [
+          { r: 1, t: 1, pi: [0,1,2,3], sc: [32000,29000,24000,15000], validated: true },
+          { r: 1, t: 2, pi: [4,5,6,7], sc: [36000,28000,21000,15000], validated: true },
+          { r: 2, t: 1, pi: [0,5,2,7], sc: [40000,25000,20000,15000], validated: true },
+          { r: 2, t: 2, pi: [1,4,3,6], sc: [30000,30000,25000,15000], validated: true },
+          { r: 3, t: 1, pi: [0,6,1,7], sc: [25000,25000,25000,25000], validated: false },
+          { r: 3, t: 2, pi: [2,4,3,5], sc: [25000,25000,25000,25000], validated: false },
+        ]
+
+        for (const rd of rounds2) {
+          const { data: tbl } = await supabase
+            .from('tables')
+            .insert({ tournament_id: t2.id, round_number: rd.r, table_number: rd.t, has_extra_sticks: false, is_validated: rd.validated })
+            .select().single()
+          if (!tbl) continue
+
+          if (rd.validated) {
+            const initResults = rd.pi.map((pIdx, seat) => ({
+              table_id: tbl.id, player_id: p2[pIdx].id, seat_index: seat,
+              score: rd.sc[seat], point: 0, rank: 0, is_negative_mode: false,
+            }))
+            const { data: rows } = await supabase.from('results').insert(initResults).select()
+            if (!rows) continue
+            const calc = calcTableResults(rows as Result[], sampleConfig)
+            for (const c of calc) {
+              await supabase.from('results').update({ point: c.point, rank: c.rank }).eq('id', c.id)
+            }
+          } else {
+            // 未入力のラウンド
+            const initResults = rd.pi.map((pIdx, seat) => ({
+              table_id: tbl.id, player_id: p2[pIdx].id, seat_index: seat,
+              score: 0, point: 0, rank: 0, is_negative_mode: false,
+            }))
+            await supabase.from('results').insert(initResults)
+          }
+        }
+      }
+    }
+
+    setSeeding(false)
     router.refresh()
   }
 
@@ -190,7 +312,19 @@ export default function DashboardClient({ tournaments, templates }: Props) {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
         <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>大会一覧</div>
-        <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '20px' }}>大会を選択して管理・成績確認ができます</div>
+        <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span>大会を選択して管理・成績確認ができます</span>
+          <button
+            onClick={handleCreateSample}
+            disabled={seeding}
+            style={{
+              padding: '3px 10px', background: 'transparent',
+              border: '1px solid var(--border-md)', borderRadius: '6px',
+              fontSize: '11px', color: 'var(--cyan-deep)', cursor: 'pointer',
+              fontWeight: 600, whiteSpace: 'nowrap',
+            }}
+          >{seeding ? '作成中...' : 'サンプルデータを作成'}</button>
+        </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: '12px' }}>
           {tournaments.map(t => {
@@ -212,7 +346,6 @@ export default function DashboardClient({ tournaments, templates }: Props) {
                     : t.status === 'finished' ? '#f59e0b' : 'var(--border-md)',
                 }} />
 
-                {/* 削除ボタン */}
                 <button
                   onClick={e => { e.stopPropagation(); setDeleteTarget(t) }}
                   style={{
@@ -233,7 +366,7 @@ export default function DashboardClient({ tournaments, templates }: Props) {
                 >
                   <div style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 700, marginBottom: '5px' }}>{t.name}</div>
                   <div style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace', marginBottom: '8px' }}>
-                    {t.held_on ?? '日程未定'} &nbsp;|&nbsp; {t.num_rounds}回戦
+                    {t.held_on ?? '日程未定'} &nbsp;|&nbsp; {t.num_rounds}回戦 &nbsp;|&nbsp; {t.players?.length ?? 0}名
                   </div>
                   {t.notes && (
                     <div style={{
@@ -287,7 +420,7 @@ export default function DashboardClient({ tournaments, templates }: Props) {
             width: '100%', maxWidth: '380px',
             boxShadow: '0 20px 60px rgba(15,21,32,0.2)',
           }}>
-            <div style={{ fontSize: '20px', marginBottom: '8px' }}>🗑️</div>
+            <div style={{ fontSize: '16px', marginBottom: '8px', color: 'var(--red)' }}>削除</div>
             <div style={{ fontFamily: 'serif', fontSize: '17px', fontWeight: 800, marginBottom: '8px' }}>大会を削除しますか？</div>
             <div style={{
               fontSize: '13px', color: 'var(--slate)', marginBottom: '6px',
@@ -300,7 +433,7 @@ export default function DashboardClient({ tournaments, templates }: Props) {
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setDeleteTarget(null)}
-                style={{ padding: '8px 18px', background: 'transparent', border: '1.5px solid var(--border-md)', color: 'var(--slate)', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                style={btnOutline}
               >キャンセル</button>
               <button
                 onClick={handleDelete}
@@ -326,20 +459,6 @@ export default function DashboardClient({ tournaments, templates }: Props) {
           }}>
             <div style={{ fontFamily: 'serif', fontSize: '18px', fontWeight: 800, marginBottom: '20px' }}>新しい大会を作成</div>
 
-            {templates.length > 0 && (
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>ルールテンプレートから読み込む</label>
-                <select value={selectedTemplate} onChange={e => applyTemplate(e.target.value)} style={inputStyle}>
-                  <option value="">テンプレートを選択...</option>
-                  {templates.map(t => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div style={{ height: '1px', background: 'var(--border)', margin: '16px 0' }} />
-
             <div style={{ marginBottom: '13px' }}>
               <label style={labelStyle}>大会名 *</label>
               <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="例：第1回 春季大会" />
@@ -364,99 +483,6 @@ export default function DashboardClient({ tournaments, templates }: Props) {
               </div>
             </div>
 
-            <div style={{ background: 'var(--navy)', borderRadius: '11px', padding: '16px', marginBottom: '13px', color: '#fff' }}>
-              <div style={cfgLabelStyle}>基本設定</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                <div>
-                  <div style={cfgItemLabelStyle}>持ち点</div>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <input type="number" value={config.startingPoints / 1000} onChange={e => setConfig(c => ({ ...c, startingPoints: +e.target.value * 1000 }))} style={cfgInputStyle} />
-                    <span style={{ padding: '7px 8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderLeft: 'none', borderRadius: '0 7px 7px 0', fontSize: '12px', color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>,000</span>
-                  </div>
-                </div>
-                <div>
-                  <div style={cfgItemLabelStyle}>返し</div>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <input type="number" value={config.returnPoints / 1000} onChange={e => setConfig(c => ({ ...c, returnPoints: +e.target.value * 1000 }))} style={cfgInputStyle} />
-                    <span style={{ padding: '7px 8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderLeft: 'none', borderRadius: '0 7px 7px 0', fontSize: '12px', color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>,000</span>
-                  </div>
-                </div>
-              </div>
-
-              <div style={cfgLabelStyle}>ウマ設定</div>
-              <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '7px', padding: '2px', gap: '2px', marginBottom: '10px' }}>
-                {(['simple', 'detail'] as const).map(m => (
-                  <button key={m} onClick={() => setUmaMode(m)} style={{
-                    flex: 1, padding: '6px 4px', fontSize: '11px', fontWeight: 600,
-                    border: 'none', borderRadius: '5px', cursor: 'pointer',
-                    background: umaMode === m ? 'var(--cyan-deep)' : 'transparent',
-                    color: umaMode === m ? '#fff' : 'rgba(255,255,255,0.38)',
-                  }}>
-                    {m === 'simple' ? 'シンプル' : '詳細（個別入力）'}
-                  </button>
-                ))}
-              </div>
-
-              {umaMode === 'simple' ? (
-                <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <div>
-                      <div style={cfgItemLabelStyle}>1位ウマ</div>
-                      <input type="number" value={uma1} onChange={e => setUma1(+e.target.value)} style={cfgInputStyle} />
-                    </div>
-                    <div>
-                      <div style={cfgItemLabelStyle}>4位ウマ</div>
-                      <input type="number" value={uma4} onChange={e => setUma4(+e.target.value)} style={{ ...cfgInputStyle, color: '#fca5a5' }} />
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
-                    {[
-                      { label: '2位', val: `+${Math.round(Math.abs(uma1) / 3)}` },
-                      { label: '3位', val: `−${Math.round(Math.abs(uma1) / 3)}` },
-                    ].map(({ label, val }) => (
-                      <div key={label} style={{ flex: 1, textAlign: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', padding: '5px 4px' }}>
-                        <div style={{ fontSize: '8px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>{label}</div>
-                        <div style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>{val}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '6px', marginBottom: '4px' }}>
-                    {['1位','2位','3位','4位'].map(l => (
-                      <div key={l} style={{ fontSize: '8px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)', textAlign: 'center' }}>{l}</div>
-                    ))}
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '6px' }}>
-                    {config.uma.map((v, i) => (
-                      <input key={i} type="number" value={v}
-                        onChange={e => {
-                          const uma = [...config.uma] as [number,number,number,number]
-                          uma[i] = +e.target.value
-                          setConfig(c => ({ ...c, uma }))
-                        }}
-                        style={{ ...cfgInputStyle, textAlign: 'center', color: i >= 2 ? '#fca5a5' : '#fff' }} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div style={cfgLabelStyle}>同点処理 / 席順</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                <ToggleGroup
-                  options={[{ value: 'kamicha', label: '上家取り' }, { value: 'split', label: '同点分け' }]}
-                  value={config.tieBreak}
-                  onChange={v => setConfig(c => ({ ...c, tieBreak: v as 'kamicha' | 'split' }))}
-                />
-                <ToggleGroup
-                  options={[{ value: 'random', label: '席ランダム' }, { value: 'none', label: '席順なし' }]}
-                  value={config.seatMode}
-                  onChange={v => setConfig(c => ({ ...c, seatMode: v as 'random' | 'none' }))}
-                />
-              </div>
-            </div>
-
             <div style={{ marginBottom: '16px' }}>
               <label style={labelStyle}>備考</label>
               <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: '70px', resize: 'vertical', lineHeight: 1.65 }} placeholder="ルールの補足、チョンボ罰則など..." />
@@ -465,28 +491,12 @@ export default function DashboardClient({ tournaments, templates }: Props) {
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowForm(false)} style={btnOutline}>キャンセル</button>
               <button onClick={handleCreate} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}>
-                {saving ? '作成中...' : '大会を開始する →'}
+                {saving ? '作成中...' : '大会を作成する →'}
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-function ToggleGroup({ options, value, onChange }: { options: { value: string; label: string }[]; value: string; onChange: (v: string) => void }) {
-  return (
-    <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '7px', padding: '2px', gap: '2px' }}>
-      {options.map(o => (
-        <button key={o.value} onClick={() => onChange(o.value)} style={{
-          flex: 1, padding: '6px 4px', fontSize: '11px', fontWeight: 600,
-          border: 'none', borderRadius: '5px', cursor: 'pointer',
-          background: value === o.value ? 'var(--cyan-deep)' : 'transparent',
-          color: value === o.value ? '#fff' : 'rgba(255,255,255,0.38)',
-          transition: 'all 0.13s',
-        }}>{o.label}</button>
-      ))}
     </div>
   )
 }
@@ -501,21 +511,6 @@ const inputStyle: React.CSSProperties = {
   background: 'var(--paper)', border: '1.5px solid var(--border-md)',
   borderRadius: '9px', fontSize: '13px', color: 'var(--ink)', outline: 'none',
   fontFamily: 'inherit',
-}
-const cfgLabelStyle: React.CSSProperties = {
-  fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em',
-  textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)',
-  marginBottom: '10px', marginTop: '14px',
-}
-const cfgItemLabelStyle: React.CSSProperties = {
-  fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.15em',
-  textTransform: 'uppercase', color: 'rgba(255,255,255,0.32)', marginBottom: '4px',
-}
-const cfgInputStyle: React.CSSProperties = {
-  width: '100%', padding: '7px 10px',
-  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: '7px', fontSize: '13px', fontWeight: 600, color: '#fff',
-  fontFamily: 'monospace', outline: 'none',
 }
 const btnPrimary: React.CSSProperties = {
   padding: '8px 18px', background: 'var(--cyan-deep)', color: '#fff',

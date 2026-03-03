@@ -50,15 +50,23 @@ export default function LoginPage() {
               width: '34px', height: '34px',
               background: 'linear-gradient(135deg, #0ea5e9, #f59e0b 180%)',
               borderRadius: '8px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'serif', fontSize: '18px', fontWeight: 900, color: '#0f1e3c',
-            }}>一</div>
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
+              padding: '6px', gap: '1.5px',
+            }}>
+              {[1,0,1,0,1,0,1,0,1].map((show, i) => (
+                <div key={i} style={{
+                  borderRadius: '50%',
+                  background: show ? '#0f1e3c' : 'transparent',
+                  opacity: show ? 0.82 : 0,
+                }} />
+              ))}
+            </div>
             <span style={{ fontFamily: 'monospace', fontSize: '26px', fontWeight: 500, color: 'var(--navy)', letterSpacing: '0.04em' }}>
               Yitia
             </span>
           </div>
           <div style={{ fontSize: '10px', color: 'var(--mist)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: '6px' }}>
-            Mahjong Tournament Manager
+            Mahjong Taikai Manager
           </div>
         </div>
 

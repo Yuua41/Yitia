@@ -9,18 +9,12 @@ export default async function DashboardPage() {
 
   const { data: tournaments } = await supabase
     .from('tournaments')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  const { data: templates } = await supabase
-    .from('rule_templates')
-    .select('*')
+    .select('*, players(id)')
     .order('created_at', { ascending: false })
 
   return (
     <DashboardClient
       tournaments={tournaments ?? []}
-      templates={templates ?? []}
     />
   )
 }

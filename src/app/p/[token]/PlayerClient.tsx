@@ -20,12 +20,48 @@ const SEAT_COLORS = [
   { bg: '#dcfce7', color: '#166534' },
   { bg: '#f3e8ff', color: '#6b21a8' },
 ]
+const NUM_COLOR = { bg: 'var(--paper)', color: 'var(--slate)' }
 
 export default function PlayerClient({ player, tournament, players, tables }: Props) {
   const router = useRouter()
   const supabase = createClient()
   const [scores, setScores] = useState<Record<string, { value: string; negative: boolean }>>({})
   const [submitting, setSubmitting] = useState<string | null>(null)
+  const [adjustmentInput, setAdjustmentInput] = useState(Math.abs(player.bonus ?? 0).toString())
+  const [adjustmentNeg, setAdjustmentNeg] = useState((player.bonus ?? 0) < 0)
+  const [savingAdjustment, setSavingAdjustment] = useState(false)
+  const [swapSource, setSwapSource] = useState<{ resultId: string; playerId: string } | null>(null)
+  const [swapping, setSwapping] = useState(false)
+
+  const noSeat = tournament.config.seatMode === 'none'
+
+  function sortResults(results: Result[]) {
+    if (noSeat) {
+      return [...results].sort((a, b) => {
+        const pA = players.find(p => p.id === a.player_id)
+        const pB = players.find(p => p.id === b.player_id)
+        return (pA?.seat_order ?? 0) - (pB?.seat_order ?? 0)
+      })
+    }
+    return [...results].sort((a, b) => a.seat_index - b.seat_index)
+  }
+
+  async function handleSwapInTable(sourceResultId: string, targetPlayerId: string) {
+    const table = tables.find(t => (t as any).results?.some((r: Result) => r.id === sourceResultId))
+    if (!table) return
+    const results = (table as any).results as Result[]
+    const sourceResult = results.find(r => r.id === sourceResultId)
+    const targetResult = results.find(r => r.player_id === targetPlayerId)
+    if (!sourceResult || !targetResult) return
+
+    setSwapping(true)
+    const oldPlayerId = sourceResult.player_id
+    await supabase.from('results').update({ player_id: targetPlayerId }).eq('id', sourceResult.id)
+    await supabase.from('results').update({ player_id: oldPlayerId }).eq('id', targetResult.id)
+    setSwapping(false)
+    setSwapSource(null)
+    router.refresh()
+  }
 
   function getMyTable(roundNum: number) {
     return tables.find(t =>
@@ -35,13 +71,22 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   }
 
   const standings = players.map(p => {
-    const total = tables
-      .filter(t => t.is_validated)
-      .reduce((sum, t) => {
-        const result = (t as any).results?.find((r: Result) => r.player_id === p.id)
-        return sum + (result?.point ?? 0)
-      }, 0) + (p.bonus ?? 0)
-    return { player: p, total: Math.round(total * 10) / 10 }
+    const roundPoints: (number | null)[] = []
+    for (let r = 1; r <= tournament.num_rounds; r++) {
+      const table = tables.find(t =>
+        t.round_number === r &&
+        t.is_validated &&
+        (t as any).results?.some((res: Result) => res.player_id === p.id)
+      )
+      if (table) {
+        const result = (table as any).results?.find((res: Result) => res.player_id === p.id)
+        roundPoints.push(result?.point ?? null)
+      } else {
+        roundPoints.push(null)
+      }
+    }
+    const total = roundPoints.reduce((sum: number, pt) => sum + (pt ?? 0), 0) + (p.bonus ?? 0)
+    return { player: p, total: Math.round(total * 10) / 10, roundPoints }
   }).sort((a, b) => b.total - a.total)
 
   const myTotal = standings.find(s => s.player.id === player.id)?.total ?? 0
@@ -97,7 +142,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
         <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(15,21,32,0.07)' }}>
           <div style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: '1px solid var(--border)' }}>
-            🎴 スコア入力
+            スコア入力
           </div>
           {Array.from({ length: tournament.num_rounds }, (_, i) => i + 1).map(roundNum => {
             const myTable = getMyTable(roundNum)
@@ -114,9 +159,11 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <div style={{ fontSize: '12.5px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {roundNum}回戦 — 卓{myTable.table_number}
-                    <span style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--mist)' }}>
-                      ({SEAT_LABELS[myResult?.seat_index ?? 0]}家)
-                    </span>
+                    {!noSeat && (
+                      <span style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--mist)' }}>
+                        ({SEAT_LABELS[myResult?.seat_index ?? 0]}家)
+                      </span>
+                    )}
                   </div>
                   <span style={{
                     fontSize: '9.5px', padding: '2px 7px', borderRadius: '9px', fontFamily: 'monospace',
@@ -134,16 +181,17 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     </div>
                     <div style={{ borderTop: '1px solid var(--paper)', paddingTop: '8px' }}>
                       <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)', marginBottom: '6px' }}>卓{myTable.table_number} 全員の結果</div>
-                      {results.sort((a, b) => a.seat_index - b.seat_index).map(r => {
+                      {sortResults(results).map((r, ri) => {
                         const rPlayer = players.find(p => p.id === r.player_id)
                         const isMe = r.player_id === player.id
+                        const sc2 = noSeat ? NUM_COLOR : SEAT_COLORS[r.seat_index]
                         return (
                           <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0', borderBottom: '1px solid var(--paper)' }}>
-                            <div style={{ width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, fontFamily: 'serif', background: SEAT_COLORS[r.seat_index].bg, color: SEAT_COLORS[r.seat_index].color, flexShrink: 0 }}>
-                              {SEAT_LABELS[r.seat_index]}
+                            <div style={{ width: '18px', height: '18px', borderRadius: noSeat ? '4px' : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: noSeat ? '10px' : '9px', fontWeight: 700, fontFamily: noSeat ? 'monospace' : 'serif', background: sc2.bg, color: sc2.color, flexShrink: 0 }}>
+                              {noSeat ? `${ri + 1}` : SEAT_LABELS[r.seat_index]}
                             </div>
                             <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
-                              {isMe ? '⭐ ' : ''}{rPlayer?.name}
+                              {isMe ? '' : ''}{rPlayer?.name}
                             </div>
                             <span style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace' }}>{r.rank}位</span>
                             <span style={{ fontFamily: 'monospace', fontSize: '11.5px', fontWeight: 600, minWidth: '52px', textAlign: 'right', color: r.point >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
@@ -159,17 +207,38 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)', marginBottom: '8px' }}>
                       卓{myTable.table_number} スコア入力（全員分）
                     </div>
-                    {results.sort((a, b) => a.seat_index - b.seat_index).map(r => {
+                    {sortResults(results).map((r, ri) => {
                       const rPlayer = players.find(p => p.id === r.player_id)
                       const isMe = r.player_id === player.id
                       const sc = getScore(r.id)
+                      const sc2 = noSeat ? NUM_COLOR : SEAT_COLORS[r.seat_index]
+                      const isSwapSelected = swapSource?.resultId === r.id
                       return (
-                        <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0', borderBottom: '1px solid var(--paper)' }}>
-                          <div style={{ width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, fontFamily: 'serif', background: SEAT_COLORS[r.seat_index].bg, color: SEAT_COLORS[r.seat_index].color, flexShrink: 0 }}>
-                            {SEAT_LABELS[r.seat_index]}
+                        <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0', borderBottom: '1px solid var(--paper)', background: isSwapSelected ? 'var(--cyan-pale)' : 'transparent', borderRadius: isSwapSelected ? '6px' : '0' }}>
+                          <div style={{ width: '18px', height: '18px', borderRadius: noSeat ? '4px' : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: noSeat ? '10px' : '9px', fontWeight: 700, fontFamily: noSeat ? 'monospace' : 'serif', background: sc2.bg, color: sc2.color, flexShrink: 0 }}>
+                            {noSeat ? `${ri + 1}` : SEAT_LABELS[r.seat_index]}
                           </div>
-                          <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
-                            {isMe ? '⭐ ' : ''}{rPlayer?.name}
+                          <div
+                            onClick={noSeat ? () => {
+                              if (swapping) return
+                              if (!swapSource) {
+                                setSwapSource({ resultId: r.id, playerId: r.player_id })
+                              } else if (swapSource.resultId === r.id) {
+                                setSwapSource(null)
+                              } else {
+                                handleSwapInTable(swapSource.resultId, r.player_id)
+                              }
+                            } : undefined}
+                            style={{
+                              flex: 1, fontSize: '12px', fontWeight: 600,
+                              color: isMe ? 'var(--cyan-deep)' : 'var(--ink)',
+                              cursor: noSeat ? 'pointer' : 'default',
+                              padding: noSeat ? '2px 6px' : '0',
+                              borderRadius: noSeat ? '4px' : '0',
+                              border: noSeat ? `1px dashed ${isSwapSelected ? 'var(--cyan-deep)' : 'transparent'}` : 'none',
+                            }}
+                          >
+                            {rPlayer?.name}
                           </div>
                           <button onClick={() => setScores(s => ({ ...s, [r.id]: { ...sc, negative: !sc.negative } }))} style={{
                             width: '22px', height: '22px', borderRadius: '6px', flexShrink: 0,
@@ -183,7 +252,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                             type="number"
                             value={sc.value}
                             onChange={e => setScores(s => ({ ...s, [r.id]: { ...sc, value: e.target.value } }))}
-                            placeholder="0"
+                            placeholder={(tournament.config.startingPoints / 100).toString()}
                             style={{
                               width: '70px', padding: '4px 6px',
                               border: '1.5px solid var(--border-md)', borderRadius: '6px',
@@ -213,26 +282,107 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
         <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(15,21,32,0.07)' }}>
           <div style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: '1px solid var(--border)' }}>
-            📊 全体成績
+            全体成績
           </div>
           {standings.map((s, i) => {
             const isMe = s.player.id === player.id
             return (
               <div key={s.player.id} style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '8px 15px', borderBottom: '1px solid var(--paper)',
                 background: isMe ? 'var(--cyan-pale)' : 'transparent',
               }}>
-                <div style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--mist)', width: '20px', textAlign: 'center' }}>{i + 1}</div>
-                <div style={{ flex: 1, fontSize: '12.5px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
-                  {isMe ? '⭐ ' : ''}{s.player.name}{isMe ? '（自分）' : ''}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--mist)', width: '20px', textAlign: 'center' }}>{i + 1}</div>
+                  <div style={{ flex: 1, fontSize: '12.5px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
+                    {isMe ? '' : ''}{s.player.name}{isMe ? '（自分）' : ''}
+                  </div>
+                  <div style={{ fontFamily: 'monospace', fontSize: '12.5px', fontWeight: 600, color: s.total >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                    {formatPoint(s.total)}
+                  </div>
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: '12.5px', fontWeight: 600, color: s.total >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
-                  {formatPoint(s.total)}
-                </div>
+                {s.roundPoints.some(pt => pt !== null) && (
+                  <div style={{ display: 'flex', gap: '4px', marginTop: '4px', paddingLeft: '28px', flexWrap: 'wrap' }}>
+                    {s.roundPoints.map((pt, ri) => (
+                      <span key={ri} style={{
+                        fontSize: '9.5px', fontFamily: 'monospace', padding: '1px 5px',
+                        borderRadius: '4px', background: 'var(--paper)',
+                        color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+                      }}>
+                        R{ri + 1}:{pt !== null ? formatPoint(pt) : '-'}
+                      </span>
+                    ))}
+                    {(s.player.bonus ?? 0) !== 0 && (
+                      <span style={{
+                        fontSize: '9.5px', fontFamily: 'monospace', padding: '1px 5px',
+                        borderRadius: '4px', background: 'var(--red-pale)',
+                        color: 'var(--red)',
+                      }}>
+                        調整:{formatPoint(s.player.bonus)}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             )
           })}
+        </div>
+
+        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(15,21,32,0.07)' }}>
+          <div style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: '1px solid var(--border)' }}>
+            得点調整
+          </div>
+          <div style={{ padding: '12px 15px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--mist)', marginBottom: '8px' }}>
+              チョンボ等のペナルティや調整ポイントを入力してください
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button onClick={() => setAdjustmentNeg(n => !n)} style={{
+                width: '28px', height: '28px', borderRadius: '6px', flexShrink: 0,
+                border: `1.5px solid ${adjustmentNeg ? 'rgba(239,68,68,0.3)' : 'var(--border-md)'}`,
+                background: adjustmentNeg ? 'var(--red-pale)' : 'var(--paper)',
+                color: adjustmentNeg ? 'var(--red)' : 'var(--cyan-deep)',
+                fontSize: '12px', fontWeight: 700, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>{adjustmentNeg ? '▲' : '+'}</button>
+              <input
+                type="number"
+                value={adjustmentInput}
+                onChange={e => setAdjustmentInput(e.target.value)}
+                placeholder="0"
+                style={{
+                  flex: 1, padding: '6px 8px',
+                  border: '1.5px solid var(--border-md)', borderRadius: '6px',
+                  fontSize: '13px', fontWeight: 600, textAlign: 'right',
+                  fontFamily: 'monospace', background: 'var(--paper)', outline: 'none',
+                }}
+              />
+              <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>pt</span>
+              <button
+                onClick={async () => {
+                  setSavingAdjustment(true)
+                  const val = parseFloat(adjustmentInput) || 0
+                  const bonus = adjustmentNeg ? -Math.abs(val) : Math.abs(val)
+                  await supabase.from('players').update({ bonus }).eq('id', player.id)
+                  setSavingAdjustment(false)
+                  router.refresh()
+                }}
+                disabled={savingAdjustment}
+                style={{
+                  padding: '6px 14px', flexShrink: 0,
+                  background: savingAdjustment ? 'var(--mist)' : 'var(--cyan-deep)',
+                  color: '#fff', border: 'none', borderRadius: '7px',
+                  fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                }}
+              >{savingAdjustment ? '保存中...' : '保存'}</button>
+            </div>
+            {(player.bonus ?? 0) !== 0 && (
+              <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--mist)' }}>
+                現在の調整: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: player.bonus < 0 ? 'var(--red)' : 'var(--cyan-deep)' }}>
+                  {formatPoint(player.bonus)}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--mist)', padding: '8px 0 24px', fontFamily: 'monospace' }}>

@@ -7,7 +7,7 @@ export interface RuleConfig {
   tieBreak: 'kamicha' | 'split'
   seatMode: 'random' | 'none'
   umaMode: 'simple' | 'detail'
-  rounding: 'round' | 'round_half_up'  // 四捨五入 | 五捨六入
+  rounding: 'none' | 'round' | 'round_half_up'  // 小数点以下反映 | 四捨五入 | 五捨六入
 }
 
 export interface RuleTemplate {

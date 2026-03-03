@@ -41,7 +41,7 @@ export default function QRClient({ tournament, players }: Props) {
             <button onClick={() => window.print()} style={{
               padding: '8px 16px', background: 'var(--gold)', color: 'var(--navy)',
               border: 'none', borderRadius: '8px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
-            }}>🖨️ PDF出力</button>
+            }}>PDF出力</button>
           </div>
           <div id="qr-print-area">
             <div className="qr-grid" style={{
