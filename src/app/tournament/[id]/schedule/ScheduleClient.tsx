@@ -131,13 +131,6 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
   }
 
   function sortResults(results: Result[]) {
-    if (noSeat) {
-      return [...results].sort((a, b) => {
-        const pA = players.find(p => p.id === a.player_id)
-        const pB = players.find(p => p.id === b.player_id)
-        return (pA?.seat_order ?? 0) - (pB?.seat_order ?? 0)
-      })
-    }
     return [...results].sort((a, b) => a.seat_index - b.seat_index)
   }
 
@@ -264,10 +257,13 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
                           </div>
                         )}
                         {isValidated ? (
-                          <div style={{ textAlign: 'right', minWidth: '68px' }}>
-                            <div style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace' }}>{result.rank}位</div>
-                            <div style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'monospace', color: result.point >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
-                              {formatPoint(result.point)}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace' }}>{(result.score / 100).toLocaleString()}00</span>
+                            <div style={{ textAlign: 'right', minWidth: '68px' }}>
+                              <div style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(result.rank)}位</div>
+                              <div style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'monospace', color: result.point >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                                {formatPoint(result.point)}
+                              </div>
                             </div>
                           </div>
                         ) : (

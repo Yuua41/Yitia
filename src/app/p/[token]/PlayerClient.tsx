@@ -36,13 +36,6 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   const noSeat = tournament.config.seatMode === 'none'
 
   function sortResults(results: Result[]) {
-    if (noSeat) {
-      return [...results].sort((a, b) => {
-        const pA = players.find(p => p.id === a.player_id)
-        const pB = players.find(p => p.id === b.player_id)
-        return (pA?.seat_order ?? 0) - (pB?.seat_order ?? 0)
-      })
-    }
     return [...results].sort((a, b) => a.seat_index - b.seat_index)
   }
 
@@ -177,7 +170,8 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                       <div style={{ fontFamily: 'monospace', fontSize: '27px', fontWeight: 500, color: (myResult?.point ?? 0) >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
                         {formatPoint(myResult?.point ?? 0)}
                       </div>
-                      <div style={{ fontSize: '10.5px', color: 'var(--mist)', marginTop: '2px' }}>{myResult?.rank}位</div>
+                      <div style={{ fontSize: '10.5px', color: 'var(--mist)', marginTop: '2px' }}>{Math.floor(myResult?.rank ?? 0)}位</div>
+                      <div style={{ fontSize: '10px', color: 'var(--mist)', marginTop: '1px', fontFamily: 'monospace' }}>素点 {((myResult?.score ?? 0) / 100).toLocaleString()}00</div>
                     </div>
                     <div style={{ borderTop: '1px solid var(--paper)', paddingTop: '8px' }}>
                       <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)', marginBottom: '6px' }}>卓{myTable.table_number} 全員の結果</div>
@@ -193,7 +187,8 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                             <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
                               {isMe ? '' : ''}{rPlayer?.name}
                             </div>
-                            <span style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace' }}>{r.rank}位</span>
+                            <span style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace', minWidth: '38px', textAlign: 'right' }}>{(r.score / 100).toLocaleString()}00</span>
+                            <span style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(r.rank)}位</span>
                             <span style={{ fontFamily: 'monospace', fontSize: '11.5px', fontWeight: 600, minWidth: '52px', textAlign: 'right', color: r.point >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
                               {formatPoint(r.point)}
                             </span>

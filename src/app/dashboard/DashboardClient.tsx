@@ -54,6 +54,7 @@ export default function DashboardClient({ tournaments }: Props) {
         notes: notes || null,
         num_rounds: numRounds,
         config: DEFAULT_CONFIG,
+        admin_token: nanoid(12),
         status: 'draft',
       })
       .select()
@@ -175,6 +176,7 @@ export default function DashboardClient({ tournaments }: Props) {
         notes: 'サンプルデータ。25000点持ち30000点返し、ウマ30-10。',
         num_rounds: 4,
         config: sampleConfig,
+        admin_token: nanoid(12),
         status: 'finished',
       })
       .select()
@@ -239,6 +241,7 @@ export default function DashboardClient({ tournaments }: Props) {
         notes: null,
         num_rounds: 3,
         config: sampleConfig,
+        admin_token: nanoid(12),
         status: 'ongoing',
       })
       .select().single()

@@ -26,6 +26,7 @@ export interface Tournament {
   notes: string | null
   num_rounds: number
   config: RuleConfig
+  admin_token: string
   status: 'draft' | 'ongoing' | 'finished'
   created_at: string
   players?: Player[]

@@ -6,9 +6,10 @@ import type { Tournament, Player } from '@/types'
 interface Props {
   tournament: Tournament
   players: Player[]
+  adminToken?: string
 }
 
-export default function QRClient({ tournament, players }: Props) {
+export default function QRClient({ tournament, players, adminToken }: Props) {
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
   return (
@@ -44,6 +45,34 @@ export default function QRClient({ tournament, players }: Props) {
             }}>PDF出力</button>
           </div>
           <div id="qr-print-area">
+            {adminToken && (() => {
+              const adminUrl = `${origin}/a/${adminToken}`
+              return (
+                <div style={{
+                  background: 'var(--navy)', border: '2px solid var(--cyan-deep)',
+                  borderRadius: '12px', padding: '20px', textAlign: 'center',
+                  marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '24px',
+                  boxShadow: '0 2px 12px rgba(14,165,233,0.15)',
+                }}>
+                  <div style={{ background: '#fff', borderRadius: '10px', padding: '8px', flexShrink: 0 }}>
+                    <QRCode value={adminUrl} size={110} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan-deep)', marginBottom: '4px' }}>管理者用</div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>卓組・成績入力 QR</div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>
+                      ログインなしで卓組・成績入力、全体成績、QRコードページにアクセスできます
+                    </div>
+                    <div
+                      onClick={() => window.open(adminUrl, '_blank')}
+                      style={{ fontSize: '9px', fontFamily: 'monospace', color: 'var(--cyan-deep)', wordBreak: 'break-all', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      /a/{adminToken}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
             <div className="qr-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(165px, 1fr))',

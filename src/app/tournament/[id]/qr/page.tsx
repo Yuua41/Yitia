@@ -26,5 +26,5 @@ export default async function QRPage({
     .eq('tournament_id', id)
     .order('seat_order')
 
-  return <QRClient tournament={tournament} players={players ?? []} />
+  return <QRClient tournament={tournament} players={players ?? []} adminToken={tournament.admin_token} />
 }
