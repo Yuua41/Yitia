@@ -29,6 +29,7 @@ export default function DashboardClient({ tournaments }: Props) {
   const [deleteTarget, setDeleteTarget] = useState<Tournament | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [seeding, setSeeding] = useState(false)
+  const [navigatingId, setNavigatingId] = useState<string | null>(null)
 
   const [name, setName] = useState('')
   const [heldOn, setHeldOn] = useState(new Date().toISOString().split('T')[0])
@@ -323,7 +324,6 @@ export default function DashboardClient({ tournaments }: Props) {
       <div className="dash-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
         <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>大会一覧</div>
         <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span>大会を選択して管理・成績確認ができます</span>
           <button
             onClick={handleCreateSample}
             disabled={seeding}
@@ -342,11 +342,12 @@ export default function DashboardClient({ tournaments }: Props) {
             return (
               <div key={t.id} style={{
                 background: '#fff', border: '1.5px solid var(--border)',
-                borderRadius: '12px', padding: '18px', cursor: 'pointer',
+                borderRadius: '12px', padding: '18px', cursor: navigatingId ? 'wait' : 'pointer',
                 transition: 'all 0.15s', boxShadow: '0 1px 8px rgba(15,21,32,0.07)',
                 position: 'relative', overflow: 'hidden',
+                opacity: navigatingId && navigatingId !== t.id ? 0.5 : 1,
               }}
-                onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-2px)')}
+                onMouseEnter={e => !navigatingId && (e.currentTarget.style.transform = 'translateY(-2px)')}
                 onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
               >
                 <div style={{
@@ -371,10 +372,12 @@ export default function DashboardClient({ tournaments }: Props) {
                 >✕</button>
 
                 <div
-                  onClick={() => router.push(`/tournament/${t.id}/schedule`)}
+                  onClick={() => { setNavigatingId(t.id); router.push(`/tournament/${t.id}/schedule`) }}
                   style={{ paddingRight: '24px' }}
                 >
-                  <div style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 700, marginBottom: '5px' }}>{t.name}</div>
+                  <div style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 700, marginBottom: '5px' }}>
+                    {navigatingId === t.id ? <span style={{ fontSize: '12px', color: 'var(--mist)', fontWeight: 600 }}>Loading...</span> : t.name}
+                  </div>
                   <div style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace', marginBottom: '8px' }}>
                     {t.held_on ?? '日程未定'} &nbsp;|&nbsp; {t.num_rounds}回戦 &nbsp;|&nbsp; {t.players?.length ?? 0}名
                   </div>
