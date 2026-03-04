@@ -88,9 +88,21 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
 
   return (
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <div style={{
+      <style>{`
+        .standings-table-view { display: block; }
+        .standings-card-view { display: none; }
+        .standings-header { padding: 0 26px !important; }
+        .standings-content { padding: 24px 26px !important; }
+        @media (max-width: 768px) {
+          .standings-table-view { display: none !important; }
+          .standings-card-view { display: block !important; }
+          .standings-header { padding: 0 16px !important; }
+          .standings-content { padding: 16px !important; }
+        }
+      `}</style>
+      <div className="standings-header" style={{
         height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
-        padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
         <div>
           <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{tournament.name} › </span>
@@ -101,83 +113,146 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
           border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
           cursor: 'pointer', opacity: savingAdj ? 0.6 : 1,
         }}>
-          {savingAdj ? '保存中...' : 'ポイント調整を保存'}
+          {savingAdj ? '保存中...' : '調整を保存'}
         </button>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
+      <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>総合成績</div>
         <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '20px' }}>
           {tournament.name} — {tables.length} / {tournament.num_rounds * Math.floor(players.length / 4)} 試合確定済み
         </div>
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '0 1px 8px rgba(15,21,32,0.07)', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
-            <thead>
-              <tr>
-                <th style={thStyle('rank')} onClick={() => handleSort('rank')}>順位 <span>{sortIcon('rank')}</span></th>
-                <th style={thStyle('name')} onClick={() => handleSort('name')}>名前（参加順） <span>{sortIcon('name')}</span></th>
-                {Array.from({ length: tournament.num_rounds }, (_, i) => (
-                  <th key={i} style={thStyle()}>R{i + 1}</th>
-                ))}
-                <th style={thStyle()}>ポイント調整</th>
-                <th style={{ ...thStyle('total'), textAlign: 'right' }} onClick={() => handleSort('total')}>合計 <span>{sortIcon('total')}</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map(({ player, roundPoints, total, rank, isTied }) => {
-                const rkBg = rank === 1 ? 'var(--gold)' : rank === 2 ? 'var(--slate)' : rank === 3 ? '#94a3b8' : 'var(--paper)'
-                const rkColor = rank <= 3 ? '#fff' : 'var(--slate)'
-                const adj = adjustments[player.id] ?? 0
-                return (
-                  <tr key={player.id}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--paper)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                    <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                        <span style={{
-                          width: '22px', height: '22px', borderRadius: '50%',
-                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '11px', fontWeight: 800, fontFamily: 'serif',
-                          background: rkBg, color: rkColor,
-                        }}>{rank}</span>
-                        {isTied && <span style={{ fontSize: '9px', fontFamily: 'monospace', color: 'var(--mist)', fontWeight: 700 }}>T</span>}
-                      </span>
-                    </td>
-                    <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)', fontWeight: 600 }}>
-                      {player.seat_order + 1}. {player.name}
-                    </td>
-                    {roundPoints.map((pt, i) => (
-                      <td key={i} style={{
-                        padding: '10px 12px', borderBottom: '1px solid var(--paper)',
-                        fontFamily: 'monospace', fontWeight: 600,
-                        color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
-                      }}>{pt === null ? '—' : formatPoint(pt)}</td>
-                    ))}
-                    <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)' }}>
-                      <input
-                        type="number"
-                        value={adj}
-                        onChange={e => setAdjustments(a => ({ ...a, [player.id]: +e.target.value }))}
-                        style={{
-                          width: '68px', padding: '4px 6px',
-                          border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`,
-                          borderRadius: '6px', fontSize: '11.5px', fontFamily: 'monospace',
-                          textAlign: 'center', outline: 'none',
-                          background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'var(--gold-pale)' : 'var(--paper)',
-                          color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--gold-dark)' : 'var(--ink)',
-                        }}
-                      />
-                    </td>
-                    <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)', textAlign: 'right' }}>
-                      <strong style={{
-                        fontFamily: 'monospace', fontSize: '14px',
-                        color: total >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
-                      }}>{formatPoint(total)}</strong>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+
+        {/* Desktop: Table View */}
+        <div className="standings-table-view">
+          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '0 1px 8px rgba(15,21,32,0.07)', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle('rank')} onClick={() => handleSort('rank')}>順位 <span>{sortIcon('rank')}</span></th>
+                  <th style={thStyle('name')} onClick={() => handleSort('name')}>名前（参加順） <span>{sortIcon('name')}</span></th>
+                  {Array.from({ length: tournament.num_rounds }, (_, i) => (
+                    <th key={i} style={thStyle()}>R{i + 1}</th>
+                  ))}
+                  <th style={thStyle()}>ポイント調整</th>
+                  <th style={{ ...thStyle('total'), textAlign: 'right' }} onClick={() => handleSort('total')}>合計 <span>{sortIcon('total')}</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map(({ player, roundPoints, total, rank, isTied }) => {
+                  const rkBg = rank === 1 ? 'var(--gold)' : rank === 2 ? 'var(--slate)' : rank === 3 ? '#94a3b8' : 'var(--paper)'
+                  const rkColor = rank <= 3 ? '#fff' : 'var(--slate)'
+                  const adj = adjustments[player.id] ?? 0
+                  return (
+                    <tr key={player.id}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--paper)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                          <span style={{
+                            width: '22px', height: '22px', borderRadius: '50%',
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '11px', fontWeight: 800, fontFamily: 'serif',
+                            background: rkBg, color: rkColor,
+                          }}>{rank}</span>
+                          {isTied && <span style={{ fontSize: '9px', fontFamily: 'monospace', color: 'var(--mist)', fontWeight: 700 }}>T</span>}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)', fontWeight: 600 }}>
+                        {player.seat_order + 1}. {player.name}
+                      </td>
+                      {roundPoints.map((pt, i) => (
+                        <td key={i} style={{
+                          padding: '10px 12px', borderBottom: '1px solid var(--paper)',
+                          fontFamily: 'monospace', fontWeight: 600,
+                          color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+                        }}>{pt === null ? '—' : formatPoint(pt)}</td>
+                      ))}
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)' }}>
+                        <input
+                          type="number"
+                          value={adj}
+                          onChange={e => setAdjustments(a => ({ ...a, [player.id]: +e.target.value }))}
+                          style={{
+                            width: '68px', padding: '4px 6px',
+                            border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`,
+                            borderRadius: '6px', fontSize: '11.5px', fontFamily: 'monospace',
+                            textAlign: 'center', outline: 'none',
+                            background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'var(--gold-pale)' : 'var(--paper)',
+                            color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--gold-dark)' : 'var(--ink)',
+                          }}
+                        />
+                      </td>
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)', textAlign: 'right' }}>
+                        <strong style={{
+                          fontFamily: 'monospace', fontSize: '14px',
+                          color: total >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+                        }}>{formatPoint(total)}</strong>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Mobile: Card View */}
+        <div className="standings-card-view" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {sorted.map(({ player, roundPoints, total, rank }) => {
+            const rkBg = rank === 1 ? 'var(--gold)' : rank === 2 ? 'var(--slate)' : rank === 3 ? '#94a3b8' : 'var(--paper)'
+            const rkColor = rank <= 3 ? '#fff' : 'var(--slate)'
+            const adj = adjustments[player.id] ?? 0
+            return (
+              <div key={player.id} style={{
+                background: '#fff', border: '1px solid var(--border)', borderRadius: '12px',
+                padding: '12px 14px', boxShadow: '0 1px 6px rgba(15,21,32,0.06)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                  <span style={{
+                    width: '28px', height: '28px', borderRadius: '50%',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '13px', fontWeight: 800, fontFamily: 'serif',
+                    background: rkBg, color: rkColor, flexShrink: 0,
+                  }}>{rank}</span>
+                  <div style={{ flex: 1, fontSize: '13.5px', fontWeight: 700 }}>
+                    {player.seat_order + 1}. {player.name}
+                  </div>
+                  <strong style={{
+                    fontFamily: 'monospace', fontSize: '16px',
+                    color: total >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+                  }}>{formatPoint(total)}</strong>
+                </div>
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                  {roundPoints.map((pt, i) => (
+                    <span key={i} style={{
+                      fontSize: '10px', fontFamily: 'monospace', padding: '2px 6px',
+                      borderRadius: '4px', background: 'var(--paper)',
+                      color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+                      fontWeight: 600,
+                    }}>
+                      R{i + 1}:{pt !== null ? formatPoint(pt) : '-'}
+                    </span>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--mist)' }}>
+                  <span>調整:</span>
+                  <input
+                    type="number"
+                    value={adj}
+                    onChange={e => setAdjustments(a => ({ ...a, [player.id]: +e.target.value }))}
+                    style={{
+                      width: '72px', padding: '5px 8px',
+                      border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`,
+                      borderRadius: '6px', fontSize: '12px', fontFamily: 'monospace',
+                      textAlign: 'center', outline: 'none',
+                      background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'var(--gold-pale)' : 'var(--paper)',
+                      color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--gold-dark)' : 'var(--ink)',
+                    }}
+                  />
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

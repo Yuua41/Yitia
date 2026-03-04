@@ -209,10 +209,18 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
   return (
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <style>{`
+        .settings-header { padding: 0 26px; }
+        .settings-content { padding: 24px 26px; }
+        @media (max-width: 768px) {
+          .settings-header { padding: 0 16px !important; }
+          .settings-content { padding: 16px !important; }
+        }
+      `}</style>
       {/* ヘッダー */}
-      <div style={{
+      <div className="settings-header" style={{
         height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
-        padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 700, letterSpacing: '0.04em' }}>設定</span>
@@ -231,7 +239,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
       </div>
 
       {/* コンテンツ */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
+      <div className="settings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: '600px' }}>
           <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>設定</div>
           <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '20px' }}>
@@ -268,7 +276,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '13px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '13px' }}>
               <div>
                 <label style={labelStyle}>開催日</label>
                 {isDraft ? (
@@ -364,7 +372,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
             color: '#fff',
           }}>
             <div style={cfgLabelStyle}>持ち点 / 返し</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '12px' }}>
               <div>
                 <div style={cfgItemLabelStyle}>持ち点</div>
                 {isDraft ? (
@@ -393,7 +401,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
             {isDraft ? (
               settingsMode === 'basic' ? (
                 <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
                     <div>
                       <div style={cfgItemLabelStyle}>1位・4位ウマ</div>
                       <input type="number" value={uma14} onChange={e => setUma14(+e.target.value)} style={cfgInputStyle} />

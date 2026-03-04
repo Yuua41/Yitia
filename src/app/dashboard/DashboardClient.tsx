@@ -329,7 +329,7 @@ export default function DashboardClient({ tournaments }: Props) {
           >{seeding ? '作成中...' : 'サンプルデータを作成'}</button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
           {tournaments.map(t => {
             const s = statusLabel(t)
             return (
@@ -456,7 +456,7 @@ export default function DashboardClient({ tournaments }: Props) {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
         }}>
           <div style={{
-            background: '#fff', borderRadius: '16px', padding: '28px',
+            background: '#fff', borderRadius: '16px', padding: 'clamp(20px, 4vw, 28px)',
             width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto',
             boxShadow: '0 20px 60px rgba(15,21,32,0.2)',
           }}>
@@ -466,7 +466,7 @@ export default function DashboardClient({ tournaments }: Props) {
               <label style={labelStyle}>大会名 *</label>
               <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="例：第1回 春季大会" />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '13px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '13px' }}>
               <div>
                 <label style={labelStyle}>開催日</label>
                 <input type="date" value={heldOn} onChange={e => setHeldOn(e.target.value)} style={inputStyle} />

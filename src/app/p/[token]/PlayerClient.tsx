@@ -253,7 +253,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
             background: 'radial-gradient(circle, rgba(14,165,233,0.35), transparent 65%)',
             pointerEvents: 'none',
           }} />
-          <div style={{ fontSize: '8.5px', fontFamily: 'monospace', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: '6px' }}>
+          <div style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: '6px' }}>
             Yitia — Player View
           </div>
           <div style={{ fontFamily: 'serif', fontSize: '22px', fontWeight: 800, color: '#fff', letterSpacing: '0.07em', marginBottom: '12px' }}>
@@ -410,7 +410,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                             {rPlayer?.name}
                           </div>
                           <button onClick={() => setScores(s => ({ ...s, [r.id]: { ...sc, negative: !sc.negative } }))} style={{
-                            width: '22px', height: '22px', borderRadius: '6px', flexShrink: 0,
+                            width: '32px', height: '32px', borderRadius: '6px', flexShrink: 0,
                             border: `1.5px solid ${sc.negative ? 'rgba(239,68,68,0.3)' : 'var(--border-md)'}`,
                             background: sc.negative ? 'var(--red-pale)' : 'var(--paper)',
                             color: sc.negative ? 'var(--red)' : 'var(--mist)',
@@ -423,7 +423,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                             onChange={e => setScores(s => ({ ...s, [r.id]: { ...sc, value: e.target.value } }))}
                             placeholder={(tournament.config.startingPoints / 100).toString()}
                             style={{
-                              width: '70px', padding: '4px 6px',
+                              width: '80px', padding: '6px 8px',
                               border: '1.5px solid var(--border-md)', borderRadius: '6px',
                               fontSize: '11.5px', fontWeight: 600, textAlign: 'right',
                               fontFamily: 'monospace', background: 'var(--paper)', outline: 'none',

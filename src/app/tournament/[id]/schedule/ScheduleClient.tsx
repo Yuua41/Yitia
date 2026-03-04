@@ -219,9 +219,17 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
 
   return (
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <div style={{
+      <style>{`
+        .schedule-header { padding: 0 26px; }
+        .schedule-content { padding: 24px 26px; }
+        @media (max-width: 768px) {
+          .schedule-header { padding: 0 16px !important; }
+          .schedule-content { padding: 16px !important; }
+        }
+      `}</style>
+      <div className="schedule-header" style={{
         height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
-        padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
         <div>
           <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{tournament.name} › </span>
@@ -233,7 +241,7 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
           background: 'var(--paper)', color: 'var(--slate)', border: '1px solid var(--border)',
         }}>確定 {validatedCount}/{localTables.length}</span>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
+      <div className="schedule-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>卓組・成績入力</div>
         <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '18px' }}>
           {tournament.name} — R{activeRound} / {tournament.num_rounds}
@@ -354,7 +362,7 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
                         ) : (
                           <>
                             <button onClick={() => toggleNegative(result.id)} style={{
-                              width: '24px', height: '24px', borderRadius: '6px', flexShrink: 0,
+                              width: '34px', height: '34px', borderRadius: '6px', flexShrink: 0,
                               border: `1.5px solid ${sc.negative ? 'rgba(239,68,68,0.3)' : 'var(--border-md)'}`,
                               background: sc.negative ? 'var(--red-pale)' : 'var(--paper)',
                               color: sc.negative ? 'var(--red)' : 'var(--mist)',
@@ -367,7 +375,7 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
                               onChange={e => setScore(result.id, e.target.value)}
                               placeholder={(tournament.config.startingPoints / 100).toString()}
                               style={{
-                                width: '72px', padding: '4px 7px',
+                                width: '80px', padding: '6px 7px',
                                 background: 'var(--paper)', border: '1.5px solid var(--border-md)',
                                 borderRadius: '7px', fontSize: '13px', fontWeight: 600,
                                 textAlign: 'right', fontFamily: 'monospace', outline: 'none',

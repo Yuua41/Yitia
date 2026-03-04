@@ -15,6 +15,10 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
   return (
     <>
       <style>{`
+        @media (max-width: 768px) {
+          .qr-header { padding: 0 16px !important; }
+          .qr-content { padding: 16px !important; }
+        }
         @media print {
           body * { visibility: hidden; }
           #qr-print-area, #qr-print-area * { visibility: visible; }
@@ -24,7 +28,7 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
         }
       `}</style>
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div className="no-print" style={{
+        <div className="no-print qr-header" style={{
           height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
           padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         }}>
@@ -33,7 +37,7 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
             <span style={{ fontSize: '14px', fontWeight: 700 }}>QRコード</span>
           </div>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
+        <div className="qr-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
           <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>QRコード</div>
           <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '18px' }}>
             参加者にQRを見せるとスコア入力・成績確認ができます
@@ -51,7 +55,7 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
                 <div style={{
                   background: 'var(--navy)', border: '2px solid var(--cyan-deep)',
                   borderRadius: '12px', padding: '20px', textAlign: 'center',
-                  marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '24px',
+                  marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' as const, justifyContent: 'center',
                   boxShadow: '0 2px 12px rgba(14,165,233,0.15)',
                 }}>
                   <div style={{ background: '#fff', borderRadius: '10px', padding: '8px', flexShrink: 0 }}>
@@ -75,7 +79,7 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
             })()}
             <div className="qr-grid" style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(165px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(145px, 1fr))',
               gap: '12px',
             }}>
               {players.map(player => {
