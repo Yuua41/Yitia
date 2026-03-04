@@ -78,6 +78,30 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
     return sortDir === 'asc' ? '▲' : '▼'
   }
 
+  function exportCSV() {
+    const header = [
+      '順位', '名前',
+      ...Array.from({ length: tournament.num_rounds }, (_, i) => `R${i + 1}`),
+      '調整', '合計',
+    ]
+    const rows = sorted.map(({ player, roundPoints, total, rank }) => [
+      rank,
+      player.name,
+      ...roundPoints.map(p => p !== null ? formatPoint(p) : ''),
+      adjustments[player.id] ?? 0,
+      formatPoint(total),
+    ])
+    const bom = '\uFEFF'
+    const csv = bom + [header, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${tournament.name}_成績.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const thStyle = (key?: SortKey): React.CSSProperties => ({
     padding: '8px 12px', textAlign: 'left',
     fontSize: '9.5px', fontFamily: 'monospace', letterSpacing: '0.12em',
@@ -90,12 +114,12 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <style>{`
         .standings-table-view { display: block; }
-        .standings-card-view { display: none; }
+        .standings-card-view { display: none !important; }
         .standings-header { padding: 0 26px !important; }
         .standings-content { padding: 24px 26px !important; }
         @media (max-width: 768px) {
           .standings-table-view { display: none !important; }
-          .standings-card-view { display: block !important; }
+          .standings-card-view { display: flex !important; }
           .standings-header { padding: 0 16px !important; }
           .standings-content { padding: 16px !important; }
         }
@@ -108,13 +132,20 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
           <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{tournament.name} › </span>
           <span style={{ fontSize: '14px', fontWeight: 700 }}>全体成績</span>
         </div>
-        <button onClick={saveAdjustments} disabled={savingAdj} style={{
-          padding: '6px 14px', background: 'var(--gold)', color: 'var(--navy)',
-          border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
-          cursor: 'pointer', opacity: savingAdj ? 0.6 : 1,
-        }}>
-          {savingAdj ? '保存中...' : '調整を保存'}
-        </button>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button onClick={exportCSV} style={{
+            padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
+            border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+            cursor: 'pointer',
+          }}>CSV出力</button>
+          <button onClick={saveAdjustments} disabled={savingAdj} style={{
+            padding: '6px 14px', background: 'var(--gold)', color: 'var(--navy)',
+            border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+            cursor: 'pointer', opacity: savingAdj ? 0.6 : 1,
+          }}>
+            {savingAdj ? '保存中...' : '調整を保存'}
+          </button>
+        </div>
       </div>
       <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>総合成績</div>
@@ -197,7 +228,7 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
         </div>
 
         {/* Mobile: Card View */}
-        <div className="standings-card-view" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="standings-card-view" style={{ flexDirection: 'column', gap: '10px' }}>
           {sorted.map(({ player, roundPoints, total, rank }) => {
             const rkBg = rank === 1 ? 'var(--gold)' : rank === 2 ? 'var(--slate)' : rank === 3 ? '#94a3b8' : 'var(--paper)'
             const rkColor = rank <= 3 ? '#fff' : 'var(--slate)'

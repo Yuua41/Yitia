@@ -299,7 +299,7 @@ export default function DashboardClient({ tournaments }: Props) {
   }
 
   const statusLabel = (t: Tournament) => {
-    if (t.status === 'ongoing') return { text: '進行中', color: 'var(--gold-dark)', bg: 'var(--gold-pale)' }
+    if (t.status === 'ongoing') return { text: '進行中', color: 'var(--cyan-deep)', bg: 'var(--cyan-pale)' }
     if (t.status === 'finished') return { text: '完了', color: '#15803d', bg: '#f0fdf4' }
     return { text: '下書き', color: 'var(--mist)', bg: 'var(--paper)' }
   }
@@ -352,7 +352,7 @@ export default function DashboardClient({ tournaments }: Props) {
                 <div style={{
                   position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
                   background: t.status === 'ongoing'
-                    ? 'linear-gradient(90deg, #abdad1, #f4a460)'
+                    ? 'linear-gradient(90deg, #abdad1, #8ecbc2)'
                     : t.status === 'finished' ? '#f4a460' : 'var(--border-md)',
                 }} />
 
