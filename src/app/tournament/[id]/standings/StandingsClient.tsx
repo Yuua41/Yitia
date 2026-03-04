@@ -116,12 +116,16 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
         .standings-table-view { display: block; }
         .standings-card-view { display: none !important; }
         .standings-header { padding: 0 26px !important; }
+        .standings-header-btns { display: flex; }
         .standings-content { padding: 24px 26px !important; }
+        .standings-content-btns { display: none; }
         @media (max-width: 768px) {
           .standings-table-view { display: none !important; }
           .standings-card-view { display: flex !important; }
           .standings-header { padding: 0 16px !important; }
+          .standings-header-btns { display: none !important; }
           .standings-content { padding: 16px !important; }
+          .standings-content-btns { display: flex !important; }
         }
       `}</style>
       <div className="standings-header" style={{
@@ -132,7 +136,7 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
           <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{tournament.name} › </span>
           <span style={{ fontSize: '14px', fontWeight: 700 }}>全体成績</span>
         </div>
-        <div style={{ display: 'flex', gap: '6px' }}>
+        <div className="standings-header-btns" style={{ display: 'flex', gap: '6px' }}>
           <button onClick={exportCSV} style={{
             padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
             border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
@@ -149,8 +153,22 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
       </div>
       <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>総合成績</div>
-        <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '20px' }}>
+        <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '12px' }}>
           {tournament.name} — {tables.length} / {tournament.num_rounds * Math.floor(players.length / 4)} 試合確定済み
+        </div>
+        <div className="standings-content-btns" style={{ gap: '8px', marginBottom: '16px' }}>
+          <button onClick={exportCSV} style={{
+            padding: '8px 16px', background: 'transparent', color: 'var(--cyan-deep)',
+            border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+            cursor: 'pointer', flex: 1,
+          }}>CSV出力</button>
+          <button onClick={saveAdjustments} disabled={savingAdj} style={{
+            padding: '8px 16px', background: 'var(--gold)', color: 'var(--navy)',
+            border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+            cursor: 'pointer', opacity: savingAdj ? 0.6 : 1, flex: 1,
+          }}>
+            {savingAdj ? '保存中...' : '調整を保存'}
+          </button>
         </div>
 
         {/* Desktop: Table View */}
