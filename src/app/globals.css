@@ -4,18 +4,18 @@
 
 :root {
   --ink:       #0f1520;
-  --paper:     #f4f7fb;
+  --paper:     #fefcf5;
   --surface:   #ffffff;
-  --navy:      #0f1e3c;
-  --navy-mid:  #162444;
-  --cyan:      #0ea5e9;
-  --cyan-deep: #0284c7;
-  --cyan-pale: #e0f2fe;
-  --cyan-dim:  #7cc8ef;
-  --sky:       #38bdf8;
-  --gold:      #f59e0b;
-  --gold-dark: #b45309;
-  --gold-pale: #fffbeb;
+  --navy:      #1a2f2d;
+  --navy-mid:  #213938;
+  --cyan:      #abdad1;
+  --cyan-deep: #3d7d73;
+  --cyan-pale: #e5f5f1;
+  --cyan-dim:  #8ecbc2;
+  --sky:       #abdad1;
+  --gold:      #f4a460;
+  --gold-dark: #a16830;
+  --gold-pale: #fef3e6;
   --red:       #ef4444;
   --red-pale:  #fef2f2;
   --slate:     #334155;

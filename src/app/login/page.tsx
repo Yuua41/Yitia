@@ -48,7 +48,7 @@ export default function LoginPage() {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
               width: '34px', height: '34px',
-              background: 'linear-gradient(135deg, #0ea5e9, #f59e0b 180%)',
+              background: 'linear-gradient(135deg, #abdad1, #f4a460 180%)',
               borderRadius: '8px',
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
               padding: '6px', gap: '1.5px',
@@ -56,7 +56,7 @@ export default function LoginPage() {
               {[1,0,1,0,1,0,1,0,1].map((show, i) => (
                 <div key={i} style={{
                   borderRadius: '50%',
-                  background: show ? '#0f1e3c' : 'transparent',
+                  background: show ? '#1a2f2d' : 'transparent',
                   opacity: show ? 0.82 : 0,
                 }} />
               ))}
@@ -117,7 +117,7 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%', padding: '11px',
-              background: loading ? 'var(--mist)' : 'var(--cyan-deep)',
+              background: loading ? 'var(--mist)' : 'linear-gradient(135deg, #f4a460, #d88a45)',
               color: '#fff', border: 'none', borderRadius: '9px',
               fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
               marginTop: '4px',

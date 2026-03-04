@@ -56,7 +56,7 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
                   background: 'var(--navy)', border: '2px solid var(--cyan-deep)',
                   borderRadius: '12px', padding: '20px', textAlign: 'center',
                   marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' as const, justifyContent: 'center',
-                  boxShadow: '0 2px 12px rgba(14,165,233,0.15)',
+                  boxShadow: '0 2px 12px rgba(61,125,115,0.15)',
                 }}>
                   <div style={{ background: '#fff', borderRadius: '10px', padding: '8px', flexShrink: 0 }}>
                     <QRCode value={adminUrl} size={110} />
@@ -119,7 +119,7 @@ function QRCode({ value, size }: { value: string; size: number }) {
       QRCodeLib.toCanvas(canvasRef.current!, value, {
         width: size,
         margin: 1,
-        color: { dark: '#0f1e3c', light: '#ffffff' },
+        color: { dark: '#1a2f2d', light: '#ffffff' },
       })
     })
   }, [value, size])

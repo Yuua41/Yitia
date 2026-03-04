@@ -273,7 +273,7 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
             return (
               <div key={table.id} style={{
                 background: '#fff',
-                border: `1.5px solid ${isValidated ? 'rgba(14,165,233,0.35)' : isSubmitted ? 'rgba(217,119,6,0.35)' : 'var(--border)'}`,
+                border: `1.5px solid ${isValidated ? 'rgba(61,125,115,0.35)' : isSubmitted ? 'rgba(217,119,6,0.35)' : 'var(--border)'}`,
                 borderRadius: '12px', overflow: 'hidden',
                 boxShadow: '0 1px 8px rgba(15,21,32,0.07)',
               }}>
@@ -354,7 +354,7 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
                             <span style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace' }}>{(result.score / 100).toLocaleString()}00</span>
                             <div style={{ textAlign: 'right', minWidth: '68px' }}>
                               <div style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(result.rank)}位</div>
-                              <div style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'monospace', color: result.point >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                              <div style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'monospace', color: result.point >= 0 ? '#0284c7' : 'var(--red)' }}>
                                 {formatPoint(result.point)}
                               </div>
                             </div>

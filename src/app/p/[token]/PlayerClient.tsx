@@ -250,7 +250,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         }}>
           <div style={{
             position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px',
-            background: 'radial-gradient(circle, rgba(14,165,233,0.35), transparent 65%)',
+            background: 'radial-gradient(circle, rgba(171,218,209,0.35), transparent 65%)',
             pointerEvents: 'none',
           }} />
           <div style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: '6px' }}>
@@ -305,7 +305,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                 {isValidated ? (
                   <div>
                     <div style={{ textAlign: 'center', padding: '6px 0 10px' }}>
-                      <div style={{ fontFamily: 'monospace', fontSize: '27px', fontWeight: 500, color: (myResult?.point ?? 0) >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                      <div style={{ fontFamily: 'monospace', fontSize: '27px', fontWeight: 500, color: (myResult?.point ?? 0) >= 0 ? '#0284c7' : 'var(--red)' }}>
                         {formatPoint(myResult?.point ?? 0)}
                       </div>
                       <div style={{ fontSize: '10.5px', color: 'var(--mist)', marginTop: '2px' }}>{Math.floor(myResult?.rank ?? 0)}位</div>
@@ -333,7 +333,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                             </div>
                             <span style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace', minWidth: '38px', textAlign: 'right' }}>{(r.score / 100).toLocaleString()}00</span>
                             <span style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(r.rank)}位</span>
-                            <span style={{ fontFamily: 'monospace', fontSize: '11.5px', fontWeight: 600, minWidth: '52px', textAlign: 'right', color: r.point >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                            <span style={{ fontFamily: 'monospace', fontSize: '11.5px', fontWeight: 600, minWidth: '52px', textAlign: 'right', color: r.point >= 0 ? '#0284c7' : 'var(--red)' }}>
                               {formatPoint(r.point)}
                             </span>
                           </div>
@@ -468,7 +468,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   <div style={{ flex: 1, fontSize: '12.5px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
                     {s.player.name}{isMe ? '（自分）' : ''}
                   </div>
-                  <div style={{ fontFamily: 'monospace', fontSize: '12.5px', fontWeight: 600, color: s.total >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: '12.5px', fontWeight: 600, color: s.total >= 0 ? '#0284c7' : 'var(--red)' }}>
                     {formatPoint(s.total)}
                   </div>
                 </div>
@@ -478,7 +478,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                       <span key={ri} style={{
                         fontSize: '9.5px', fontFamily: 'monospace', padding: '1px 5px',
                         borderRadius: '4px', background: 'var(--paper)',
-                        color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+                        color: pt === null ? 'var(--mist)' : pt >= 0 ? '#0284c7' : 'var(--red)',
                       }}>
                         R{ri + 1}:{pt !== null ? formatPoint(pt) : '-'}
                       </span>
@@ -512,7 +512,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                 width: '28px', height: '28px', borderRadius: '6px', flexShrink: 0,
                 border: `1.5px solid ${adjustmentNeg ? 'rgba(239,68,68,0.3)' : 'var(--border-md)'}`,
                 background: adjustmentNeg ? 'var(--red-pale)' : 'var(--paper)',
-                color: adjustmentNeg ? 'var(--red)' : 'var(--cyan-deep)',
+                color: adjustmentNeg ? 'var(--red)' : '#0284c7',
                 fontSize: '12px', fontWeight: 700, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>{adjustmentNeg ? '▲' : '+'}</button>
@@ -550,7 +550,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
             </div>
             {(localPlayer.bonus ?? 0) !== 0 && (
               <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--mist)' }}>
-                現在の調整: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: localPlayer.bonus < 0 ? 'var(--red)' : 'var(--cyan-deep)' }}>
+                現在の調整: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: localPlayer.bonus < 0 ? 'var(--red)' : '#0284c7' }}>
                   {formatPoint(localPlayer.bonus)}
                 </span>
               </div>

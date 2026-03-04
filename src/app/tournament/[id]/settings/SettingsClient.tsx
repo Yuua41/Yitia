@@ -202,7 +202,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
   const statusLabel = () => {
     if (tournament.status === 'ongoing') return { text: '進行中', color: 'var(--cyan-deep)', bg: 'var(--cyan-pale)' }
     if (tournament.status === 'finished') return { text: '完了', color: '#15803d', bg: '#f0fdf4' }
-    return { text: '開催前', color: '#d97706', bg: '#fffbeb' }
+    return { text: '開催前', color: '#a16830', bg: 'var(--gold-pale)' }
   }
 
   const s = statusLabel()
@@ -521,10 +521,10 @@ export default function SettingsClient({ tournament, players, templates }: Props
                   fontSize: '14px', fontWeight: 700, cursor: 'pointer',
                 }}>{saving ? '更新中...' : '更新'}</button>
                 <button onClick={handleStart} disabled={starting} style={{
-                  flex: 1, padding: '12px', background: starting ? 'var(--mist)' : 'linear-gradient(135deg, #f59e0b, #d97706)',
+                  flex: 1, padding: '12px', background: starting ? 'var(--mist)' : 'linear-gradient(135deg, #f4a460, #d88a45)',
                   color: '#fff', border: 'none', borderRadius: '10px',
                   fontSize: '14px', fontWeight: 700, cursor: 'pointer',
-                  boxShadow: '0 2px 12px rgba(245,158,11,0.3)',
+                  boxShadow: '0 2px 12px rgba(244,164,96,0.3)',
                 }}>{starting ? '開始中...' : '大会を開始する'}</button>
               </div>
             </div>
@@ -533,7 +533,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
           {/* 閲覧のみ通知 */}
           {!isDraft && (
             <div style={{
-              background: 'var(--cyan-pale)', border: '1.5px solid rgba(14,165,233,0.2)',
+              background: 'var(--cyan-pale)', border: '1.5px solid rgba(61,125,115,0.2)',
               borderRadius: '12px', padding: '14px 18px',
               fontSize: '12px', color: 'var(--cyan-deep)', lineHeight: 1.6,
             }}>

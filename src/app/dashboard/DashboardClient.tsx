@@ -299,21 +299,28 @@ export default function DashboardClient({ tournaments }: Props) {
   }
 
   const statusLabel = (t: Tournament) => {
-    if (t.status === 'ongoing') return { text: '進行中', color: 'var(--cyan-deep)', bg: 'var(--cyan-pale)' }
+    if (t.status === 'ongoing') return { text: '進行中', color: 'var(--gold-dark)', bg: 'var(--gold-pale)' }
     if (t.status === 'finished') return { text: '完了', color: '#15803d', bg: '#f0fdf4' }
     return { text: '下書き', color: 'var(--mist)', bg: 'var(--paper)' }
   }
 
   return (
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <div style={{
+      <style>{`
+        @media (max-width: 768px) {
+          .dash-header { padding: 0 16px !important; }
+          .dash-content { padding: 16px !important; }
+          .dash-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+      <div className="dash-header" style={{
         height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
         padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
         <span style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 700, letterSpacing: '0.04em' }}>大会一覧</span>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
+      <div className="dash-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
         <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>大会一覧</div>
         <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span>大会を選択して管理・成績確認ができます</span>
@@ -323,13 +330,13 @@ export default function DashboardClient({ tournaments }: Props) {
             style={{
               padding: '3px 10px', background: 'transparent',
               border: '1px solid var(--border-md)', borderRadius: '6px',
-              fontSize: '11px', color: 'var(--cyan-deep)', cursor: 'pointer',
+              fontSize: '11px', color: 'var(--gold-dark)', cursor: 'pointer',
               fontWeight: 600, whiteSpace: 'nowrap',
             }}
           >{seeding ? '作成中...' : 'サンプルデータを作成'}</button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+        <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
           {tournaments.map(t => {
             const s = statusLabel(t)
             return (
@@ -345,8 +352,8 @@ export default function DashboardClient({ tournaments }: Props) {
                 <div style={{
                   position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
                   background: t.status === 'ongoing'
-                    ? 'linear-gradient(90deg, #0ea5e9, #38bdf8)'
-                    : t.status === 'finished' ? '#f59e0b' : 'var(--border-md)',
+                    ? 'linear-gradient(90deg, #abdad1, #f4a460)'
+                    : t.status === 'finished' ? '#f4a460' : 'var(--border-md)',
                 }} />
 
                 <button
@@ -402,11 +409,11 @@ export default function DashboardClient({ tournaments }: Props) {
               justifyContent: 'center', minHeight: '148px', gap: '8px',
               transition: 'all 0.15s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--cyan)'; e.currentTarget.style.background = 'var(--cyan-pale)' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.background = 'var(--gold-pale)' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-md)'; e.currentTarget.style.background = 'transparent' }}
           >
-            <div style={{ width: '40px', height: '40px', background: 'var(--cyan-pale)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>＋</div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--mist)' }}>新しい大会を作成</div>
+            <div style={{ width: '40px', height: '40px', background: 'var(--gold-pale)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: 'var(--gold-dark)' }}>＋</div>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold-dark)' }}>新しい大会を作成</div>
           </div>
         </div>
       </div>
@@ -516,7 +523,7 @@ const inputStyle: React.CSSProperties = {
   fontFamily: 'inherit',
 }
 const btnPrimary: React.CSSProperties = {
-  padding: '8px 18px', background: 'var(--cyan-deep)', color: '#fff',
+  padding: '8px 18px', background: 'linear-gradient(135deg, #f4a460, #d88a45)', color: '#fff',
   border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
 }
 const btnOutline: React.CSSProperties = {

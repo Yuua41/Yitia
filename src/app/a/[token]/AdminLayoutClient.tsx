@@ -41,14 +41,14 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
           .admin-hamburger {
             display: flex !important;
             position: fixed;
-            top: 10px; left: 10px;
+            bottom: 10px; left: 10px;
             z-index: 999;
             width: 40px; height: 40px;
             align-items: center; justify-content: center;
             background: var(--navy);
-            border: 1px solid rgba(14,165,233,0.3);
+            border: 1px solid rgba(171,218,209,0.4);
             border-radius: 8px;
-            color: #38bdf8;
+            color: #abdad1;
             font-size: 22px;
             cursor: pointer;
           }
@@ -85,14 +85,14 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
       }}>
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: '180px',
-          background: 'radial-gradient(ellipse at 30% 0%, rgba(14,165,233,0.22), transparent 70%)',
+          background: 'radial-gradient(ellipse at 30% 0%, rgba(171,218,209,0.22), transparent 70%)',
           pointerEvents: 'none',
         }} />
         <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{
               width: '30px', height: '30px',
-              background: 'linear-gradient(135deg, #0ea5e9, #f59e0b 160%)',
+              background: 'linear-gradient(135deg, #abdad1, #f4a460 160%)',
               borderRadius: '7px',
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
               padding: '5px', gap: '1.5px',
@@ -100,7 +100,7 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
               {[1,0,1,0,1,0,1,0,1].map((show, i) => (
                 <div key={i} style={{
                   borderRadius: '50%',
-                  background: show ? '#0f1e3c' : 'transparent',
+                  background: show ? '#1a2f2d' : 'transparent',
                   opacity: show ? 0.82 : 0,
                 }} />
               ))}
@@ -125,9 +125,9 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
                   padding: '8px 10px', borderRadius: '8px', marginBottom: '1px',
-                  background: active ? 'rgba(14,165,233,0.22)' : 'transparent',
-                  color: active ? '#38bdf8' : 'rgba(255,255,255,0.42)',
-                  border: active ? '1px solid rgba(14,165,233,0.25)' : '1px solid transparent',
+                  background: active ? 'rgba(171,218,209,0.22)' : 'transparent',
+                  color: active ? '#abdad1' : 'rgba(255,255,255,0.42)',
+                  border: active ? '1px solid rgba(171,218,209,0.25)' : '1px solid transparent',
                   fontSize: '12.5px', fontWeight: 500, transition: 'all 0.13s',
                 }}>
                   <span>{item.label}</span>
