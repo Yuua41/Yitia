@@ -35,6 +35,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   const [swapping, setSwapping] = useState(false)
   const [extraSticks, setExtraSticks] = useState<Record<string, boolean>>({})
   const [validating, setValidating] = useState<string | null>(null)
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ score: true, adjustment: false, standings: false })
 
   const noSeat = tournament.config.seatMode === 'none'
 
@@ -131,6 +132,10 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
   const myTotal = standings.find(s => s.player.id === player.id)?.total ?? 0
   const myRank = standings.findIndex(s => s.player.id === player.id) + 1
+
+  function toggleSection(key: string) {
+    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
+  }
 
   function getScore(resultId: string) {
     return scores[resultId] ?? { value: '', negative: false }
@@ -256,25 +261,25 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           <div style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: '6px' }}>
             Yitia — Player View
           </div>
-          <div style={{ fontFamily: 'serif', fontSize: '22px', fontWeight: 800, color: '#fff', letterSpacing: '0.07em', marginBottom: '12px' }}>
-            {localPlayer.name}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-            <div style={{ fontFamily: 'monospace', fontSize: '34px', fontWeight: 500, color: myTotal >= 0 ? '#7dd3fc' : '#fca5a5' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, color: '#fff', letterSpacing: '0.07em', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {localPlayer.name}
+            </div>
+            <div style={{ fontFamily: 'monospace', fontSize: '20px', fontWeight: 500, color: myTotal >= 0 ? '#7dd3fc' : '#fca5a5', flexShrink: 0 }}>
               {myTotal >= 0 ? '+' : '▲'}{Math.abs(myTotal).toFixed(1)}
             </div>
-            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>pt</div>
-            <div style={{ marginLeft: 'auto', background: 'var(--gold)', color: 'var(--navy)', fontFamily: 'serif', fontSize: '14px', fontWeight: 800, padding: '4px 11px', borderRadius: '7px' }}>
+            <div style={{ background: 'var(--gold)', color: 'var(--navy)', fontFamily: 'serif', fontSize: '13px', fontWeight: 800, padding: '4px 10px', borderRadius: '7px', flexShrink: 0 }}>
               {myRank}位
             </div>
           </div>
         </div>
 
         <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(15,21,32,0.07)' }}>
-          <div style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: '1px solid var(--border)' }}>
-            スコア入力
+          <div onClick={() => toggleSection('score')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: openSections.score ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
+            <span>スコア入力・卓確認</span>
+            <span style={{ fontSize: '10px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.score ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
           </div>
-          {Array.from({ length: tournament.num_rounds }, (_, i) => i + 1).map(roundNum => {
+          {openSections.score && Array.from({ length: tournament.num_rounds }, (_, i) => i + 1).map(roundNum => {
             const myTable = getMyTable(roundNum)
             if (!myTable) return (
               <div key={roundNum} style={{ padding: '11px 15px', borderBottom: '1px solid var(--paper)', fontSize: '12.5px', color: 'var(--mist)' }}>
@@ -452,11 +457,76 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           })}
         </div>
 
+        {/* 得点調整 (accordion, default closed) */}
         <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(15,21,32,0.07)' }}>
-          <div style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: '1px solid var(--border)' }}>
-            全体成績
+          <div onClick={() => toggleSection('adjustment')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: openSections.adjustment ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
+            <span>得点調整</span>
+            <span style={{ fontSize: '10px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.adjustment ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
           </div>
-          {standings.map((s, i) => {
+          {openSections.adjustment && (
+            <div style={{ padding: '12px 15px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--mist)', marginBottom: '8px' }}>
+                チョンボ等のペナルティや調整ポイントを入力してください
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button onClick={() => setAdjustmentNeg(n => !n)} style={{
+                  width: '28px', height: '28px', borderRadius: '6px', flexShrink: 0,
+                  border: `1.5px solid ${adjustmentNeg ? 'rgba(239,68,68,0.3)' : 'var(--border-md)'}`,
+                  background: adjustmentNeg ? 'var(--red-pale)' : 'var(--paper)',
+                  color: adjustmentNeg ? 'var(--red)' : '#0284c7',
+                  fontSize: '12px', fontWeight: 700, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>{adjustmentNeg ? '▲' : '+'}</button>
+                <input
+                  type="number"
+                  value={adjustmentInput}
+                  onChange={e => setAdjustmentInput(e.target.value)}
+                  placeholder="0"
+                  style={{
+                    flex: 1, padding: '6px 8px',
+                    border: '1.5px solid var(--border-md)', borderRadius: '6px',
+                    fontSize: '13px', fontWeight: 600, textAlign: 'right',
+                    fontFamily: 'monospace', background: 'var(--paper)', outline: 'none',
+                  }}
+                />
+                <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>pt</span>
+                <button
+                  onClick={async () => {
+                    setSavingAdjustment(true)
+                    const val = parseFloat(adjustmentInput) || 0
+                    const bonus = adjustmentNeg ? -Math.abs(val) : Math.abs(val)
+                    await supabase.from('players').update({ bonus }).eq('id', player.id)
+                    setLocalPlayer(prev => ({ ...prev, bonus }))
+                    setLocalPlayers(prev => prev.map(p => p.id === player.id ? { ...p, bonus } : p))
+                    setSavingAdjustment(false)
+                  }}
+                  disabled={savingAdjustment}
+                  style={{
+                    padding: '6px 14px', flexShrink: 0,
+                    background: savingAdjustment ? 'var(--mist)' : 'var(--cyan-deep)',
+                    color: '#fff', border: 'none', borderRadius: '7px',
+                    fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                  }}
+                >{savingAdjustment ? '保存中...' : '保存'}</button>
+              </div>
+              {(localPlayer.bonus ?? 0) !== 0 && (
+                <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--mist)' }}>
+                  現在の調整: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: localPlayer.bonus < 0 ? 'var(--red)' : '#0284c7' }}>
+                    {formatPoint(localPlayer.bonus)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 全体成績 (accordion, default closed) */}
+        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(15,21,32,0.07)' }}>
+          <div onClick={() => toggleSection('standings')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: openSections.standings ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
+            <span>全体成績</span>
+            <span style={{ fontSize: '10px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.standings ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+          </div>
+          {openSections.standings && standings.map((s, i) => {
             const isMe = s.player.id === player.id
             return (
               <div key={s.player.id} style={{
@@ -497,65 +567,6 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
               </div>
             )
           })}
-        </div>
-
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(15,21,32,0.07)' }}>
-          <div style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: '1px solid var(--border)' }}>
-            得点調整
-          </div>
-          <div style={{ padding: '12px 15px' }}>
-            <div style={{ fontSize: '11px', color: 'var(--mist)', marginBottom: '8px' }}>
-              チョンボ等のペナルティや調整ポイントを入力してください
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <button onClick={() => setAdjustmentNeg(n => !n)} style={{
-                width: '28px', height: '28px', borderRadius: '6px', flexShrink: 0,
-                border: `1.5px solid ${adjustmentNeg ? 'rgba(239,68,68,0.3)' : 'var(--border-md)'}`,
-                background: adjustmentNeg ? 'var(--red-pale)' : 'var(--paper)',
-                color: adjustmentNeg ? 'var(--red)' : '#0284c7',
-                fontSize: '12px', fontWeight: 700, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>{adjustmentNeg ? '▲' : '+'}</button>
-              <input
-                type="number"
-                value={adjustmentInput}
-                onChange={e => setAdjustmentInput(e.target.value)}
-                placeholder="0"
-                style={{
-                  flex: 1, padding: '6px 8px',
-                  border: '1.5px solid var(--border-md)', borderRadius: '6px',
-                  fontSize: '13px', fontWeight: 600, textAlign: 'right',
-                  fontFamily: 'monospace', background: 'var(--paper)', outline: 'none',
-                }}
-              />
-              <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>pt</span>
-              <button
-                onClick={async () => {
-                  setSavingAdjustment(true)
-                  const val = parseFloat(adjustmentInput) || 0
-                  const bonus = adjustmentNeg ? -Math.abs(val) : Math.abs(val)
-                  await supabase.from('players').update({ bonus }).eq('id', player.id)
-                  setLocalPlayer(prev => ({ ...prev, bonus }))
-                  setLocalPlayers(prev => prev.map(p => p.id === player.id ? { ...p, bonus } : p))
-                  setSavingAdjustment(false)
-                }}
-                disabled={savingAdjustment}
-                style={{
-                  padding: '6px 14px', flexShrink: 0,
-                  background: savingAdjustment ? 'var(--mist)' : 'var(--cyan-deep)',
-                  color: '#fff', border: 'none', borderRadius: '7px',
-                  fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                }}
-              >{savingAdjustment ? '保存中...' : '保存'}</button>
-            </div>
-            {(localPlayer.bonus ?? 0) !== 0 && (
-              <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--mist)' }}>
-                現在の調整: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: localPlayer.bonus < 0 ? 'var(--red)' : '#0284c7' }}>
-                  {formatPoint(localPlayer.bonus)}
-                </span>
-              </div>
-            )}
-          </div>
         </div>
 
         <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--mist)', padding: '8px 0 24px', fontFamily: 'monospace' }}>
