@@ -9,6 +9,7 @@ interface Props {
   tournament: Tournament
   players: Player[]
   tables: Table[]
+  isOwner: boolean
 }
 
 const SEAT_LABELS = ['東', '南', '西', '北']
@@ -20,7 +21,7 @@ const SEAT_COLORS = [
 ]
 const NUM_COLOR = { bg: 'var(--paper)', color: 'var(--slate)' }
 
-export default function ScheduleClient({ tournament, players, tables }: Props) {
+export default function ScheduleClient({ tournament, players, tables, isOwner: _isOwner }: Props) {
   const supabase = createClient()
   const [localTables, setLocalTables] = useState(tables)
   const [activeRound, setActiveRound] = useState(1)
@@ -29,6 +30,8 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
   const [swapping, setSwapping] = useState(false)
   const [dragInfo, setDragInfo] = useState<{ resultId: string; playerId: string } | null>(null)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
+  const [swappedIds, setSwappedIds] = useState<string[]>([])
+
 
   // Initialize scores from submitted tables
   const initScores = () => {
@@ -192,22 +195,54 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
 
     setSwapping(true)
     const oldPlayerId = currentResult.player_id
-    await supabase.from('results').update({ player_id: newPlayerId }).eq('id', currentResult.id)
-    await supabase.from('results').update({ player_id: oldPlayerId }).eq('id', targetResult.id)
+    const isSameTable = currentResult.table_id === targetResult.table_id
 
-    // Update local state
+    if (isSameTable) {
+      // Same table: swap player_id AND score/is_negative_mode so scores follow the player
+      await supabase.from('results')
+        .update({ player_id: newPlayerId, score: targetResult.score, is_negative_mode: targetResult.is_negative_mode })
+        .eq('id', currentResult.id)
+      await supabase.from('results')
+        .update({ player_id: oldPlayerId, score: currentResult.score, is_negative_mode: currentResult.is_negative_mode })
+        .eq('id', targetResult.id)
+      // Swap scores input state
+      setScores(prev => {
+        const cur = prev[currentResult.id]
+        const tgt = prev[targetResult.id]
+        const next = { ...prev }
+        if (tgt !== undefined) next[currentResult.id] = tgt; else delete next[currentResult.id]
+        if (cur !== undefined) next[targetResult.id] = cur; else delete next[targetResult.id]
+        return next
+      })
+    } else {
+      await supabase.from('results').update({ player_id: newPlayerId }).eq('id', currentResult.id)
+      await supabase.from('results').update({ player_id: oldPlayerId }).eq('id', targetResult.id)
+    }
+
+    // Update local tables state
     setLocalTables(prev => prev.map(t => {
       const results = (t as any).results as Result[]
       if (!results?.some(r => r.id === currentResult.id || r.id === targetResult.id)) return t
       return {
         ...t,
         results: results.map(r => {
-          if (r.id === currentResult.id) return { ...r, player_id: newPlayerId }
-          if (r.id === targetResult.id) return { ...r, player_id: oldPlayerId }
+          if (r.id === currentResult.id) return {
+            ...r,
+            player_id: newPlayerId,
+            ...(isSameTable ? { score: targetResult.score, is_negative_mode: targetResult.is_negative_mode } : {}),
+          }
+          if (r.id === targetResult.id) return {
+            ...r,
+            player_id: oldPlayerId,
+            ...(isSameTable ? { score: currentResult.score, is_negative_mode: currentResult.is_negative_mode } : {}),
+          }
           return r
         }),
       }
     }))
+    // Flash swapped rows
+    setSwappedIds([currentResult.id, targetResult.id])
+    setTimeout(() => setSwappedIds([]), 1200)
     setSwapping(false)
   }
 
@@ -225,6 +260,15 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
         @media (max-width: 768px) {
           .schedule-header { padding: 0 16px !important; }
           .schedule-content { padding: 16px !important; }
+        }
+        @keyframes swap-flash {
+          0% { background: var(--cyan-pale); transform: scale(1.03); }
+          40% { background: var(--cyan-pale); }
+          100% { background: transparent; transform: scale(1); }
+        }
+        .swap-highlight {
+          animation: swap-flash 1.2s ease-out;
+          border-radius: 6px;
         }
       `}</style>
       <div className="schedule-header" style={{
@@ -293,7 +337,7 @@ export default function ScheduleClient({ tournament, players, tables }: Props) {
                     const seatColor = noSeat ? NUM_COLOR : SEAT_COLORS[result.seat_index]
                     const seatLabel = noSeat ? `${result.seat_index + 1}` : SEAT_LABELS[result.seat_index]
                     return (
-                      <div key={result.id} style={{
+                      <div key={result.id} className={swappedIds.includes(result.id) ? 'swap-highlight' : ''} style={{
                         display: 'flex', alignItems: 'center', gap: '7px',
                         padding: '6px 0', borderBottom: '1px solid var(--paper)',
                       }}>

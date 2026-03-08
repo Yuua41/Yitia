@@ -2,19 +2,20 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { formatPoint } from '@/lib/mahjong/calculator'
-import type { Tournament, Player, Table, Result } from '@/types'
+import { calcStandings, formatPoint } from '@/lib/mahjong/calculator'
+import type { Tournament, Player, Table } from '@/types'
 
 interface Props {
   tournament: Tournament
   players: Player[]
   tables: Table[]
+  isOwner: boolean
 }
 
 type SortKey = 'rank' | 'name' | 'total'
 type SortDir = 'asc' | 'desc'
 
-export default function StandingsClient({ tournament, players, tables }: Props) {
+export default function StandingsClient({ tournament, players, tables, isOwner }: Props) {
   const supabase = createClient()
   const [localPlayers, setLocalPlayers] = useState(players)
   const [sortKey, setSortKey] = useState<SortKey>('rank')
@@ -24,28 +25,7 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
   )
   const [savingAdj, setSavingAdj] = useState(false)
 
-  const standings = localPlayers.map(player => {
-    const roundPoints: (number | null)[] = Array(tournament.num_rounds).fill(null)
-    tables.forEach(table => {
-      const results = (table as any).results as Result[]
-      const result = results?.find(r => r.player_id === player.id)
-      if (result && result.point !== 0) {
-        roundPoints[table.round_number - 1] = result.point
-      }
-    })
-    const base = roundPoints.reduce<number>((sum, p) => sum + (p ?? 0), 0)
-    const adj = adjustments[player.id] ?? 0
-    const total = Math.round((base + adj) * 10) / 10
-    return { player, roundPoints, base, total }
-  })
-
-  const ranked = standings
-    .sort((a, b) => b.total - a.total)
-    .map((s, _i, arr) => {
-      const rank = arr.filter(x => x.total > s.total).length + 1
-      const isTied = arr.filter(x => x.total === s.total).length > 1
-      return { ...s, rank, isTied }
-    })
+  const ranked = calcStandings(localPlayers, tables, tournament.num_rounds, adjustments)
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
@@ -142,13 +122,15 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
             border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
             cursor: 'pointer',
           }}>CSV出力</button>
-          <button onClick={saveAdjustments} disabled={savingAdj} style={{
-            padding: '6px 14px', background: 'var(--gold)', color: 'var(--navy)',
-            border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
-            cursor: 'pointer', opacity: savingAdj ? 0.6 : 1,
-          }}>
-            {savingAdj ? '保存中...' : '調整を保存'}
-          </button>
+          {isOwner && (
+            <button onClick={saveAdjustments} disabled={savingAdj} style={{
+              padding: '6px 14px', background: 'var(--gold)', color: 'var(--navy)',
+              border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+              cursor: 'pointer', opacity: savingAdj ? 0.6 : 1,
+            }}>
+              {savingAdj ? '保存中...' : '調整を保存'}
+            </button>
+          )}
         </div>
       </div>
       <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
@@ -162,13 +144,15 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
             border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
             cursor: 'pointer', flex: 1,
           }}>CSV出力</button>
-          <button onClick={saveAdjustments} disabled={savingAdj} style={{
-            padding: '8px 16px', background: 'var(--gold)', color: 'var(--navy)',
-            border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
-            cursor: 'pointer', opacity: savingAdj ? 0.6 : 1, flex: 1,
-          }}>
-            {savingAdj ? '保存中...' : '調整を保存'}
-          </button>
+          {isOwner && (
+            <button onClick={saveAdjustments} disabled={savingAdj} style={{
+              padding: '8px 16px', background: 'var(--gold)', color: 'var(--navy)',
+              border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+              cursor: 'pointer', opacity: savingAdj ? 0.6 : 1, flex: 1,
+            }}>
+              {savingAdj ? '保存中...' : '調整を保存'}
+            </button>
+          )}
         </div>
 
         {/* Desktop: Table View */}
@@ -217,19 +201,26 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
                         }}>{pt === null ? '—' : formatPoint(pt)}</td>
                       ))}
                       <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)' }}>
-                        <input
-                          type="number"
-                          value={adj}
-                          onChange={e => setAdjustments(a => ({ ...a, [player.id]: +e.target.value }))}
-                          style={{
-                            width: '68px', padding: '4px 6px',
-                            border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`,
-                            borderRadius: '6px', fontSize: '11.5px', fontFamily: 'monospace',
-                            textAlign: 'center', outline: 'none',
-                            background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'var(--gold-pale)' : 'var(--paper)',
-                            color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--gold-dark)' : 'var(--ink)',
-                          }}
-                        />
+                        {isOwner ? (
+                          <input
+                            type="number"
+                            value={adj}
+                            onChange={e => setAdjustments(a => ({ ...a, [player.id]: +e.target.value }))}
+                            style={{
+                              width: '68px', padding: '4px 6px',
+                              border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`,
+                              borderRadius: '6px', fontSize: '11.5px', fontFamily: 'monospace',
+                              textAlign: 'center', outline: 'none',
+                              background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'var(--gold-pale)' : 'var(--paper)',
+                              color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--gold-dark)' : 'var(--ink)',
+                            }}
+                          />
+                        ) : (
+                          <span style={{
+                            fontFamily: 'monospace', fontSize: '11.5px',
+                            color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--gold-dark)' : 'var(--mist)',
+                          }}>{adj !== 0 ? formatPoint(adj) : '—'}</span>
+                        )}
                       </td>
                       <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)', textAlign: 'right' }}>
                         <strong style={{
@@ -285,19 +276,26 @@ export default function StandingsClient({ tournament, players, tables }: Props) 
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--mist)' }}>
                   <span>調整:</span>
-                  <input
-                    type="number"
-                    value={adj}
-                    onChange={e => setAdjustments(a => ({ ...a, [player.id]: +e.target.value }))}
-                    style={{
-                      width: '72px', padding: '5px 8px',
-                      border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`,
-                      borderRadius: '6px', fontSize: '12px', fontFamily: 'monospace',
-                      textAlign: 'center', outline: 'none',
-                      background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'var(--gold-pale)' : 'var(--paper)',
-                      color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--gold-dark)' : 'var(--ink)',
-                    }}
-                  />
+                  {isOwner ? (
+                    <input
+                      type="number"
+                      value={adj}
+                      onChange={e => setAdjustments(a => ({ ...a, [player.id]: +e.target.value }))}
+                      style={{
+                        width: '72px', padding: '5px 8px',
+                        border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`,
+                        borderRadius: '6px', fontSize: '12px', fontFamily: 'monospace',
+                        textAlign: 'center', outline: 'none',
+                        background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'var(--gold-pale)' : 'var(--paper)',
+                        color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--gold-dark)' : 'var(--ink)',
+                      }}
+                    />
+                  ) : (
+                    <span style={{
+                      fontFamily: 'monospace', fontSize: '12px',
+                      color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--gold-dark)' : 'var(--mist)',
+                    }}>{adj !== 0 ? formatPoint(adj) : '—'}</span>
+                  )}
                 </div>
               </div>
             )

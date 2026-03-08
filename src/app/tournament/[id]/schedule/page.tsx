@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import ScheduleClient from './ScheduleClient'
+import ScheduleClient from '@/components/tournament/ScheduleClient'
 
 export default async function SchedulePage({
   params,
@@ -38,6 +38,7 @@ export default async function SchedulePage({
       tournament={tournament}
       players={players ?? []}
       tables={tables ?? []}
+      isOwner={true}
     />
   )
 }

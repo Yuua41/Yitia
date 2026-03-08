@@ -8,6 +8,7 @@ export interface RuleConfig {
   seatMode: 'random' | 'none'
   umaMode: 'simple' | 'detail'
   rounding: 'none' | 'round' | 'round_half_up'  // 小数点以下反映 | 四捨五入 | 五捨六入
+  allowPlayerEntry?: boolean  // プレイヤーによるスコア入力を許可するか（デフォルトtrue）
 }
 
 export interface RuleTemplate {

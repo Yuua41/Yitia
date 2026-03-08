@@ -30,17 +30,23 @@ export default function DashboardClient({ tournaments }: Props) {
   const [deleting, setDeleting] = useState(false)
   const [seeding, setSeeding] = useState(false)
   const [navigatingId, setNavigatingId] = useState<string | null>(null)
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
+
+  function showToast(msg: string, type: 'success' | 'error' = 'error') {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
 
   const [name, setName] = useState('')
   const [heldOn, setHeldOn] = useState(new Date().toISOString().split('T')[0])
   const [notes, setNotes] = useState('')
-  const [playerText, setPlayerText] = useState('')
+  const [playerCount, setPlayerCount] = useState(8)
   const [numRounds, setNumRounds] = useState(4)
 
   async function handleCreate() {
-    if (!name.trim()) return alert('大会名を入力してください')
-    const names = playerText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean)
-    if (names.length < 4) return alert('プレイヤーを4名以上入力してください')
+    if (!name.trim()) return showToast('大会名を入力してください')
+    if (playerCount < 4) return showToast('プレイヤーを4名以上入力してください')
 
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -62,15 +68,15 @@ export default function DashboardClient({ tournaments }: Props) {
       .single()
 
     if (error || !tournament) {
-      alert('作成に失敗しました: ' + error?.message)
+      showToast('作成に失敗しました: ' + error?.message)
       setSaving(false)
       return
     }
 
-    let adjustedNames = [...names]
-    while (adjustedNames.length % 4 !== 0) {
-      adjustedNames.push(`黒子${4 - (adjustedNames.length % 4)}`)
-    }
+    const adjustedCount = playerCount % 4 === 0 ? playerCount : playerCount + (4 - playerCount % 4)
+    const adjustedNames = Array.from({ length: adjustedCount }, (_, i) =>
+      i < playerCount ? `プレイヤー${i + 1}` : `黒子${i - playerCount + 1}`
+    )
 
     const playersToInsert = adjustedNames.map((n, idx) => ({
       tournament_id: tournament.id,
@@ -86,7 +92,7 @@ export default function DashboardClient({ tournaments }: Props) {
       .select()
 
     if (pErr || !players) {
-      alert('プレイヤー作成失敗: ' + pErr?.message)
+      showToast('プレイヤー作成失敗: ' + pErr?.message)
       setSaving(false)
       return
     }
@@ -126,6 +132,98 @@ export default function DashboardClient({ tournaments }: Props) {
     }
 
     router.push(`/tournament/${tournament.id}/settings`)
+    router.refresh()
+  }
+
+  async function handleDuplicate(t: Tournament) {
+    const ok = confirm(`「${t.name}」のコピーを作成しますか？\n参加者・ルール設定が引き継がれ、スコアなしの新しい下書きが作成されます。`)
+    if (!ok) return
+
+    setDuplicatingId(t.id)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setDuplicatingId(null); return }
+
+    const { data: sourcePlayers } = await supabase
+      .from('players')
+      .select('name, seat_order, bonus')
+      .eq('tournament_id', t.id)
+      .order('seat_order')
+
+    if (!sourcePlayers) { setDuplicatingId(null); return }
+
+    const { data: newTournament, error: tErr } = await supabase
+      .from('tournaments')
+      .insert({
+        owner_id: user.id,
+        name: t.name + '_コピー',
+        held_on: t.held_on,
+        notes: t.notes,
+        num_rounds: t.num_rounds,
+        config: t.config,
+        admin_token: nanoid(12),
+        status: 'draft',
+      })
+      .select()
+      .single()
+
+    if (tErr || !newTournament) {
+      showToast('複製に失敗しました: ' + tErr?.message)
+      setDuplicatingId(null)
+      return
+    }
+
+    const { data: newPlayers, error: pErr } = await supabase
+      .from('players')
+      .insert(sourcePlayers.map(p => ({
+        tournament_id: newTournament.id,
+        name: p.name,
+        seat_order: p.seat_order,
+        token: nanoid(12),
+        bonus: p.bonus,
+      })))
+      .select()
+
+    if (pErr || !newPlayers) {
+      showToast('プレイヤー複製失敗: ' + pErr?.message)
+      setDuplicatingId(null)
+      return
+    }
+
+    const { generateSchedule } = await import('@/lib/mahjong/calculator')
+    const playerIds = newPlayers.map(p => p.id)
+    const schedule = generateSchedule(playerIds, newTournament.num_rounds)
+
+    for (const round of schedule) {
+      for (const tbl of round.tables) {
+        const { data: tableRow } = await supabase
+          .from('tables')
+          .insert({
+            tournament_id: newTournament.id,
+            round_number: round.roundNumber,
+            table_number: round.tables.indexOf(tbl) + 1,
+            has_extra_sticks: false,
+            is_validated: false,
+          })
+          .select()
+          .single()
+
+        if (!tableRow) continue
+        await supabase.from('results').insert(
+          tbl.seatOrder.map((pid, seatIdx) => ({
+            table_id: tableRow.id,
+            player_id: pid,
+            seat_index: seatIdx,
+            score: 0,
+            point: 0,
+            rank: 0,
+            is_negative_mode: false,
+          }))
+        )
+      }
+    }
+
+    setDuplicatingId(null)
+    router.push(`/tournament/${newTournament.id}/settings`)
     router.refresh()
   }
 
@@ -184,7 +282,7 @@ export default function DashboardClient({ tournaments }: Props) {
       .single()
 
     if (e1 || !t1) {
-      alert('作成失敗: ' + e1?.message)
+      showToast('作成失敗: ' + e1?.message)
       setSeeding(false)
       return
     }
@@ -358,6 +456,23 @@ export default function DashboardClient({ tournaments }: Props) {
                 }} />
 
                 <button
+                  onClick={e => { e.stopPropagation(); handleDuplicate(t) }}
+                  disabled={!!duplicatingId}
+                  title="複製"
+                  style={{
+                    position: 'absolute', top: '10px', right: '38px',
+                    width: '24px', height: '24px', borderRadius: '50%',
+                    background: 'transparent', border: '1px solid var(--border-md)',
+                    color: duplicatingId === t.id ? 'var(--cyan-deep)' : 'var(--mist)',
+                    fontSize: '11px', cursor: duplicatingId ? 'wait' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.13s',
+                  }}
+                  onMouseEnter={e => { if (!duplicatingId) { e.currentTarget.style.background = 'var(--cyan-pale)'; e.currentTarget.style.color = 'var(--cyan-deep)'; e.currentTarget.style.borderColor = 'rgba(61,125,115,0.3)' } }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = duplicatingId === t.id ? 'var(--cyan-deep)' : 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border-md)' }}
+                >{duplicatingId === t.id ? '…' : '⧉'}</button>
+
+                <button
                   onClick={e => { e.stopPropagation(); setDeleteTarget(t) }}
                   style={{
                     position: 'absolute', top: '10px', right: '10px',
@@ -373,7 +488,7 @@ export default function DashboardClient({ tournaments }: Props) {
 
                 <div
                   onClick={() => { setNavigatingId(t.id); router.push(`/tournament/${t.id}/schedule`) }}
-                  style={{ paddingRight: '24px' }}
+                  style={{ paddingRight: '56px' }}
                 >
                   <div style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 700, marginBottom: '5px' }}>
                     {navigatingId === t.id ? <span style={{ fontSize: '12px', color: 'var(--mist)', fontWeight: 600 }}>Loading...</span> : t.name}
@@ -489,16 +604,55 @@ export default function DashboardClient({ tournaments }: Props) {
               </div>
             </div>
             <div style={{ marginBottom: '13px' }}>
-              <label style={labelStyle}>プレイヤー名（改行またはカンマ区切り）</label>
-              <textarea value={playerText} onChange={e => setPlayerText(e.target.value)} style={{ ...inputStyle, minHeight: '100px', resize: 'vertical', lineHeight: 1.65 }} placeholder="アカギ&#10;カイジ&#10;衣..." />
-              <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '3px' }}>
-                {playerText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean).length} 名入力中
+              <label style={labelStyle}>参加人数</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setPlayerCount(c => Math.max(4, c - 1))}
+                  style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid var(--border-md)', background: 'var(--paper)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >−</button>
+                <input
+                  type="number"
+                  min={4}
+                  value={playerCount}
+                  onChange={e => setPlayerCount(Math.max(4, parseInt(e.target.value) || 4))}
+                  style={{ ...inputStyle, width: '70px', textAlign: 'center', flexShrink: 0 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setPlayerCount(c => c + 1)}
+                  style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid var(--border-md)', background: 'var(--paper)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >＋</button>
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  {[8, 12, 16, 20, 24, 28, 32].map(n => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setPlayerCount(n)}
+                      style={{
+                        padding: '3px 10px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer',
+                        border: '1.5px solid var(--border-md)',
+                        background: playerCount === n ? 'var(--navy)' : 'var(--paper)',
+                        color: playerCount === n ? '#fff' : 'var(--ink)',
+                        fontWeight: playerCount === n ? 700 : 400,
+                      }}
+                    >{n}人</button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '5px' }}>
+                プレイヤー1〜{playerCount} として登録されます。名前は大会設定で一括変更できます。
+                {playerCount % 4 !== 0 && (
+                  <span style={{ color: 'var(--slate)', marginLeft: '4px' }}>
+                    （{4 - playerCount % 4}名の黒子を追加して{playerCount + (4 - playerCount % 4)}名に調整されます）
+                  </span>
+                )}
               </div>
             </div>
 
             <div style={{ marginBottom: '16px' }}>
               <label style={labelStyle}>備考</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: '70px', resize: 'vertical', lineHeight: 1.65 }} placeholder="ルールの補足、チョンボ罰則など..." />
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: '70px', resize: 'vertical', lineHeight: 1.65 }} />
             </div>
 
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
@@ -508,6 +662,21 @@ export default function DashboardClient({ tournaments }: Props) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* トースト通知 */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 10000, pointerEvents: 'none',
+          background: toast.type === 'error' ? '#dc2626' : 'var(--navy)',
+          color: '#fff', padding: '10px 20px', borderRadius: '10px',
+          fontSize: '13px', fontWeight: 600,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+          whiteSpace: 'nowrap',
+        }}>
+          {toast.msg}
         </div>
       )}
     </div>

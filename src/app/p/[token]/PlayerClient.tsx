@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { calcTableResults, formatPoint } from '@/lib/mahjong/calculator'
+import { calcTableResults, calcStandings, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table, Result } from '@/types'
 
 interface Props {
@@ -38,6 +38,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({ score: true, adjustment: false, standings: false })
 
   const noSeat = tournament.config.seatMode === 'none'
+  const allowPlayerEntry = tournament.config.allowPlayerEntry !== false
 
   // Refetch data from Supabase (client-side, no SSR roundtrip)
   const refetchData = useCallback(async () => {
@@ -111,24 +112,11 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
     )
   }
 
-  const standings = localPlayers.map(p => {
-    const roundPoints: (number | null)[] = []
-    for (let r = 1; r <= tournament.num_rounds; r++) {
-      const table = localTables.find(t =>
-        t.round_number === r &&
-        t.is_validated &&
-        (t as any).results?.some((res: Result) => res.player_id === p.id)
-      )
-      if (table) {
-        const result = (table as any).results?.find((res: Result) => res.player_id === p.id)
-        roundPoints.push(result?.point ?? null)
-      } else {
-        roundPoints.push(null)
-      }
-    }
-    const total = roundPoints.reduce((sum: number, pt) => sum + (pt ?? 0), 0) + (p.bonus ?? 0)
-    return { player: p, total: Math.round(total * 10) / 10, roundPoints }
-  }).sort((a, b) => b.total - a.total)
+  const standings = calcStandings(
+    localPlayers,
+    localTables.filter(t => t.is_validated),
+    tournament.num_rounds
+  )
 
   const myTotal = standings.find(s => s.player.id === player.id)?.total ?? 0
   const myRank = standings.findIndex(s => s.player.id === player.id) + 1
@@ -276,7 +264,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
         <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(15,21,32,0.07)' }}>
           <div onClick={() => toggleSection('score')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: openSections.score ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
-            <span>スコア入力・卓確認</span>
+            <span>{allowPlayerEntry ? 'スコア入力・卓確認' : '卓確認'}</span>
             <span style={{ fontSize: '10px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.score ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
           </div>
           {openSections.score && Array.from({ length: tournament.num_rounds }, (_, i) => i + 1).map(roundNum => {
@@ -376,7 +364,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                       fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
                     }}>修正する</button>
                   </div>
-                ) : (
+                ) : allowPlayerEntry ? (
                   <div>
                     <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)', marginBottom: '8px' }}>
                       卓{myTable.table_number} スコア入力（全員分）
@@ -450,6 +438,30 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                       <input type="checkbox" checked={extraSticks[myTable.id] ?? false} onChange={e => setExtraSticks(s => ({ ...s, [myTable.id]: e.target.checked }))} />
                       卓外点棒あり（合計チェックをスキップ）
                     </label>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--mist)', marginBottom: '8px' }}>
+                      卓{myTable.table_number} メンバー
+                    </div>
+                    {sortResults(results).map((r, ri) => {
+                      const rPlayer = localPlayers.find(p => p.id === r.player_id)
+                      const isMe = r.player_id === player.id
+                      const sc2 = noSeat ? NUM_COLOR : SEAT_COLORS[r.seat_index]
+                      return (
+                        <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0', borderBottom: '1px solid var(--paper)' }}>
+                          <div style={{ width: '18px', height: '18px', borderRadius: noSeat ? '4px' : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: noSeat ? '10px' : '9px', fontWeight: 700, fontFamily: noSeat ? 'monospace' : 'serif', background: sc2.bg, color: sc2.color, flexShrink: 0 }}>
+                            {noSeat ? `${ri + 1}` : SEAT_LABELS[r.seat_index]}
+                          </div>
+                          <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
+                            {rPlayer?.name}
+                          </div>
+                        </div>
+                      )
+                    })}
+                    <div style={{ marginTop: '10px', padding: '8px 12px', background: 'var(--paper)', borderRadius: '7px', fontSize: '11px', color: 'var(--mist)', textAlign: 'center' }}>
+                      スコアは管理者が入力します
+                    </div>
                   </div>
                 )}
               </div>
