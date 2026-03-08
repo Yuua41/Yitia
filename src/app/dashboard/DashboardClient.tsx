@@ -685,7 +685,7 @@ export default function DashboardClient({ tournaments }: Props) {
                         color: playerCount === n ? '#c8c5a0' : 'var(--mist)',
                         fontWeight: playerCount === n ? 700 : 400,
                       }}
-                    >{n}人</button>
+                    >{n}</button>
                   ))}
                 </div>
               </div>
