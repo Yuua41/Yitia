@@ -29,7 +29,9 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
       `}</style>
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <div className="no-print qr-header" style={{
-          height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
+          height: '52px', background: 'rgba(14,26,24,0.82)',
+          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
           padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         }}>
           <div>
@@ -86,9 +88,11 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
                 const url = `${origin}/p/${player.token}`
                 return (
                   <div key={player.id} style={{
-                    background: '#fff', border: '1px solid var(--border)',
+                    background: 'rgba(255,255,255,0.06)',
+                    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.09)',
                     borderRadius: '12px', padding: '16px', textAlign: 'center',
-                    boxShadow: '0 1px 8px rgba(15,21,32,0.07)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
                   }}>
                     <QRCode value={url} size={100} />
                     <div style={{ fontSize: '13px', fontWeight: 700, margin: '10px 0 4px' }}>

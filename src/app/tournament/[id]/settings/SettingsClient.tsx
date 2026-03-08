@@ -219,7 +219,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
   const statusLabel = () => {
     if (tournament.status === 'ongoing') return { text: '進行中', color: 'var(--cyan-deep)', bg: 'var(--cyan-pale)' }
-    if (tournament.status === 'finished') return { text: '完了', color: '#15803d', bg: '#f0fdf4' }
+    if (tournament.status === 'finished') return { text: '完了', color: '#4ade80', bg: 'rgba(74,222,128,0.12)' }
     return { text: '開催前', color: '#a16830', bg: 'var(--gold-pale)' }
   }
 
@@ -237,7 +237,9 @@ export default function SettingsClient({ tournament, players, templates }: Props
       `}</style>
       {/* ヘッダー */}
       <div className="settings-header" style={{
-        height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
+        height: '52px', background: 'rgba(14,26,24,0.82)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255,255,255,0.07)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -279,9 +281,11 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
           {/* 大会情報カード */}
           <div style={{
-            background: '#fff', border: '1.5px solid var(--border)',
+            background: 'rgba(255,255,255,0.05)',
+            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+            border: '1.5px solid rgba(255,255,255,0.09)',
             borderRadius: '12px', padding: '18px', marginBottom: '14px',
-            boxShadow: '0 1px 8px rgba(15,21,32,0.05)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
           }}>
             <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '14px' }}>大会情報</div>
 
@@ -327,9 +331,11 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
           {/* 参加者カード */}
           <div style={{
-            background: '#fff', border: '1.5px solid var(--border)',
+            background: 'rgba(255,255,255,0.05)',
+            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+            border: '1.5px solid rgba(255,255,255,0.09)',
             borderRadius: '12px', padding: '18px', marginBottom: '14px',
-            boxShadow: '0 1px 8px rgba(15,21,32,0.05)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
           }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '14px' }}>
               <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)' }}>参加者</div>
@@ -376,9 +382,9 @@ export default function SettingsClient({ tournament, players, templates }: Props
                 <button key={m} onClick={() => setSettingsMode(m)} style={{
                   flex: 1, padding: '7px 4px', fontSize: '12px', fontWeight: 600,
                   border: 'none', borderRadius: '7px', cursor: 'pointer',
-                  background: settingsMode === m ? '#fff' : 'transparent',
+                  background: settingsMode === m ? 'rgba(255,255,255,0.12)' : 'transparent',
                   color: settingsMode === m ? 'var(--ink)' : 'var(--mist)',
-                  boxShadow: settingsMode === m ? '0 1px 4px rgba(15,21,32,0.08)' : 'none',
+                  boxShadow: settingsMode === m ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
                   transition: 'all 0.13s',
                 }}>
                   {m === 'basic' ? '基本設定' : '詳細設定'}
@@ -526,9 +532,11 @@ export default function SettingsClient({ tournament, players, templates }: Props
           {/* ステータスセクション */}
           {isDraft && (
             <div style={{
-              background: '#fff', border: '1.5px solid var(--border)',
+              background: 'rgba(255,255,255,0.05)',
+              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+              border: '1.5px solid rgba(255,255,255,0.09)',
               borderRadius: '12px', padding: '18px', marginBottom: '14px',
-              boxShadow: '0 1px 8px rgba(15,21,32,0.05)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
             }}>
               <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '14px' }}>ステータス</div>
               <div style={{ fontSize: '12px', color: 'var(--slate)', marginBottom: '14px', lineHeight: 1.6 }}>
@@ -554,9 +562,11 @@ export default function SettingsClient({ tournament, players, templates }: Props
           {/* 進行中: 終了ボタン */}
           {tournament.status === 'ongoing' && (
             <div style={{
-              background: '#fff', border: '1.5px solid var(--border)',
+              background: 'rgba(255,255,255,0.05)',
+              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+              border: '1.5px solid rgba(255,255,255,0.09)',
               borderRadius: '12px', padding: '18px', marginBottom: '14px',
-              boxShadow: '0 1px 8px rgba(15,21,32,0.05)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
             }}>
               <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '14px' }}>ステータス</div>
               <div style={{ fontSize: '12px', color: 'var(--slate)', marginBottom: '14px', lineHeight: 1.6 }}>
@@ -614,9 +624,9 @@ export default function SettingsClient({ tournament, players, templates }: Props
           {/* 終了済み通知 */}
           {tournament.status === 'finished' && (
             <div style={{
-              background: '#f0fdf4', border: '1.5px solid rgba(21,128,61,0.2)',
+              background: 'rgba(74,222,128,0.1)', border: '1.5px solid rgba(74,222,128,0.2)',
               borderRadius: '12px', padding: '14px 18px',
-              fontSize: '12px', color: '#15803d', lineHeight: 1.6,
+              fontSize: '12px', color: '#4ade80', lineHeight: 1.6,
             }}>
               この大会は終了しています。
             </div>
