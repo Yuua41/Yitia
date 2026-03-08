@@ -3,30 +3,30 @@
 @tailwind utilities;
 
 :root {
-  --ink:       #1c1c1e;
-  --paper:     #E4E4E8;
-  --surface:   #ffffff;
+  --ink:       #e4ece8;
+  --paper:     #0e1a18;
+  --surface:   #162220;
   --navy:      #192E2C;
   --navy-mid:  #1f3c39;
 
   /* Primary accent: Mauve (#AD82A9) */
   --cyan:      #c9aed4;
-  --cyan-deep: #7B4F79;
-  --cyan-pale: #f5eef6;
+  --cyan-deep: #b891b5;
+  --cyan-pale: rgba(173,130,169,0.16);
   --cyan-dim:  #b891b5;
   --sky:       #c9aed4;
 
   /* Secondary accent: Olive (#ADA582) */
   --gold:      #ADA582;
   --gold-dark: #7A7455;
-  --gold-pale: #f2f0e4;
+  --gold-pale: rgba(173,165,130,0.16);
 
-  --red:       #ef4444;
-  --red-pale:  #fef2f2;
-  --slate:     #3c3c43;
-  --mist:      #8e8e93;
-  --border:    rgba(0,0,0,0.06);
-  --border-md: rgba(0,0,0,0.11);
+  --red:       #f87171;
+  --red-pale:  rgba(248,113,113,0.13);
+  --slate:     #9eada9;
+  --mist:      #6b8880;
+  --border:    rgba(255,255,255,0.07);
+  --border-md: rgba(255,255,255,0.13);
 }
 
 * {
@@ -36,7 +36,10 @@
 }
 
 body {
-  background: var(--paper);
+  background:
+    radial-gradient(ellipse 80% 55% at 5% 0%, rgba(173,130,169,0.09) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 45% at 95% 100%, rgba(173,165,130,0.07) 0%, transparent 60%),
+    var(--paper);
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
     var(--font-geist, 'Geist'), var(--font-jp, 'Noto Sans JP'),
@@ -57,7 +60,7 @@ input[type='number'] {
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 100px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.13); border-radius: 100px; }
 
 input:focus, textarea:focus, select:focus {
   outline: none;
@@ -73,9 +76,9 @@ input:focus, textarea:focus, select:focus {
 .skeleton-pulse {
   background: linear-gradient(
     90deg,
-    rgba(0,0,0,0.06) 25%,
-    rgba(0,0,0,0.11) 50%,
-    rgba(0,0,0,0.06) 75%
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.09) 50%,
+    rgba(255,255,255,0.04) 75%
   );
   background-size: 600px 100%;
   animation: shimmer-slide 1.6s ease-in-out infinite;

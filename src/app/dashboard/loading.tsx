@@ -1,11 +1,13 @@
 export default function DashboardLoading() {
-  const cardShadow = '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)'
+  const cardShadow = '0 2px 8px rgba(0,0,0,0.3)'
 
   return (
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* Header skeleton */}
       <div style={{
-        height: '56px', background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)',
+        height: '56px',
+        background: 'rgba(14,26,24,0.82)', backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255,255,255,0.07)',
         padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div className="skeleton-pulse" style={{ width: '80px', height: '17px' }} />
@@ -21,7 +23,10 @@ export default function DashboardLoading() {
         }}>
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} style={{
-              background: '#fff', borderRadius: '16px', overflow: 'hidden',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(16px)',
+              borderRadius: '16px', overflow: 'hidden',
               boxShadow: cardShadow,
             }}>
               {/* color bar */}

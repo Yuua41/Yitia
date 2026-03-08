@@ -29,19 +29,22 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'var(--navy)',
+      background: 'radial-gradient(ellipse 80% 60% at 30% 20%, rgba(173,130,169,0.12) 0%, transparent 60%), var(--navy)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '16px',
     }}>
       <div style={{
-        background: '#fff',
+        background: 'rgba(255,255,255,0.06)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        border: '1px solid rgba(255,255,255,0.12)',
         borderRadius: '16px',
         padding: '40px 36px',
         width: '100%',
         maxWidth: '360px',
-        boxShadow: '0 20px 60px rgba(15,21,32,0.3)',
+        boxShadow: '0 24px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)',
       }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
@@ -61,7 +64,7 @@ export default function LoginPage() {
                 }} />
               ))}
             </div>
-            <span style={{ fontFamily: 'monospace', fontSize: '26px', fontWeight: 500, color: 'var(--navy)', letterSpacing: '0.04em' }}>
+            <span style={{ fontFamily: 'monospace', fontSize: '26px', fontWeight: 500, color: 'var(--ink)', letterSpacing: '0.04em' }}>
               Yitia
             </span>
           </div>
@@ -82,8 +85,8 @@ export default function LoginPage() {
               required
               style={{
                 width: '100%', padding: '11px 14px',
-                background: 'var(--paper)', border: '1px solid var(--border-md)',
-                borderRadius: '12px', fontSize: '14px', outline: 'none',
+                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
+                borderRadius: '12px', fontSize: '14px', color: 'var(--ink)', outline: 'none',
               }}
             />
           </div>
@@ -98,8 +101,8 @@ export default function LoginPage() {
               required
               style={{
                 width: '100%', padding: '11px 14px',
-                background: 'var(--paper)', border: '1px solid var(--border-md)',
-                borderRadius: '12px', fontSize: '14px', outline: 'none',
+                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
+                borderRadius: '12px', fontSize: '14px', color: 'var(--ink)', outline: 'none',
               }}
             />
           </div>
