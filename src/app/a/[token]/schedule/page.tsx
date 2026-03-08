@@ -1,6 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import ScheduleClient from '@/app/tournament/[id]/schedule/ScheduleClient'
+import ScheduleClient from '@/components/tournament/ScheduleClient'
 
 export default async function AdminSchedulePage({
   params,
@@ -36,6 +36,7 @@ export default async function AdminSchedulePage({
       tournament={tournament}
       players={players ?? []}
       tables={tables ?? []}
+      isOwner={false}
     />
   )
 }

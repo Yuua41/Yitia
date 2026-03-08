@@ -24,6 +24,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
   const [config, setConfig] = useState<RuleConfig>({
     ...tournament.config,
     rounding: tournament.config.rounding ?? 'none',
+    allowPlayerEntry: tournament.config.allowPlayerEntry ?? true,
   })
   const [uma14, setUma14] = useState(tournament.config.uma[0])
   const [uma23, setUma23] = useState(tournament.config.uma[1])
@@ -32,6 +33,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
   const [settingsMode, setSettingsMode] = useState<'basic' | 'advanced'>('basic')
   const [saving, setSaving] = useState(false)
   const [starting, setStarting] = useState(false)
+  const [finishing, setFinishing] = useState(false)
 
   function applyTemplate(tplId: string) {
     setSelectedTemplate(tplId)
@@ -178,6 +180,22 @@ export default function SettingsClient({ tournament, players, templates }: Props
     } else {
       router.refresh()
     }
+  }
+
+  async function handleFinish() {
+    const ok = confirm('大会を終了しますか？終了後はスコア入力が締め切られます。')
+    if (!ok) return
+    setFinishing(true)
+    const { error } = await supabase
+      .from('tournaments')
+      .update({ status: 'finished' })
+      .eq('id', tournament.id)
+    if (error) {
+      alert('終了に失敗しました: ' + error.message)
+      setFinishing(false)
+      return
+    }
+    router.refresh()
   }
 
   async function handleStart() {
@@ -334,7 +352,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {players.map(p => (
-                  <span key={p.id} onClick={() => router.push(`/p/${p.token}`)} style={{
+                  <span key={p.id} onClick={() => router.push(`/tournament/${tournament.id}/players`)} style={{
                     padding: '4px 10px', background: 'var(--paper)',
                     border: '1px solid var(--border)', borderRadius: '6px',
                     fontSize: '12px', color: 'var(--cyan-deep)', cursor: 'pointer',
@@ -530,16 +548,74 @@ export default function SettingsClient({ tournament, players, templates }: Props
             </div>
           )}
 
-          {/* 閲覧のみ通知 */}
-          {!isDraft && (
+          {/* 進行中: 終了ボタン */}
+          {tournament.status === 'ongoing' && (
             <div style={{
-              background: 'var(--cyan-pale)', border: '1.5px solid rgba(61,125,115,0.2)',
-              borderRadius: '12px', padding: '14px 18px',
-              fontSize: '12px', color: 'var(--cyan-deep)', lineHeight: 1.6,
+              background: '#fff', border: '1.5px solid var(--border)',
+              borderRadius: '12px', padding: '18px', marginBottom: '14px',
+              boxShadow: '0 1px 8px rgba(15,21,32,0.05)',
             }}>
-              {tournament.status === 'ongoing'
-                ? 'この大会は進行中のため、設定の変更はできません。'
-                : 'この大会は終了しています。'}
+              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '14px' }}>ステータス</div>
+              <div style={{ fontSize: '12px', color: 'var(--slate)', marginBottom: '14px', lineHeight: 1.6 }}>
+                この大会は進行中のため、設定の変更はできません。<br />
+                全ての対局が終了したら大会を終了してください。
+              </div>
+
+              {/* プレイヤー入力制御 */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '12px 14px', marginBottom: '12px',
+                background: 'var(--paper)', border: '1.5px solid var(--border)',
+                borderRadius: '9px',
+              }}>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', marginBottom: '2px' }}>プレイヤーのスコア入力</div>
+                  <div style={{ fontSize: '10px', color: 'var(--mist)' }}>
+                    {config.allowPlayerEntry !== false ? 'プレイヤーが自分でスコアを入力できます' : '管理者のみがスコアを入力できます'}
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    const newVal = config.allowPlayerEntry === false ? true : false
+                    setConfig(c => ({ ...c, allowPlayerEntry: newVal }))
+                    await supabase.from('tournaments').update({
+                      config: { ...config, allowPlayerEntry: newVal },
+                    }).eq('id', tournament.id)
+                  }}
+                  style={{
+                    position: 'relative', width: '44px', height: '24px', flexShrink: 0,
+                    border: 'none', borderRadius: '12px', cursor: 'pointer',
+                    background: config.allowPlayerEntry !== false ? 'var(--cyan-deep)' : 'var(--mist)',
+                    transition: 'background 0.2s',
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute', top: '3px',
+                    left: config.allowPlayerEntry !== false ? '23px' : '3px',
+                    width: '18px', height: '18px', borderRadius: '50%',
+                    background: '#fff', transition: 'left 0.2s',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  }} />
+                </button>
+              </div>
+
+              <button onClick={handleFinish} disabled={finishing} style={{
+                width: '100%', padding: '12px',
+                background: finishing ? 'var(--mist)' : 'var(--navy)',
+                color: '#fff', border: 'none', borderRadius: '10px',
+                fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+              }}>{finishing ? '終了処理中...' : '大会を終了する'}</button>
+            </div>
+          )}
+
+          {/* 終了済み通知 */}
+          {tournament.status === 'finished' && (
+            <div style={{
+              background: '#f0fdf4', border: '1.5px solid rgba(21,128,61,0.2)',
+              borderRadius: '12px', padding: '14px 18px',
+              fontSize: '12px', color: '#15803d', lineHeight: 1.6,
+            }}>
+              この大会は終了しています。
             </div>
           )}
         </div>

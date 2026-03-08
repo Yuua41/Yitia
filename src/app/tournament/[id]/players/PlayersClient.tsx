@@ -1,0 +1,396 @@
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { nanoid } from 'nanoid'
+import type { Tournament, Player } from '@/types'
+
+interface Props {
+  tournament: Tournament
+  players: Player[]
+}
+
+export default function PlayersClient({ tournament, players: initialPlayers }: Props) {
+  const supabase = createClient()
+  const [players, setPlayers] = useState(initialPlayers)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [adding, setAdding] = useState(false)
+  const [qrPlayerId, setQrPlayerId] = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+
+  function showToast(msg: string) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2500)
+  }
+
+  function startEdit(player: Player) {
+    setEditingId(player.id)
+    setEditName(player.name)
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditName('')
+  }
+
+  async function saveName(playerId: string) {
+    const trimmed = editName.trim()
+    if (!trimmed) return cancelEdit()
+
+    const player = players.find(p => p.id === playerId)
+    if (player && player.name === trimmed) return cancelEdit()
+
+    setSaving(true)
+    const { error } = await supabase
+      .from('players')
+      .update({ name: trimmed })
+      .eq('id', playerId)
+
+    if (error) {
+      alert('保存に失敗しました: ' + error.message)
+      setSaving(false)
+      return
+    }
+
+    setPlayers(prev => prev.map(p => p.id === playerId ? { ...p, name: trimmed } : p))
+    setEditingId(null)
+    setEditName('')
+    setSaving(false)
+  }
+
+  async function handleDeletePlayer(player: Player) {
+    const ok = confirm(`「${player.name}」を削除しますか？\nこの参加者のスコアデータも全て削除されます。`)
+    if (!ok) return
+
+    const { error: rErr } = await supabase
+      .from('results')
+      .delete()
+      .eq('player_id', player.id)
+
+    if (rErr) {
+      alert('削除に失敗しました: ' + rErr.message)
+      return
+    }
+
+    const { error } = await supabase
+      .from('players')
+      .delete()
+      .eq('id', player.id)
+
+    if (error) {
+      alert('削除に失敗しました: ' + error.message)
+      return
+    }
+
+    setPlayers(prev => prev.filter(p => p.id !== player.id))
+    showToast(`「${player.name}」を削除しました`)
+  }
+
+  async function handleAddPlayer() {
+    const trimmed = newName.trim()
+    if (!trimmed) return
+
+    setAdding(true)
+    const nextOrder = players.length > 0 ? Math.max(...players.map(p => p.seat_order)) + 1 : 0
+
+    const { data, error } = await supabase
+      .from('players')
+      .insert({
+        tournament_id: tournament.id,
+        name: trimmed,
+        seat_order: nextOrder,
+        token: nanoid(12),
+        bonus: 0,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      alert('追加に失敗しました: ' + error.message)
+      setAdding(false)
+      return
+    }
+
+    setPlayers(prev => [...prev, data])
+    setNewName('')
+    setAdding(false)
+    showToast(`「${data.name}」を追加しました`)
+  }
+
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const qrPlayer = qrPlayerId ? players.find(p => p.id === qrPlayerId) : null
+
+  return (
+    <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <style>{`
+        .players-header { padding: 0 26px; }
+        .players-content { padding: 24px 26px; }
+        @media (max-width: 768px) {
+          .players-header { padding: 0 16px !important; }
+          .players-content { padding: 16px !important; }
+        }
+      `}</style>
+
+      <div className="players-header" style={{
+        height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+      }}>
+        <div>
+          <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{tournament.name} › </span>
+          <span style={{ fontSize: '14px', fontWeight: 700 }}>参加者</span>
+        </div>
+        <span style={{
+          display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
+          fontSize: '10px', fontWeight: 700, fontFamily: 'monospace',
+          background: 'var(--paper)', color: 'var(--slate)', border: '1px solid var(--border)',
+        }}>{players.length}名</span>
+      </div>
+
+      <div className="players-content" style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ maxWidth: '600px' }}>
+          <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>参加者</div>
+          <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '18px' }}>
+            名前をクリックして編集できます
+          </div>
+
+          {/* 参加者一覧 */}
+          <div style={{
+            background: '#fff', border: '1.5px solid var(--border)',
+            borderRadius: '12px', overflow: 'hidden',
+            boxShadow: '0 1px 8px rgba(15,21,32,0.05)',
+          }}>
+            {players.map((player, idx) => (
+              <div key={player.id} style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '10px 16px',
+                borderBottom: '1px solid var(--border)',
+              }}>
+                <div style={{
+                  width: '24px', height: '24px', borderRadius: '50%',
+                  background: 'var(--paper)', border: '1px solid var(--border)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '10px', fontWeight: 700, fontFamily: 'monospace',
+                  color: 'var(--mist)', flexShrink: 0,
+                }}>{idx + 1}</div>
+
+                {editingId === player.id ? (
+                  <input
+                    autoFocus
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') saveName(player.id)
+                      if (e.key === 'Escape') cancelEdit()
+                    }}
+                    onBlur={() => saveName(player.id)}
+                    disabled={saving}
+                    style={{
+                      flex: 1, padding: '5px 10px',
+                      background: 'var(--paper)', border: '1.5px solid var(--cyan-deep)',
+                      borderRadius: '7px', fontSize: '13px', fontWeight: 600,
+                      color: 'var(--ink)', outline: 'none', fontFamily: 'inherit',
+                    }}
+                  />
+                ) : (
+                  <div
+                    onClick={() => startEdit(player)}
+                    style={{
+                      flex: 1, padding: '5px 10px',
+                      borderRadius: '7px', fontSize: '13px', fontWeight: 600,
+                      color: 'var(--ink)', cursor: 'pointer',
+                      border: '1.5px solid transparent',
+                      transition: 'background 0.1s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--paper)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    {player.name}
+                  </div>
+                )}
+
+                <button
+                  onClick={() => handleDeletePlayer(player)}
+                  style={{
+                    fontSize: '11px', fontFamily: 'monospace',
+                    color: 'var(--mist)', background: 'var(--paper)',
+                    border: '1px solid var(--border)', borderRadius: '5px',
+                    padding: '3px 7px', cursor: 'pointer',
+                    flexShrink: 0, transition: 'color 0.1s, border-color 0.1s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                >×</button>
+
+                <button
+                  onClick={() => setQrPlayerId(player.id)}
+                  style={{
+                    fontSize: '10px', fontFamily: 'monospace',
+                    color: 'var(--mist)', background: 'var(--paper)',
+                    border: '1px solid var(--border)', borderRadius: '5px',
+                    padding: '3px 7px', cursor: 'pointer',
+                    flexShrink: 0, transition: 'color 0.1s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--cyan-deep)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--mist)')}
+                >QR</button>
+
+                <a
+                  href={`/p/${player.token}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: '10px', fontFamily: 'monospace',
+                    color: 'var(--mist)', textDecoration: 'none',
+                    padding: '3px 7px', borderRadius: '5px',
+                    background: 'var(--paper)', border: '1px solid var(--border)',
+                    flexShrink: 0, transition: 'color 0.1s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--cyan-deep)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--mist)')}
+                >
+                  個人ページ →
+                </a>
+              </div>
+            ))}
+
+            {/* 参加者追加 */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              padding: '10px 16px',
+            }}>
+              <div style={{
+                width: '24px', height: '24px', borderRadius: '50%',
+                background: 'var(--cyan-pale)', border: '1px solid rgba(61,125,115,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '12px', fontWeight: 700, color: 'var(--cyan-deep)', flexShrink: 0,
+              }}>+</div>
+              <input
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleAddPlayer() }}
+                placeholder="新しい参加者名を入力..."
+                disabled={adding}
+                style={{
+                  flex: 1, padding: '5px 10px',
+                  background: 'var(--paper)', border: '1.5px solid var(--border-md)',
+                  borderRadius: '7px', fontSize: '13px',
+                  color: 'var(--ink)', outline: 'none', fontFamily: 'inherit',
+                }}
+              />
+              <button
+                onClick={handleAddPlayer}
+                disabled={adding || !newName.trim()}
+                style={{
+                  padding: '5px 14px', borderRadius: '7px',
+                  background: !newName.trim() ? 'var(--paper)' : 'var(--cyan-deep)',
+                  color: !newName.trim() ? 'var(--mist)' : '#fff',
+                  border: 'none', fontSize: '12px', fontWeight: 600,
+                  cursor: !newName.trim() ? 'default' : 'pointer',
+                  flexShrink: 0,
+                }}
+              >{adding ? '追加中...' : '追加'}</button>
+            </div>
+          </div>
+
+          {/* 将来拡張エリア */}
+          <div style={{
+            marginTop: '20px', background: 'var(--paper)',
+            border: '1.5px dashed var(--border-md)',
+            borderRadius: '12px', padding: '20px',
+          }}>
+            <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '10px' }}>
+              Coming Soon
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {['連絡先', 'メモ', 'プロ同卓設定'].map(label => (
+                <span key={label} style={{
+                  padding: '5px 12px', borderRadius: '6px',
+                  background: '#fff', border: '1px solid var(--border)',
+                  fontSize: '11px', color: 'var(--mist)',
+                }}>{label}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* トースト通知 */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 10000, background: 'var(--navy)', color: '#fff',
+          padding: '10px 20px', borderRadius: '10px',
+          fontSize: '13px', fontWeight: 600,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+          pointerEvents: 'none',
+        }}>
+          {toast}
+        </div>
+      )}
+
+      {/* QRモーダル */}
+      {qrPlayer && (
+        <div
+          onClick={() => setQrPlayerId(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#fff', borderRadius: '16px', padding: '28px',
+              textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+              maxWidth: '300px', width: '90%',
+            }}
+          >
+            <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>
+              {qrPlayer.seat_order + 1}. {qrPlayer.name}
+            </div>
+            <div style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace', marginBottom: '16px' }}>
+              個人ページ QR
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
+              <QRCode value={`${origin}/p/${qrPlayer.token}`} size={180} />
+            </div>
+            <div
+              onClick={() => window.open(`/p/${qrPlayer.token}`, '_blank')}
+              style={{
+                fontSize: '10px', fontFamily: 'monospace', color: 'var(--cyan-deep)',
+                cursor: 'pointer', textDecoration: 'underline', marginBottom: '16px',
+              }}
+            >/p/{qrPlayer.token}</div>
+            <button
+              onClick={() => setQrPlayerId(null)}
+              style={{
+                padding: '7px 20px', background: 'var(--paper)',
+                border: '1px solid var(--border)', borderRadius: '8px',
+                fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: 'var(--slate)',
+              }}
+            >閉じる</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function QRCode({ value, size }: { value: string; size: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    if (!canvasRef.current) return
+    import('qrcode').then(QRCodeLib => {
+      QRCodeLib.toCanvas(canvasRef.current!, value, {
+        width: size,
+        margin: 1,
+        color: { dark: '#1a2f2d', light: '#ffffff' },
+      })
+    })
+  }, [value, size])
+  return <canvas ref={canvasRef} style={{ borderRadius: '8px', display: 'block', margin: '0 auto' }} />
+}

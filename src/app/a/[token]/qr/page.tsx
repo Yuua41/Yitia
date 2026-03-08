@@ -1,6 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import QRClient from '@/app/tournament/[id]/qr/QRClient'
+import QRClient from '@/components/tournament/QRClient'
 
 export default async function AdminQRPage({
   params,

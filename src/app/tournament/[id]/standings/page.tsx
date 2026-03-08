@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import StandingsClient from './StandingsClient'
+import StandingsClient from '@/components/tournament/StandingsClient'
 
 export default async function StandingsPage({
   params,
@@ -38,6 +38,7 @@ export default async function StandingsPage({
       tournament={tournament}
       players={players ?? []}
       tables={tables ?? []}
+      isOwner={true}
     />
   )
 }

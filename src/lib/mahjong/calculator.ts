@@ -1,4 +1,50 @@
-import type { Result, RuleConfig, Table } from '@/types'
+import type { Result, RuleConfig, Table, Player } from '@/types'
+
+export interface StandingEntry {
+  player: Player
+  roundPoints: (number | null)[]
+  base: number
+  total: number
+  rank: number
+  isTied: boolean
+}
+
+/**
+ * 全体成績を計算して順位付きで返す。
+ * @param players    プレイヤー一覧
+ * @param tables     確定済みテーブル一覧（is_validated フィルタ済みを渡すこと）
+ * @param numRounds  総ラウンド数
+ * @param bonuses    調整ポイントの上書き（未指定の場合は player.bonus を使用）
+ */
+export function calcStandings(
+  players: Player[],
+  tables: Table[],
+  numRounds: number,
+  bonuses: Record<string, number> = {}
+): StandingEntry[] {
+  const standings = players.map(player => {
+    const roundPoints: (number | null)[] = Array(numRounds).fill(null)
+    tables.forEach(table => {
+      const results = (table as any).results as Result[]
+      const result = results?.find(r => r.player_id === player.id)
+      if (result && result.point !== 0) {
+        roundPoints[table.round_number - 1] = result.point
+      }
+    })
+    const base = roundPoints.reduce<number>((sum, p) => sum + (p ?? 0), 0)
+    const adj = player.id in bonuses ? bonuses[player.id] : (player.bonus ?? 0)
+    const total = Math.round((base + adj) * 10) / 10
+    return { player, roundPoints, base, total }
+  })
+
+  return standings
+    .sort((a, b) => b.total - a.total)
+    .map((s, _i, arr) => {
+      const rank = arr.filter(x => x.total > s.total).length + 1
+      const isTied = arr.filter(x => x.total === s.total).length > 1
+      return { ...s, rank, isTied }
+    })
+}
 
 function roundPoint(value: number, mode: RuleConfig['rounding'] = 'none'): number {
   if (mode === 'none' || !mode) {

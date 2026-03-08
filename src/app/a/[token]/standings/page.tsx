@@ -1,6 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import StandingsClient from '@/app/tournament/[id]/standings/StandingsClient'
+import StandingsClient from '@/components/tournament/StandingsClient'
 
 export default async function AdminStandingsPage({
   params,
@@ -36,6 +36,7 @@ export default async function AdminStandingsPage({
       tournament={tournament}
       players={players ?? []}
       tables={tables ?? []}
+      isOwner={false}
     />
   )
 }

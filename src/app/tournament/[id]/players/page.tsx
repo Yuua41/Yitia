@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import QRClient from '@/components/tournament/QRClient'
+import PlayersClient from './PlayersClient'
 
-export default async function QRPage({
+export default async function PlayersPage({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -26,5 +26,10 @@ export default async function QRPage({
     .eq('tournament_id', id)
     .order('seat_order')
 
-  return <QRClient tournament={tournament} players={players ?? []} adminToken={tournament.admin_token} />
+  return (
+    <PlayersClient
+      tournament={tournament}
+      players={players ?? []}
+    />
+  )
 }
