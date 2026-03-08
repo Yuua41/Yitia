@@ -45,9 +45,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             width: 40px; height: 40px;
             align-items: center; justify-content: center;
             background: var(--navy);
-            border: 1px solid rgba(173,130,169,0.4);
+            border: 1px solid rgba(173,165,130,0.4);
             border-radius: 8px;
-            color: #c9aed4;
+            color: #c8c5a0;
             font-size: 22px;
             cursor: pointer;
           }
@@ -85,7 +85,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }}>
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: '180px',
-          background: 'radial-gradient(ellipse at 30% 0%, rgba(173,130,169,0.18), transparent 70%)',
+          background: 'radial-gradient(ellipse at 30% 0%, rgba(173,165,130,0.18), transparent 70%)',
           pointerEvents: 'none',
         }} />
 
@@ -94,11 +94,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{
               width: '30px', height: '30px',
-              background: 'linear-gradient(135deg, #c9aed4, #ADA582 160%)',
+              background: 'linear-gradient(135deg, #c8c5a0, #AD82A9 160%)',
               borderRadius: '7px',
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
               padding: '5px', gap: '1.5px',
-              boxShadow: '0 2px 8px rgba(173,130,169,0.35)',
+              boxShadow: '0 2px 8px rgba(173,165,130,0.35)',
             }}>
               {[1,0,1,0,1,0,1,0,1].map((show, i) => (
                 <div key={i} style={{
@@ -131,9 +131,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     display: 'flex', alignItems: 'center', gap: '8px',
                     padding: '8px 10px', borderRadius: '8px',
                     marginBottom: '1px', cursor: 'pointer',
-                    background: isActive ? 'rgba(173,130,169,0.22)' : 'transparent',
+                    background: isActive ? 'rgba(173,165,130,0.22)' : 'transparent',
                     color: isActive ? '#e8d8e7' : 'rgba(255,255,255,0.50)',
-                    border: isActive ? '1px solid rgba(173,130,169,0.30)' : '1px solid transparent',
+                    border: isActive ? '1px solid rgba(173,165,130,0.30)' : '1px solid transparent',
                     fontSize: '12.5px', fontWeight: isActive ? 700 : 400,
                     transition: 'all 0.15s',
                   }}
@@ -142,11 +142,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       e.currentTarget.style.background = 'rgba(255,255,255,0.09)'
                       e.currentTarget.style.color = 'rgba(255,255,255,0.85)'
                     } else {
-                      e.currentTarget.style.background = 'rgba(173,130,169,0.32)'
+                      e.currentTarget.style.background = 'rgba(173,165,130,0.32)'
                     }
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.background = isActive ? 'rgba(173,130,169,0.22)' : 'transparent'
+                    e.currentTarget.style.background = isActive ? 'rgba(173,165,130,0.22)' : 'transparent'
                     e.currentTarget.style.color = isActive ? '#e8d8e7' : 'rgba(255,255,255,0.50)'
                   }}
                 >

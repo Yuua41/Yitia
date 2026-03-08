@@ -235,7 +235,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--paper)', padding: '16px' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent', padding: '16px' }}>
       <div style={{ maxWidth: '450px', margin: '0 auto' }}>
         <div style={{
           background: 'var(--navy)', borderRadius: '14px', padding: '20px',
@@ -243,7 +243,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         }}>
           <div style={{
             position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px',
-            background: 'radial-gradient(circle, rgba(171,218,209,0.35), transparent 65%)',
+            background: 'radial-gradient(circle, rgba(173,165,130,0.25), transparent 65%)',
             pointerEvents: 'none',
           }} />
           <div style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: '6px' }}>
@@ -262,7 +262,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           </div>
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(15,21,32,0.07)' }}>
+        <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
           <div onClick={() => toggleSection('score')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: openSections.score ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>{allowPlayerEntry ? 'スコア入力・卓確認' : '卓確認'}</span>
             <span style={{ fontSize: '10px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.score ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -291,8 +291,8 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   </div>
                   <span style={{
                     fontSize: '9.5px', padding: '2px 7px', borderRadius: '9px', fontFamily: 'monospace',
-                    background: isValidated ? 'var(--cyan-pale)' : isSubmitted ? '#dcfce7' : 'var(--gold-pale)',
-                    color: isValidated ? 'var(--cyan-deep)' : isSubmitted ? '#166534' : 'var(--gold-dark)',
+                    background: isValidated ? 'var(--cyan-pale)' : isSubmitted ? 'rgba(74,222,128,0.12)' : 'var(--gold-pale)',
+                    color: isValidated ? 'var(--cyan-deep)' : isSubmitted ? '#4ade80' : 'var(--gold-dark)',
                   }}>{isValidated ? '確定済み' : isSubmitted ? '送信済み' : '入力中'}</span>
                 </div>
                 {isValidated ? (
@@ -336,7 +336,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   </div>
                 ) : isSubmitted ? (
                   <div>
-                    <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: '#166534', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: '#4ade80', marginBottom: '8px' }}>
                       卓{myTable.table_number} 送信済みスコア
                     </div>
                     {sortResults(results).map((r, ri) => {
@@ -429,7 +429,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
                       <button onClick={() => submitScores(myTable)} disabled={submitting === myTable.id} style={{
                         flex: 1, padding: '8px',
-                        background: submitting === myTable.id ? 'var(--mist)' : 'var(--cyan-deep)',
+                        background: submitting === myTable.id ? 'var(--mist)' : 'linear-gradient(135deg, #ADA582, #7A7455)',
                         color: '#fff', border: 'none', borderRadius: '7px',
                         fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
                       }}>{submitting === myTable.id ? '送信中...' : 'スコアを送信'}</button>
@@ -470,7 +470,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         </div>
 
         {/* 得点調整 (accordion, default closed) */}
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(15,21,32,0.07)' }}>
+        <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
           <div onClick={() => toggleSection('adjustment')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: openSections.adjustment ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>得点調整</span>
             <span style={{ fontSize: '10px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.adjustment ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -515,7 +515,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   disabled={savingAdjustment}
                   style={{
                     padding: '6px 14px', flexShrink: 0,
-                    background: savingAdjustment ? 'var(--mist)' : 'var(--cyan-deep)',
+                    background: savingAdjustment ? 'var(--mist)' : 'linear-gradient(135deg, #ADA582, #7A7455)',
                     color: '#fff', border: 'none', borderRadius: '7px',
                     fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                   }}
@@ -533,7 +533,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         </div>
 
         {/* 全体成績 (accordion, default closed) */}
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 1px 8px rgba(15,21,32,0.07)' }}>
+        <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
           <div onClick={() => toggleSection('standings')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: openSections.standings ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>全体成績</span>
             <span style={{ fontSize: '10px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.standings ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -555,19 +555,27 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   </div>
                 </div>
                 {s.roundPoints.some(pt => pt !== null) && (
-                  <div style={{ display: 'flex', gap: '4px', marginTop: '4px', paddingLeft: '28px', flexWrap: 'wrap' }}>
-                    {s.roundPoints.map((pt, ri) => (
-                      <span key={ri} style={{
-                        fontSize: '9.5px', fontFamily: 'monospace', padding: '1px 5px',
-                        borderRadius: '4px', background: 'var(--paper)',
-                        color: pt === null ? 'var(--mist)' : pt >= 0 ? '#0284c7' : 'var(--red)',
-                      }}>
-                        R{ri + 1}:{pt !== null ? formatPoint(pt) : '-'}
-                      </span>
-                    ))}
+                  <div style={{ marginTop: '4px', paddingLeft: '28px' }}>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${tournament.num_rounds}, minmax(0, 1fr))`,
+                      gap: '3px',
+                    }}>
+                      {s.roundPoints.map((pt, ri) => (
+                        <span key={ri} style={{
+                          fontSize: '9px', fontFamily: 'monospace', padding: '2px 3px',
+                          borderRadius: '4px', background: 'rgba(255,255,255,0.08)',
+                          color: pt === null ? 'var(--mist)' : pt >= 0 ? '#0284c7' : 'var(--red)',
+                          textAlign: 'center', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden',
+                        }}>
+                          R{ri + 1}:{pt !== null ? formatPoint(pt) : '—'}
+                        </span>
+                      ))}
+                    </div>
                     {(s.player.bonus ?? 0) !== 0 && (
                       <span style={{
-                        fontSize: '9.5px', fontFamily: 'monospace', padding: '1px 5px',
+                        display: 'inline-block', marginTop: '2px',
+                        fontSize: '9px', fontFamily: 'monospace', padding: '2px 5px',
                         borderRadius: '4px', background: 'var(--red-pale)',
                         color: 'var(--red)',
                       }}>

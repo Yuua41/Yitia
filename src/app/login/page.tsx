@@ -29,7 +29,7 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'radial-gradient(ellipse 80% 60% at 30% 20%, rgba(173,130,169,0.12) 0%, transparent 60%), var(--navy)',
+      background: 'radial-gradient(ellipse 80% 60% at 30% 20%, rgba(173,165,130,0.12) 0%, transparent 60%), var(--navy)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -51,7 +51,7 @@ export default function LoginPage() {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
               width: '34px', height: '34px',
-              background: 'linear-gradient(135deg, #c9aed4, #ADA582 180%)',
+              background: 'linear-gradient(135deg, #c8c5a0, #AD82A9 180%)',
               borderRadius: '8px',
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
               padding: '6px', gap: '1.5px',
@@ -118,7 +118,7 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%', padding: '11px',
-              background: loading ? 'var(--mist)' : 'linear-gradient(135deg, #AD82A9, #7B4F79)',
+              background: loading ? 'var(--mist)' : 'linear-gradient(135deg, #ADA582, #7A7455)',
               color: '#fff', border: 'none', borderRadius: '12px',
               fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
               marginTop: '8px', letterSpacing: '0.01em',

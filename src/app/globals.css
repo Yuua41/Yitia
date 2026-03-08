@@ -9,17 +9,17 @@
   --navy:      #192E2C;
   --navy-mid:  #1f3c39;
 
-  /* Primary accent: Mauve (#AD82A9) */
-  --cyan:      #c9aed4;
-  --cyan-deep: #b891b5;
-  --cyan-pale: rgba(173,130,169,0.16);
-  --cyan-dim:  #b891b5;
-  --sky:       #c9aed4;
+  /* Primary accent: Olive (#ADA582) */
+  --cyan:      #c8c5a0;
+  --cyan-deep: #b8b592;
+  --cyan-pale: rgba(173,165,130,0.16);
+  --cyan-dim:  #a8a57c;
+  --sky:       #c8c5a0;
 
-  /* Secondary accent: Olive (#ADA582) */
-  --gold:      #ADA582;
-  --gold-dark: #7A7455;
-  --gold-pale: rgba(173,165,130,0.16);
+  /* Secondary accent: Mauve (#AD82A9) */
+  --gold:      #AD82A9;
+  --gold-dark: #7B4F79;
+  --gold-pale: rgba(173,130,169,0.16);
 
   --red:       #f87171;
   --red-pale:  rgba(248,113,113,0.13);
@@ -37,8 +37,8 @@
 
 body {
   background:
-    radial-gradient(ellipse 80% 55% at 5% 0%, rgba(173,130,169,0.09) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 45% at 95% 100%, rgba(173,165,130,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 55% at 5% 0%, rgba(173,165,130,0.09) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 45% at 95% 100%, rgba(173,130,169,0.07) 0%, transparent 60%),
     var(--paper);
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',

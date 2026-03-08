@@ -398,7 +398,7 @@ export default function DashboardClient({ tournaments }: Props) {
   }
 
   const statusLabel = (t: Tournament) => {
-    if (t.status === 'ongoing') return { text: '進行中', color: '#c9aed4', bg: 'rgba(173,130,169,0.22)' }
+    if (t.status === 'ongoing') return { text: '進行中', color: '#c8c5a0', bg: 'rgba(173,165,130,0.22)' }
     if (t.status === 'finished') return { text: '完了', color: '#4ade80', bg: 'rgba(74,222,128,0.12)' }
     return { text: '下書き', color: 'var(--mist)', bg: 'rgba(255,255,255,0.08)' }
   }
@@ -458,8 +458,8 @@ export default function DashboardClient({ tournaments }: Props) {
                 <div style={{
                   height: '4px',
                   background: t.status === 'ongoing'
-                    ? 'linear-gradient(90deg, #AD82A9, #7B4F79)'
-                    : t.status === 'finished' ? '#ADA582' : 'rgba(255,255,255,0.10)',
+                    ? 'linear-gradient(90deg, #ADA582, #7A7455)'
+                    : t.status === 'finished' ? '#AD82A9' : 'rgba(255,255,255,0.10)',
                 }} />
 
                 {/* ローディングシマー */}
@@ -556,7 +556,7 @@ export default function DashboardClient({ tournaments }: Props) {
             }}
             onMouseEnter={e => {
               e.currentTarget.style.background = 'rgba(255,255,255,0.07)'
-              e.currentTarget.style.borderColor = 'rgba(173,130,169,0.55)'
+              e.currentTarget.style.borderColor = 'rgba(173,165,130,0.55)'
               e.currentTarget.style.boxShadow = '0 4px 28px rgba(0,0,0,0.4)'
             }}
             onMouseLeave={e => {
@@ -567,10 +567,10 @@ export default function DashboardClient({ tournaments }: Props) {
           >
             <div style={{
               width: '36px', height: '36px',
-              background: 'linear-gradient(135deg, #AD82A9, #7B4F79)',
+              background: 'linear-gradient(135deg, #ADA582, #7A7455)',
               borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '20px', color: '#fff', fontWeight: 300,
-              boxShadow: '0 2px 8px rgba(123,79,121,0.3)',
+              boxShadow: '0 2px 8px rgba(122,116,85,0.3)',
             }}>+</div>
             <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--slate)', letterSpacing: '-0.01em' }}>新しい大会を作成</div>
           </div>
@@ -680,9 +680,9 @@ export default function DashboardClient({ tournaments }: Props) {
                       onClick={() => setPlayerCount(n)}
                       style={{
                         padding: '3px 10px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer',
-                        border: playerCount === n ? '1.5px solid rgba(173,130,169,0.5)' : '1.5px solid rgba(255,255,255,0.12)',
-                        background: playerCount === n ? 'rgba(173,130,169,0.25)' : 'rgba(255,255,255,0.05)',
-                        color: playerCount === n ? '#c9aed4' : 'var(--mist)',
+                        border: playerCount === n ? '1.5px solid rgba(173,165,130,0.5)' : '1.5px solid rgba(255,255,255,0.12)',
+                        background: playerCount === n ? 'rgba(173,165,130,0.25)' : 'rgba(255,255,255,0.05)',
+                        color: playerCount === n ? '#c8c5a0' : 'var(--mist)',
                         fontWeight: playerCount === n ? 700 : 400,
                       }}
                     >{n}人</button>
@@ -744,7 +744,7 @@ const inputStyle: React.CSSProperties = {
   fontFamily: 'inherit',
 }
 const btnPrimary: React.CSSProperties = {
-  padding: '8px 20px', background: 'linear-gradient(135deg, #AD82A9, #7B4F79)', color: '#fff',
+  padding: '8px 20px', background: 'linear-gradient(135deg, #ADA582, #7A7455)', color: '#fff',
   border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
 }
 const btnOutline: React.CSSProperties = {
