@@ -338,7 +338,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
                   value={playerText}
                   onChange={e => setPlayerText(e.target.value)}
                   style={{ ...inputStyle, minHeight: '100px', resize: 'vertical', lineHeight: 1.65 }}
-                  placeholder="プレイヤー名（改行またはカンマ区切り）"
+                  placeholder={"プレイヤー名A\nプレイヤー名B\nプレイヤー名C\n（改行または半角カンマ区切り）"}
                 />
                 <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '3px' }}>
                   {playerText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean).length} 名入力中

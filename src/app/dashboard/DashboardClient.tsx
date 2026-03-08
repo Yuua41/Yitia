@@ -605,8 +605,8 @@ export default function DashboardClient({ tournaments }: Props) {
               </div>
             </div>
             <div style={{ marginBottom: '13px' }}>
-              <label style={labelStyle}>プレイヤー名（改行またはカンマ区切り）</label>
-              <textarea value={playerText} onChange={e => setPlayerText(e.target.value)} style={{ ...inputStyle, minHeight: '100px', resize: 'vertical', lineHeight: 1.65 }} placeholder="アカギ&#10;カイジ&#10;衣..." />
+              <label style={labelStyle}>プレイヤー名（改行または半角カンマ区切り）</label>
+              <textarea value={playerText} onChange={e => setPlayerText(e.target.value)} style={{ ...inputStyle, minHeight: '100px', resize: 'vertical', lineHeight: 1.65 }} placeholder={"アカギ\nカイジ\n衣\n鷲巣"} />
               <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '3px' }}>
                 {playerText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean).length} 名入力中
               </div>
