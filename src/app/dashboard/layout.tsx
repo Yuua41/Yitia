@@ -45,9 +45,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             width: 40px; height: 40px;
             align-items: center; justify-content: center;
             background: var(--navy);
-            border: 1px solid rgba(171,218,209,0.4);
+            border: 1px solid rgba(173,130,169,0.4);
             border-radius: 8px;
-            color: #abdad1;
+            color: #c9aed4;
             font-size: 22px;
             cursor: pointer;
           }
@@ -85,7 +85,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }}>
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: '180px',
-          background: 'radial-gradient(ellipse at 30% 0%, rgba(171,218,209,0.22), transparent 70%)',
+          background: 'radial-gradient(ellipse at 30% 0%, rgba(173,130,169,0.18), transparent 70%)',
           pointerEvents: 'none',
         }} />
 
@@ -94,11 +94,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{
               width: '30px', height: '30px',
-              background: 'linear-gradient(135deg, #abdad1, #f4a460 160%)',
+              background: 'linear-gradient(135deg, #c9aed4, #ADA582 160%)',
               borderRadius: '7px',
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
               padding: '5px', gap: '1.5px',
-              boxShadow: '0 2px 8px rgba(171,218,209,0.45)',
+              boxShadow: '0 2px 8px rgba(173,130,169,0.35)',
             }}>
               {[1,0,1,0,1,0,1,0,1].map((show, i) => (
                 <div key={i} style={{
@@ -128,9 +128,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '8px 10px', borderRadius: '8px',
                 marginBottom: '1px', cursor: 'pointer',
-                background: pathname === item.href ? 'rgba(171,218,209,0.22)' : 'transparent',
-                color: pathname === item.href ? '#abdad1' : 'rgba(255,255,255,0.42)',
-                border: pathname === item.href ? '1px solid rgba(171,218,209,0.25)' : '1px solid transparent',
+                background: pathname === item.href ? 'rgba(173,130,169,0.20)' : 'transparent',
+                color: pathname === item.href ? '#dcc5db' : 'rgba(255,255,255,0.50)',
+                border: pathname === item.href ? '1px solid rgba(173,130,169,0.28)' : '1px solid transparent',
                 fontSize: '12.5px', fontWeight: 500,
                 transition: 'all 0.13s',
               }}>

@@ -542,7 +542,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
                   fontSize: '14px', fontWeight: 700, cursor: 'pointer',
                 }}>{saving ? '更新中...' : '更新'}</button>
                 <button onClick={handleStart} disabled={starting} style={{
-                  flex: 1, padding: '12px', background: starting ? 'var(--mist)' : 'linear-gradient(135deg, #f4a460, #d88a45)',
+                  flex: 1, padding: '12px', background: starting ? 'var(--mist)' : 'linear-gradient(135deg, #ADA582, #7A7455)',
                   color: '#fff', border: 'none', borderRadius: '10px',
                   fontSize: '14px', fontWeight: 700, cursor: 'pointer',
                   boxShadow: '0 2px 12px rgba(244,164,96,0.3)',

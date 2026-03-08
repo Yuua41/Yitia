@@ -420,7 +420,7 @@ export default function DashboardClient({ tournaments }: Props) {
       </div>
 
       <div className="dash-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
-        <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>大会一覧</div>
+        <div style={{ fontSize: '22px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '3px' }}>大会一覧</div>
         <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             onClick={handleCreateSample}
@@ -439,9 +439,9 @@ export default function DashboardClient({ tournaments }: Props) {
             const s = statusLabel(t)
             return (
               <div key={t.id} style={{
-                background: '#fff', border: '1.5px solid var(--border)',
-                borderRadius: '12px', padding: '18px', cursor: navigatingId ? 'wait' : 'pointer',
-                transition: 'all 0.15s', boxShadow: '0 1px 8px rgba(15,21,32,0.07)',
+                background: '#fff',
+                borderRadius: '16px', padding: '18px', cursor: navigatingId ? 'wait' : 'pointer',
+                transition: 'all 0.18s', boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.07)',
                 position: 'relative', overflow: 'hidden',
                 opacity: navigatingId && navigatingId !== t.id ? 0.5 : 1,
               }}
@@ -451,8 +451,8 @@ export default function DashboardClient({ tournaments }: Props) {
                 <div style={{
                   position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
                   background: t.status === 'ongoing'
-                    ? 'linear-gradient(90deg, #abdad1, #8ecbc2)'
-                    : t.status === 'finished' ? '#f4a460' : 'var(--border-md)',
+                    ? 'linear-gradient(90deg, #AD82A9, #7B4F79)'
+                    : t.status === 'finished' ? '#ADA582' : 'var(--border-md)',
                 }} />
 
                 <button
@@ -490,7 +490,7 @@ export default function DashboardClient({ tournaments }: Props) {
                   onClick={() => { setNavigatingId(t.id); router.push(`/tournament/${t.id}/schedule`) }}
                   style={{ paddingRight: '56px' }}
                 >
-                  <div style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 700, marginBottom: '5px' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: '5px' }}>
                     {navigatingId === t.id ? <span style={{ fontSize: '12px', color: 'var(--mist)', fontWeight: 600 }}>Loading...</span> : t.name}
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace', marginBottom: '8px' }}>
@@ -508,9 +508,10 @@ export default function DashboardClient({ tournaments }: Props) {
                   )}
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <span style={{
-                      display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
-                      fontSize: '10px', fontWeight: 700, fontFamily: 'monospace',
+                      display: 'inline-flex', padding: '2px 10px', borderRadius: '100px',
+                      fontSize: '10px', fontWeight: 600,
                       background: s.bg, color: s.color,
+                      letterSpacing: '0.04em',
                     }}>{s.text}</span>
                   </div>
                 </div>
@@ -549,7 +550,7 @@ export default function DashboardClient({ tournaments }: Props) {
             boxShadow: '0 20px 60px rgba(15,21,32,0.2)',
           }}>
             <div style={{ fontSize: '16px', marginBottom: '8px', color: 'var(--red)' }}>削除</div>
-            <div style={{ fontFamily: 'serif', fontSize: '17px', fontWeight: 800, marginBottom: '8px' }}>大会を削除しますか？</div>
+            <div style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: '8px' }}>大会を削除しますか？</div>
             <div style={{
               fontSize: '13px', color: 'var(--slate)', marginBottom: '6px',
               background: 'var(--paper)', padding: '10px 13px', borderRadius: '8px',
@@ -585,7 +586,7 @@ export default function DashboardClient({ tournaments }: Props) {
             width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto',
             boxShadow: '0 20px 60px rgba(15,21,32,0.2)',
           }}>
-            <div style={{ fontFamily: 'serif', fontSize: '18px', fontWeight: 800, marginBottom: '20px' }}>新しい大会を作成</div>
+            <div style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '20px' }}>新しい大会を作成</div>
 
             <div style={{ marginBottom: '13px' }}>
               <label style={labelStyle}>大会名 *</label>
@@ -695,8 +696,8 @@ const inputStyle: React.CSSProperties = {
   fontFamily: 'inherit',
 }
 const btnPrimary: React.CSSProperties = {
-  padding: '8px 18px', background: 'linear-gradient(135deg, #f4a460, #d88a45)', color: '#fff',
-  border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+  padding: '8px 20px', background: 'linear-gradient(135deg, #AD82A9, #7B4F79)', color: '#fff',
+  border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
 }
 const btnOutline: React.CSSProperties = {
   padding: '8px 18px', background: 'transparent',
