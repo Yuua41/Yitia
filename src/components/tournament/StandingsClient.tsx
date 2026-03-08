@@ -109,7 +109,9 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
         }
       `}</style>
       <div className="standings-header" style={{
-        height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
+        height: '52px', background: 'rgba(14,26,24,0.82)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255,255,255,0.07)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
         <div>
@@ -157,7 +159,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
 
         {/* Desktop: Table View */}
         <div className="standings-table-view">
-          <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '0 1px 8px rgba(15,21,32,0.07)', overflowX: 'auto' }}>
+          <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
               <thead>
                 <tr>
@@ -244,8 +246,10 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
             const adj = adjustments[player.id] ?? 0
             return (
               <div key={player.id} style={{
-                background: '#fff', border: '1px solid var(--border)', borderRadius: '12px',
-                padding: '12px 14px', boxShadow: '0 1px 6px rgba(15,21,32,0.06)',
+                background: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px',
+                padding: '12px 14px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                   <span style={{

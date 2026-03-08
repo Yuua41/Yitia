@@ -14,10 +14,10 @@ interface Props {
 
 const SEAT_LABELS = ['東', '南', '西', '北']
 const SEAT_COLORS = [
-  { bg: '#fef9c3', color: '#a16207' },
-  { bg: '#dbeafe', color: '#1d4ed8' },
-  { bg: '#dcfce7', color: '#166534' },
-  { bg: '#f3e8ff', color: '#6b21a8' },
+  { bg: 'rgba(250,204,21,0.18)', color: '#fbbf24' },
+  { bg: 'rgba(96,165,250,0.18)', color: '#60a5fa' },
+  { bg: 'rgba(74,222,128,0.18)', color: '#4ade80' },
+  { bg: 'rgba(192,132,252,0.18)', color: '#c084fc' },
 ]
 const NUM_COLOR = { bg: 'var(--paper)', color: 'var(--slate)' }
 
@@ -272,7 +272,9 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
         }
       `}</style>
       <div className="schedule-header" style={{
-        height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
+        height: '52px', background: 'rgba(14,26,24,0.82)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255,255,255,0.07)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
         <div>
@@ -298,7 +300,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
                 padding: '6px 15px', borderRadius: '16px',
                 border: `1.5px solid ${activeRound === r ? 'var(--navy)' : 'var(--border-md)'}`,
                 fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'monospace',
-                background: activeRound === r ? 'var(--navy)' : '#fff',
+                background: activeRound === r ? 'var(--navy)' : 'transparent',
                 color: activeRound === r ? '#fff' : allDone ? 'var(--cyan-deep)' : 'var(--mist)',
               }}>R{r}{allDone ? ' ✓' : ''}</button>
             )
@@ -312,14 +314,15 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
             const hasExtra = extraSticks[table.id] ?? false
 
             const statusLabel = isValidated ? '✓ 確定済み' : isSubmitted ? '確定待ち' : '入力中'
-            const statusBg = isValidated ? 'var(--cyan-deep)' : isSubmitted ? '#d97706' : 'var(--navy)'
+            const statusBg = isValidated ? '#7A7455' : isSubmitted ? '#b45309' : 'var(--navy-mid)'
 
             return (
               <div key={table.id} style={{
-                background: '#fff',
-                border: `1.5px solid ${isValidated ? 'rgba(61,125,115,0.35)' : isSubmitted ? 'rgba(217,119,6,0.35)' : 'var(--border)'}`,
+                background: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                border: `1.5px solid ${isValidated ? 'rgba(173,165,130,0.4)' : isSubmitted ? 'rgba(180,83,9,0.45)' : 'rgba(255,255,255,0.09)'}`,
                 borderRadius: '12px', overflow: 'hidden',
-                boxShadow: '0 1px 8px rgba(15,21,32,0.07)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
               }}>
                 <div style={{
                   padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
