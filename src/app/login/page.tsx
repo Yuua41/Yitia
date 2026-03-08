@@ -70,11 +70,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div style={{ height: '1px', background: 'var(--border)', marginBottom: '20px' }} />
-
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '5px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: 'var(--slate)', marginBottom: '6px' }}>
               メールアドレス
             </label>
             <input
@@ -83,14 +81,14 @@ export default function LoginPage() {
               onChange={e => setEmail(e.target.value)}
               required
               style={{
-                width: '100%', padding: '9px 13px',
-                background: 'var(--paper)', border: '1.5px solid var(--border-md)',
-                borderRadius: '9px', fontSize: '13px', outline: 'none',
+                width: '100%', padding: '11px 14px',
+                background: 'var(--paper)', border: '1px solid var(--border-md)',
+                borderRadius: '12px', fontSize: '14px', outline: 'none',
               }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '5px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: 'var(--slate)', marginBottom: '6px' }}>
               パスワード
             </label>
             <input
@@ -99,9 +97,9 @@ export default function LoginPage() {
               onChange={e => setPassword(e.target.value)}
               required
               style={{
-                width: '100%', padding: '9px 13px',
-                background: 'var(--paper)', border: '1.5px solid var(--border-md)',
-                borderRadius: '9px', fontSize: '13px', outline: 'none',
+                width: '100%', padding: '11px 14px',
+                background: 'var(--paper)', border: '1px solid var(--border-md)',
+                borderRadius: '12px', fontSize: '14px', outline: 'none',
               }}
             />
           </div>
@@ -118,9 +116,9 @@ export default function LoginPage() {
             style={{
               width: '100%', padding: '11px',
               background: loading ? 'var(--mist)' : 'linear-gradient(135deg, #AD82A9, #7B4F79)',
-              color: '#fff', border: 'none', borderRadius: '9px',
+              color: '#fff', border: 'none', borderRadius: '12px',
               fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
-              marginTop: '4px',
+              marginTop: '8px', letterSpacing: '0.01em',
             }}
           >
             {loading ? 'ログイン中...' : 'ログイン'}

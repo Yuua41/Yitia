@@ -400,7 +400,7 @@ export default function DashboardClient({ tournaments }: Props) {
   const statusLabel = (t: Tournament) => {
     if (t.status === 'ongoing') return { text: '進行中', color: 'var(--cyan-deep)', bg: 'var(--cyan-pale)' }
     if (t.status === 'finished') return { text: '完了', color: '#15803d', bg: '#f0fdf4' }
-    return { text: '下書き', color: 'var(--mist)', bg: 'var(--paper)' }
+    return { text: '下書き', color: 'var(--slate)', bg: 'rgba(0,0,0,0.07)' }
   }
 
   return (
@@ -413,106 +413,125 @@ export default function DashboardClient({ tournaments }: Props) {
         }
       `}</style>
       <div className="dash-header" style={{
-        height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
+        height: '56px', background: 'var(--surface)', borderBottom: '1px solid var(--border)',
         padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
-        <span style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 700, letterSpacing: '0.04em' }}>大会一覧</span>
+        <span style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em' }}>大会一覧</span>
+        <button
+          onClick={handleCreateSample}
+          disabled={seeding}
+          style={{
+            padding: '5px 12px', background: 'transparent',
+            border: '1px solid var(--border-md)', borderRadius: '8px',
+            fontSize: '11px', color: 'var(--mist)', cursor: 'pointer',
+            fontWeight: 500, whiteSpace: 'nowrap',
+          }}
+        >{seeding ? '作成中...' : 'サンプルデータを作成'}</button>
       </div>
 
-      <div className="dash-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
-        <div style={{ fontSize: '22px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '3px' }}>大会一覧</div>
-        <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button
-            onClick={handleCreateSample}
-            disabled={seeding}
-            style={{
-              padding: '3px 10px', background: 'transparent',
-              border: '1px solid var(--border-md)', borderRadius: '6px',
-              fontSize: '11px', color: 'var(--gold-dark)', cursor: 'pointer',
-              fontWeight: 600, whiteSpace: 'nowrap',
-            }}
-          >{seeding ? '作成中...' : 'サンプルデータを作成'}</button>
-        </div>
+      <div className="dash-content" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
 
-        <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+        <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
           {tournaments.map(t => {
             const s = statusLabel(t)
             return (
               <div key={t.id} style={{
                 background: '#fff',
-                borderRadius: '16px', padding: '18px', cursor: navigatingId ? 'wait' : 'pointer',
-                transition: 'all 0.18s', boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.07)',
-                position: 'relative', overflow: 'hidden',
-                opacity: navigatingId && navigatingId !== t.id ? 0.5 : 1,
+                borderRadius: '16px', overflow: 'hidden',
+                cursor: navigatingId ? 'wait' : 'pointer',
+                transition: 'box-shadow 0.2s, opacity 0.2s',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
+                opacity: navigatingId && navigatingId !== t.id ? 0.4 : 1,
+                position: 'relative',
               }}
-                onMouseEnter={e => !navigatingId && (e.currentTarget.style.transform = 'translateY(-2px)')}
-                onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
+                onMouseEnter={e => { if (!navigatingId) e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.11)' }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)' }}
               >
+                {/* ステータスに応じた上部カラーバー */}
                 <div style={{
-                  position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
+                  height: '4px',
                   background: t.status === 'ongoing'
                     ? 'linear-gradient(90deg, #AD82A9, #7B4F79)'
-                    : t.status === 'finished' ? '#ADA582' : 'var(--border-md)',
+                    : t.status === 'finished' ? '#ADA582' : 'rgba(0,0,0,0.10)',
                 }} />
 
-                <button
-                  onClick={e => { e.stopPropagation(); handleDuplicate(t) }}
-                  disabled={!!duplicatingId}
-                  title="複製"
-                  style={{
-                    position: 'absolute', top: '10px', right: '38px',
-                    width: '24px', height: '24px', borderRadius: '50%',
-                    background: 'transparent', border: '1px solid var(--border-md)',
-                    color: duplicatingId === t.id ? 'var(--cyan-deep)' : 'var(--mist)',
-                    fontSize: '11px', cursor: duplicatingId ? 'wait' : 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.13s',
-                  }}
-                  onMouseEnter={e => { if (!duplicatingId) { e.currentTarget.style.background = 'var(--cyan-pale)'; e.currentTarget.style.color = 'var(--cyan-deep)'; e.currentTarget.style.borderColor = 'rgba(61,125,115,0.3)' } }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = duplicatingId === t.id ? 'var(--cyan-deep)' : 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border-md)' }}
-                >{duplicatingId === t.id ? '…' : '⧉'}</button>
-
-                <button
-                  onClick={e => { e.stopPropagation(); setDeleteTarget(t) }}
-                  style={{
-                    position: 'absolute', top: '10px', right: '10px',
-                    width: '24px', height: '24px', borderRadius: '50%',
-                    background: 'transparent', border: '1px solid var(--border-md)',
-                    color: 'var(--mist)', fontSize: '11px', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.13s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-pale)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border-md)' }}
-                >✕</button>
-
-                <div
-                  onClick={() => { setNavigatingId(t.id); router.push(`/tournament/${t.id}/schedule`) }}
-                  style={{ paddingRight: '56px' }}
-                >
-                  <div style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: '5px' }}>
-                    {navigatingId === t.id ? <span style={{ fontSize: '12px', color: 'var(--mist)', fontWeight: 600 }}>Loading...</span> : t.name}
+                {/* ローディングシマー */}
+                {navigatingId === t.id && (
+                  <div style={{
+                    position: 'absolute', inset: 0, zIndex: 10,
+                    background: 'rgba(255,255,255,0.85)',
+                    backdropFilter: 'blur(3px)',
+                  }}>
+                    <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
+                      <div className="skeleton-pulse" style={{ width: '52px', height: '22px', borderRadius: '100px' }} />
+                      <div className="skeleton-pulse" style={{ width: '65%', height: '18px' }} />
+                      <div className="skeleton-pulse" style={{ width: '45%', height: '12px' }} />
+                    </div>
                   </div>
-                  <div style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace', marginBottom: '8px' }}>
-                    {t.held_on ?? '日程未定'} &nbsp;|&nbsp; {t.num_rounds}回戦 &nbsp;|&nbsp; {t.players?.length ?? 0}名
-                  </div>
-                  {t.notes && (
-                    <div style={{
-                      fontSize: '11.5px', color: 'var(--slate)',
-                      background: 'var(--paper)', borderRadius: '7px',
-                      padding: '7px 9px', border: '1px solid var(--border)',
-                      lineHeight: 1.5, marginBottom: '10px',
-                      display: '-webkit-box', WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                    } as React.CSSProperties}>{t.notes}</div>
-                  )}
-                  <div style={{ display: 'flex', gap: '6px' }}>
+                )}
+
+                {/* カード本体 */}
+                <div style={{ padding: '14px 16px 18px' }}>
+                  {/* 上段: ステータスバッジ + アクションボタン（近接・整列） */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                     <span style={{
-                      display: 'inline-flex', padding: '2px 10px', borderRadius: '100px',
-                      fontSize: '10px', fontWeight: 600,
+                      display: 'inline-flex', alignItems: 'center',
+                      padding: '3px 10px', borderRadius: '100px',
+                      fontSize: '10px', fontWeight: 600, letterSpacing: '0.04em',
                       background: s.bg, color: s.color,
-                      letterSpacing: '0.04em',
                     }}>{s.text}</span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDuplicate(t) }}
+                        disabled={!!duplicatingId}
+                        title="複製"
+                        style={{
+                          width: '26px', height: '26px', borderRadius: '8px',
+                          background: 'transparent', border: '1px solid var(--border-md)',
+                          color: duplicatingId === t.id ? 'var(--cyan-deep)' : 'var(--mist)',
+                          fontSize: '11px', cursor: duplicatingId ? 'wait' : 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 0.13s',
+                        }}
+                        onMouseEnter={e => { if (!duplicatingId) { e.currentTarget.style.background = 'var(--cyan-pale)'; e.currentTarget.style.color = 'var(--cyan-deep)' } }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--mist)' }}
+                      >{duplicatingId === t.id ? '…' : '⧉'}</button>
+                      <button
+                        onClick={e => { e.stopPropagation(); setDeleteTarget(t) }}
+                        style={{
+                          width: '26px', height: '26px', borderRadius: '8px',
+                          background: 'transparent', border: '1px solid var(--border-md)',
+                          color: 'var(--mist)', fontSize: '11px', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 0.13s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-pale)'; e.currentTarget.style.color = 'var(--red)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--mist)' }}
+                      >✕</button>
+                    </div>
+                  </div>
+
+                  {/* タイトル（コントラスト強調） */}
+                  <div onClick={() => { setNavigatingId(t.id); router.push(`/tournament/${t.id}/schedule`) }}>
+                    <div style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.3, marginBottom: '8px', color: 'var(--ink)' }}>
+                      {t.name}
+                    </div>
+                    {/* メタ情報（反復・整列） */}
+                    <div style={{ fontSize: '12px', color: 'var(--mist)', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <span>{t.held_on ?? '日程未定'}</span>
+                      <span style={{ opacity: 0.4 }}>·</span>
+                      <span>{t.num_rounds}回戦</span>
+                      <span style={{ opacity: 0.4 }}>·</span>
+                      <span>{t.players?.length ?? 0}名</span>
+                    </div>
+                    {t.notes && (
+                      <div style={{
+                        fontSize: '12px', color: 'var(--mist)',
+                        marginTop: '10px', lineHeight: 1.6,
+                        display: '-webkit-box', WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                      } as React.CSSProperties}>{t.notes}</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -522,17 +541,31 @@ export default function DashboardClient({ tournaments }: Props) {
           <div
             onClick={() => setShowForm(true)}
             style={{
-              background: 'transparent', border: '1.5px dashed var(--border-md)',
-              borderRadius: '12px', padding: '18px', cursor: 'pointer',
+              background: 'rgba(255,255,255,0.5)', border: '1.5px dashed rgba(0,0,0,0.15)',
+              borderRadius: '16px', cursor: 'pointer',
               display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', minHeight: '148px', gap: '8px',
-              transition: 'all 0.15s',
+              justifyContent: 'center', minHeight: '140px', gap: '10px',
+              transition: 'all 0.18s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.background = 'var(--gold-pale)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-md)'; e.currentTarget.style.background = 'transparent' }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.85)'
+              e.currentTarget.style.borderColor = 'rgba(173,130,169,0.5)'
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.5)'
+              e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)'
+              e.currentTarget.style.boxShadow = 'none'
+            }}
           >
-            <div style={{ width: '40px', height: '40px', background: 'var(--gold-pale)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: 'var(--gold-dark)' }}>＋</div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold-dark)' }}>新しい大会を作成</div>
+            <div style={{
+              width: '36px', height: '36px',
+              background: 'linear-gradient(135deg, #AD82A9, #7B4F79)',
+              borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '20px', color: '#fff', fontWeight: 300,
+              boxShadow: '0 2px 8px rgba(123,79,121,0.3)',
+            }}>+</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--slate)', letterSpacing: '-0.01em' }}>新しい大会を作成</div>
           </div>
         </div>
       </div>

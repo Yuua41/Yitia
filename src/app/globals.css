@@ -4,7 +4,7 @@
 
 :root {
   --ink:       #1c1c1e;
-  --paper:     #f5f5f0;
+  --paper:     #E4E4E8;
   --surface:   #ffffff;
   --navy:      #192E2C;
   --navy-mid:  #1f3c39;
@@ -63,6 +63,23 @@ input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--cyan-dim) !important;
   box-shadow: 0 0 0 3px var(--cyan-pale) !important;
+}
+
+@keyframes shimmer-slide {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton-pulse {
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,0.06) 25%,
+    rgba(0,0,0,0.11) 50%,
+    rgba(0,0,0,0.06) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer-slide 1.6s ease-in-out infinite;
+  border-radius: 6px;
 }
 
 @layer utilities {
