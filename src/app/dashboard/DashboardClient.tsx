@@ -41,13 +41,12 @@ export default function DashboardClient({ tournaments }: Props) {
   const [name, setName] = useState('')
   const [heldOn, setHeldOn] = useState(new Date().toISOString().split('T')[0])
   const [notes, setNotes] = useState('')
-  const [playerText, setPlayerText] = useState('')
+  const [playerCount, setPlayerCount] = useState(8)
   const [numRounds, setNumRounds] = useState(4)
 
   async function handleCreate() {
     if (!name.trim()) return showToast('大会名を入力してください')
-    const names = playerText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean)
-    if (names.length < 4) return showToast('プレイヤーを4名以上入力してください')
+    if (playerCount < 4) return showToast('プレイヤーを4名以上入力してください')
 
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -74,10 +73,10 @@ export default function DashboardClient({ tournaments }: Props) {
       return
     }
 
-    let adjustedNames = [...names]
-    while (adjustedNames.length % 4 !== 0) {
-      adjustedNames.push(`黒子${4 - (adjustedNames.length % 4)}`)
-    }
+    const adjustedCount = playerCount % 4 === 0 ? playerCount : playerCount + (4 - playerCount % 4)
+    const adjustedNames = Array.from({ length: adjustedCount }, (_, i) =>
+      i < playerCount ? `プレイヤー${i + 1}` : `黒子${i - playerCount + 1}`
+    )
 
     const playersToInsert = adjustedNames.map((n, idx) => ({
       tournament_id: tournament.id,
@@ -605,16 +604,55 @@ export default function DashboardClient({ tournaments }: Props) {
               </div>
             </div>
             <div style={{ marginBottom: '13px' }}>
-              <label style={labelStyle}>プレイヤー名（改行または半角カンマ区切り）</label>
-              <textarea value={playerText} onChange={e => setPlayerText(e.target.value)} style={{ ...inputStyle, minHeight: '100px', resize: 'vertical', lineHeight: 1.65 }} placeholder={"アカギ\nカイジ\n衣\n鷲巣"} />
-              <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '3px' }}>
-                {playerText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean).length} 名入力中
+              <label style={labelStyle}>参加人数</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setPlayerCount(c => Math.max(4, c - 1))}
+                  style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid var(--border-md)', background: 'var(--paper)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >−</button>
+                <input
+                  type="number"
+                  min={4}
+                  value={playerCount}
+                  onChange={e => setPlayerCount(Math.max(4, parseInt(e.target.value) || 4))}
+                  style={{ ...inputStyle, width: '70px', textAlign: 'center', flexShrink: 0 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setPlayerCount(c => c + 1)}
+                  style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid var(--border-md)', background: 'var(--paper)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >＋</button>
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  {[8, 12, 16, 20, 24, 28, 32].map(n => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setPlayerCount(n)}
+                      style={{
+                        padding: '3px 10px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer',
+                        border: '1.5px solid var(--border-md)',
+                        background: playerCount === n ? 'var(--navy)' : 'var(--paper)',
+                        color: playerCount === n ? '#fff' : 'var(--ink)',
+                        fontWeight: playerCount === n ? 700 : 400,
+                      }}
+                    >{n}人</button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '5px' }}>
+                プレイヤー1〜{playerCount} として登録されます。名前は大会設定で一括変更できます。
+                {playerCount % 4 !== 0 && (
+                  <span style={{ color: 'var(--slate)', marginLeft: '4px' }}>
+                    （{4 - playerCount % 4}名の黒子を追加して{playerCount + (4 - playerCount % 4)}名に調整されます）
+                  </span>
+                )}
               </div>
             </div>
 
             <div style={{ marginBottom: '16px' }}>
               <label style={labelStyle}>備考</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: '70px', resize: 'vertical', lineHeight: 1.65 }} placeholder="ルールの補足、チョンボ罰則など..." />
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: '70px', resize: 'vertical', lineHeight: 1.65 }} />
             </div>
 
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>

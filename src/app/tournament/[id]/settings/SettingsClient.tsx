@@ -331,7 +331,10 @@ export default function SettingsClient({ tournament, players, templates }: Props
             borderRadius: '12px', padding: '18px', marginBottom: '14px',
             boxShadow: '0 1px 8px rgba(15,21,32,0.05)',
           }}>
-            <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '14px' }}>参加者</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '14px' }}>
+              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)' }}>参加者</div>
+              {isDraft && <div style={{ fontSize: '10px', color: 'var(--mist)' }}>改行、または半角カンマ区切り</div>}
+            </div>
             {isDraft ? (
               <>
                 <textarea
