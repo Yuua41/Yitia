@@ -122,22 +122,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           大会
         </div>
         <nav style={{ padding: '4px 8px', flex: 1 }}>
-          {NAV_ITEMS.map(item => (
-            <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '8px 10px', borderRadius: '8px',
-                marginBottom: '1px', cursor: 'pointer',
-                background: pathname === item.href ? 'rgba(173,130,169,0.20)' : 'transparent',
-                color: pathname === item.href ? '#dcc5db' : 'rgba(255,255,255,0.50)',
-                border: pathname === item.href ? '1px solid rgba(173,130,169,0.28)' : '1px solid transparent',
-                fontSize: '12.5px', fontWeight: 500,
-                transition: 'all 0.13s',
-              }}>
-                <span>{item.label}</span>
-              </div>
-            </Link>
-          ))}
+          {NAV_ITEMS.map(item => {
+            const isActive = pathname === item.href
+            return (
+              <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '8px 10px', borderRadius: '8px',
+                    marginBottom: '1px', cursor: 'pointer',
+                    background: isActive ? 'rgba(173,130,169,0.22)' : 'transparent',
+                    color: isActive ? '#e8d8e7' : 'rgba(255,255,255,0.50)',
+                    border: isActive ? '1px solid rgba(173,130,169,0.30)' : '1px solid transparent',
+                    fontSize: '12.5px', fontWeight: isActive ? 700 : 400,
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.09)'
+                      e.currentTarget.style.color = 'rgba(255,255,255,0.85)'
+                    } else {
+                      e.currentTarget.style.background = 'rgba(173,130,169,0.32)'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = isActive ? 'rgba(173,130,169,0.22)' : 'transparent'
+                    e.currentTarget.style.color = isActive ? '#e8d8e7' : 'rgba(255,255,255,0.50)'
+                  }}
+                >
+                  <span>{item.label}</span>
+                </div>
+              </Link>
+            )
+          })}
         </nav>
 
         {/* Footer */}

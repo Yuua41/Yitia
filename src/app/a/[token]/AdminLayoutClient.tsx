@@ -46,9 +46,9 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
             width: 40px; height: 40px;
             align-items: center; justify-content: center;
             background: var(--navy);
-            border: 1px solid rgba(171,218,209,0.4);
+            border: 1px solid rgba(173,130,169,0.4);
             border-radius: 8px;
-            color: #abdad1;
+            color: #c9aed4;
             font-size: 22px;
             cursor: pointer;
           }
@@ -85,14 +85,14 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
       }}>
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: '180px',
-          background: 'radial-gradient(ellipse at 30% 0%, rgba(171,218,209,0.22), transparent 70%)',
+          background: 'radial-gradient(ellipse at 30% 0%, rgba(173,130,169,0.18), transparent 70%)',
           pointerEvents: 'none',
         }} />
         <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{
               width: '30px', height: '30px',
-              background: 'linear-gradient(135deg, #abdad1, #f4a460 160%)',
+              background: 'linear-gradient(135deg, #c9aed4, #ADA582 160%)',
               borderRadius: '7px',
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
               padding: '5px', gap: '1.5px',
@@ -122,14 +122,28 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
             const active = pathname === item.href
             return (
               <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '8px 10px', borderRadius: '8px', marginBottom: '1px',
-                  background: active ? 'rgba(171,218,209,0.22)' : 'transparent',
-                  color: active ? '#abdad1' : 'rgba(255,255,255,0.42)',
-                  border: active ? '1px solid rgba(171,218,209,0.25)' : '1px solid transparent',
-                  fontSize: '12.5px', fontWeight: 500, transition: 'all 0.13s',
-                }}>
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '8px 10px', borderRadius: '8px', marginBottom: '1px',
+                    background: active ? 'rgba(173,130,169,0.22)' : 'transparent',
+                    color: active ? '#e8d8e7' : 'rgba(255,255,255,0.50)',
+                    border: active ? '1px solid rgba(173,130,169,0.30)' : '1px solid transparent',
+                    fontSize: '12.5px', fontWeight: active ? 700 : 400, transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.09)'
+                      e.currentTarget.style.color = 'rgba(255,255,255,0.85)'
+                    } else {
+                      e.currentTarget.style.background = 'rgba(173,130,169,0.32)'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = active ? 'rgba(173,130,169,0.22)' : 'transparent'
+                    e.currentTarget.style.color = active ? '#e8d8e7' : 'rgba(255,255,255,0.50)'
+                  }}
+                >
                   <span>{item.label}</span>
                 </div>
               </Link>

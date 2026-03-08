@@ -134,14 +134,28 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
             const active = pathname === item.href
             return (
               <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '8px 10px', borderRadius: '8px', marginBottom: '1px',
-                  background: active ? 'rgba(171,218,209,0.22)' : 'transparent',
-                  color: active ? '#abdad1' : 'rgba(255,255,255,0.42)',
-                  border: active ? '1px solid rgba(171,218,209,0.25)' : '1px solid transparent',
-                  fontSize: '12.5px', fontWeight: 500, transition: 'all 0.13s',
-                }}>
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '8px 10px', borderRadius: '8px', marginBottom: '1px',
+                    background: active ? 'rgba(173,130,169,0.22)' : 'transparent',
+                    color: active ? '#e8d8e7' : 'rgba(255,255,255,0.50)',
+                    border: active ? '1px solid rgba(173,130,169,0.30)' : '1px solid transparent',
+                    fontSize: '12.5px', fontWeight: active ? 700 : 400, transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.09)'
+                      e.currentTarget.style.color = 'rgba(255,255,255,0.85)'
+                    } else {
+                      e.currentTarget.style.background = 'rgba(173,130,169,0.32)'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = active ? 'rgba(173,130,169,0.22)' : 'transparent'
+                    e.currentTarget.style.color = active ? '#e8d8e7' : 'rgba(255,255,255,0.50)'
+                  }}
+                >
                   <span>{item.label}</span>
                 </div>
               </Link>
