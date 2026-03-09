@@ -19,7 +19,7 @@ const SEAT_COLORS = [
   { bg: 'rgba(74,222,128,0.18)', color: '#4ade80' },
   { bg: 'rgba(192,132,252,0.18)', color: '#c084fc' },
 ]
-const NUM_COLOR = { bg: 'var(--paper)', color: 'var(--slate)' }
+const NUM_COLOR = { bg: 'rgba(255,255,255,0.12)', color: 'var(--slate)' }
 
 export default function ScheduleClient({ tournament, players, tables, isOwner: _isOwner }: Props) {
   const supabase = createClient()
@@ -401,7 +401,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
                             <span style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace' }}>{(result.score / 100).toLocaleString()}00</span>
                             <div style={{ textAlign: 'right', minWidth: '68px' }}>
                               <div style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(result.rank)}位</div>
-                              <div style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'monospace', color: result.point >= 0 ? '#0284c7' : 'var(--red)' }}>
+                              <div style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'monospace', color: result.point >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
                                 {formatPoint(result.point)}
                               </div>
                             </div>

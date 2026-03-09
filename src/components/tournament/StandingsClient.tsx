@@ -199,7 +199,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                         <td key={i} style={{
                           padding: '10px 12px', borderBottom: '1px solid var(--paper)',
                           fontFamily: 'monospace', fontWeight: 600,
-                          color: pt === null ? 'var(--mist)' : pt >= 0 ? '#0284c7' : 'var(--red)',
+                          color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
                         }}>{pt === null ? '—' : formatPoint(pt)}</td>
                       ))}
                       <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)' }}>
@@ -227,7 +227,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                       <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)', textAlign: 'right' }}>
                         <strong style={{
                           fontFamily: 'monospace', fontSize: '14px',
-                          color: total >= 0 ? '#0284c7' : 'var(--red)',
+                          color: total >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
                         }}>{formatPoint(total)}</strong>
                       </td>
                     </tr>
@@ -263,7 +263,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                   </div>
                   <strong style={{
                     fontFamily: 'monospace', fontSize: '16px',
-                    color: total >= 0 ? '#0284c7' : 'var(--red)',
+                    color: total >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
                   }}>{formatPoint(total)}</strong>
                 </div>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
@@ -271,7 +271,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                     <span key={i} style={{
                       fontSize: '10px', fontFamily: 'monospace', padding: '2px 6px',
                       borderRadius: '4px', background: 'var(--paper)',
-                      color: pt === null ? 'var(--mist)' : pt >= 0 ? '#0284c7' : 'var(--red)',
+                      color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
                       fontWeight: 600,
                     }}>
                       R{i + 1}:{pt !== null ? formatPoint(pt) : '-'}
