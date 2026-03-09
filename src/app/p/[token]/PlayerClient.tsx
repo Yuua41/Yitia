@@ -14,12 +14,12 @@ interface Props {
 
 const SEAT_LABELS = ['東', '南', '西', '北']
 const SEAT_COLORS = [
-  { bg: '#fef9c3', color: '#a16207' },
-  { bg: '#dbeafe', color: '#1d4ed8' },
-  { bg: '#dcfce7', color: '#166534' },
-  { bg: '#f3e8ff', color: '#6b21a8' },
+  { bg: 'rgba(250,204,21,0.18)', color: '#fbbf24' },
+  { bg: 'rgba(96,165,250,0.18)', color: '#60a5fa' },
+  { bg: 'rgba(74,222,128,0.18)', color: '#4ade80' },
+  { bg: 'rgba(192,132,252,0.18)', color: '#c084fc' },
 ]
-const NUM_COLOR = { bg: 'var(--paper)', color: 'var(--slate)' }
+const NUM_COLOR = { bg: 'rgba(255,255,255,0.12)', color: 'var(--slate)' }
 
 export default function PlayerClient({ player, tournament, players, tables }: Props) {
   const supabase = createClient()
@@ -246,18 +246,18 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
             background: 'radial-gradient(circle, rgba(173,165,130,0.25), transparent 65%)',
             pointerEvents: 'none',
           }} />
-          <div style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: '6px' }}>
+          <div style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: '8px' }}>
             Yitia — Player View
           </div>
+          <div style={{ fontFamily: 'serif', fontSize: '22px', fontWeight: 800, color: '#fff', letterSpacing: '0.05em', marginBottom: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {localPlayer.name}
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, color: '#fff', letterSpacing: '0.07em', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {localPlayer.name}
-            </div>
-            <div style={{ fontFamily: 'monospace', fontSize: '20px', fontWeight: 500, color: myTotal >= 0 ? '#7dd3fc' : '#fca5a5', flexShrink: 0 }}>
-              {myTotal >= 0 ? '+' : '▲'}{Math.abs(myTotal).toFixed(1)}
-            </div>
-            <div style={{ background: 'var(--gold)', color: 'var(--navy)', fontFamily: 'serif', fontSize: '13px', fontWeight: 800, padding: '4px 10px', borderRadius: '7px', flexShrink: 0 }}>
+            <div style={{ background: 'var(--gold)', color: 'var(--navy)', fontFamily: 'serif', fontSize: '12px', fontWeight: 800, padding: '3px 9px', borderRadius: '6px', flexShrink: 0 }}>
               {myRank}位
+            </div>
+            <div style={{ fontFamily: 'monospace', fontSize: '34px', fontWeight: 700, color: myTotal >= 0 ? 'var(--cyan)' : 'var(--red)', lineHeight: 1 }}>
+              {myTotal >= 0 ? '+' : '▲'}{Math.abs(myTotal).toFixed(1)}
             </div>
           </div>
         </div>
