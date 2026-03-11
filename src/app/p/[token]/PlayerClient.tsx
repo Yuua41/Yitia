@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { calcTableResults, calcStandings, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table, Result } from '@/types'
@@ -36,6 +36,12 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   const [extraSticks, setExtraSticks] = useState<Record<string, boolean>>({})
   const [validating, setValidating] = useState<string | null>(null)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({ score: true, adjustment: false, standings: false })
+  const [displayAbsTotal, setDisplayAbsTotal] = useState(0)
+  const [showRank, setShowRank] = useState(false)
+  const [flashTableIds, setFlashTableIds] = useState<Set<string>>(new Set())
+  const hasAnimated = useRef(false)
+  const prevTablesRef = useRef(tables)
+  const isFirstRenderRef = useRef(true)
 
   const noSeat = tournament.config.seatMode === 'none'
   const allowPlayerEntry = tournament.config.allowPlayerEntry !== false
@@ -120,6 +126,53 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
   const myTotal = standings.find(s => s.player.id === player.id)?.total ?? 0
   const myRank = standings.findIndex(s => s.player.id === player.id) + 1
+
+  // ① カウントアップ: マウント時に 0 → myTotal を 800ms でカウント、終了後に順位を表示
+  useEffect(() => {
+    if (hasAnimated.current) {
+      setDisplayAbsTotal(Math.abs(myTotal))
+      return
+    }
+    hasAnimated.current = true
+    const target = Math.abs(myTotal)
+    const duration = 800
+    const start = performance.now()
+    let rafId: number
+    const animate = (now: number) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplayAbsTotal(parseFloat((eased * target).toFixed(1)))
+      if (progress < 1) {
+        rafId = requestAnimationFrame(animate)
+      } else {
+        setDisplayAbsTotal(target)
+        setTimeout(() => setShowRank(true), 300)
+      }
+    }
+    rafId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(rafId)
+  }, [myTotal])
+
+  // ⑤ 更新フラッシュ: localTables が変化した卓を検知してゴールドフラッシュ
+  useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false
+      prevTablesRef.current = localTables
+      return
+    }
+    const changedIds = new Set<string>()
+    localTables.forEach(t => {
+      const prev = prevTablesRef.current.find(p => p.id === t.id)
+      if (prev && JSON.stringify(prev) !== JSON.stringify(t)) changedIds.add(t.id)
+    })
+    prevTablesRef.current = localTables
+    if (changedIds.size > 0) {
+      setFlashTableIds(changedIds)
+      const timer = setTimeout(() => setFlashTableIds(new Set()), 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [localTables])
 
   function toggleSection(key: string) {
     setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
@@ -236,6 +289,34 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
   return (
     <div style={{ minHeight: '100vh', background: 'transparent', padding: '16px' }}>
+      <style>{`
+        @keyframes breathe {
+          0%, 100% { transform: scale(1); opacity: 0.65; }
+          50% { transform: scale(1.18); opacity: 1; }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes slideInDown {
+          from { opacity: 0; transform: translateY(-7px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes flashGold {
+          0% { background-color: transparent; }
+          20% { background-color: rgba(173,165,130,0.22); }
+          100% { background-color: transparent; }
+        }
+        @keyframes popIn {
+          from { opacity: 0; transform: translateY(-5px) scale(0.96); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes mePulse {
+          0% { box-shadow: inset 0 0 0 1px rgba(173,165,130,0); }
+          45% { box-shadow: inset 0 0 0 1px rgba(173,165,130,0.55); }
+          100% { box-shadow: inset 0 0 0 1px rgba(173,165,130,0); }
+        }
+      `}</style>
       <div style={{ maxWidth: '450px', margin: '0 auto' }}>
         <div style={{
           background: 'var(--navy)', borderRadius: '14px', padding: '20px',
@@ -243,21 +324,30 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         }}>
           <div style={{
             position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px',
-            background: 'radial-gradient(circle, rgba(173,165,130,0.25), transparent 65%)',
+            background: `radial-gradient(circle, ${myTotal >= 0 ? 'rgba(173,165,130,0.35)' : 'rgba(239,68,68,0.28)'}, transparent 65%)`,
             pointerEvents: 'none',
+            animation: 'breathe 3s ease-in-out infinite',
           }} />
           <div style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: '8px' }}>
             Yitia — Player View
           </div>
-          <div style={{ fontFamily: 'serif', fontSize: '22px', fontWeight: 800, color: '#fff', letterSpacing: '0.05em', marginBottom: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {localPlayer.name}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ background: 'var(--gold)', color: 'var(--navy)', fontFamily: 'serif', fontSize: '12px', fontWeight: 800, padding: '3px 9px', borderRadius: '6px', flexShrink: 0 }}>
-              {myRank}位
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+            <div style={{ fontFamily: 'serif', fontSize: '22px', fontWeight: 800, color: '#fff', letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+              {localPlayer.name}
             </div>
-            <div style={{ fontFamily: 'monospace', fontSize: '34px', fontWeight: 700, color: myTotal >= 0 ? 'var(--cyan)' : 'var(--red)', lineHeight: 1 }}>
-              {myTotal >= 0 ? '+' : '▲'}{Math.abs(myTotal).toFixed(1)}
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontFamily: 'monospace', fontSize: '52px', fontWeight: 700, color: myTotal >= 0 ? 'var(--cyan)' : 'var(--red)', lineHeight: 1 }}>
+                {myTotal >= 0 ? '+' : '▲'}{displayAbsTotal.toFixed(1)}
+              </div>
+              <div style={{
+                fontFamily: 'serif', fontSize: '16px', fontWeight: 800, color: 'var(--gold)',
+                marginTop: '4px', letterSpacing: '0.05em',
+                opacity: showRank ? 1 : 0,
+                transform: showRank ? 'translateY(0)' : 'translateY(6px)',
+                transition: 'opacity 0.6s ease, transform 0.6s ease',
+              }}>
+                総合 {myRank}位
+              </div>
             </div>
           </div>
         </div>
@@ -270,7 +360,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           {openSections.score && Array.from({ length: tournament.num_rounds }, (_, i) => i + 1).map(roundNum => {
             const myTable = getMyTable(roundNum)
             if (!myTable) return (
-              <div key={roundNum} style={{ padding: '11px 15px', borderBottom: '1px solid var(--paper)', fontSize: '12.5px', color: 'var(--mist)' }}>
+              <div key={roundNum} style={{ padding: '11px 15px', borderBottom: '1px solid var(--paper)', fontSize: '12.5px', color: 'var(--mist)', animation: 'slideInDown 0.25s ease both', animationDelay: `${(roundNum - 1) * 60}ms` }}>
                 {roundNum}回戦 — 卓なし
               </div>
             )
@@ -279,7 +369,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
             const isValidated = myTable.is_validated
             const isSubmitted = myTable.is_submitted
             return (
-              <div key={roundNum} style={{ padding: '11px 15px', borderBottom: '1px solid var(--paper)' }}>
+              <div key={roundNum} style={{ padding: '11px 15px', borderBottom: '1px solid var(--paper)', animation: flashTableIds.has(myTable.id) ? 'flashGold 1.2s ease' : 'slideInDown 0.25s ease both', animationDelay: flashTableIds.has(myTable.id) ? '0ms' : `${(roundNum - 1) * 60}ms` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <div style={{ fontSize: '12.5px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {roundNum}回戦 — 卓{myTable.table_number}
@@ -291,18 +381,23 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   </div>
                   <span style={{
                     fontSize: '9.5px', padding: '2px 7px', borderRadius: '9px', fontFamily: 'monospace',
-                    background: isValidated ? 'var(--cyan-pale)' : isSubmitted ? 'rgba(74,222,128,0.12)' : 'var(--gold-pale)',
+                    background: isValidated
+                      ? 'linear-gradient(90deg, var(--cyan-pale) 25%, rgba(200,197,160,0.38) 50%, var(--cyan-pale) 75%)'
+                      : isSubmitted ? 'rgba(74,222,128,0.12)' : 'var(--gold-pale)',
+                    backgroundSize: isValidated ? '200% auto' : 'auto',
+                    animation: isValidated ? 'shimmer 2.5s linear infinite' : 'none',
                     color: isValidated ? 'var(--cyan-deep)' : isSubmitted ? '#4ade80' : 'var(--gold-dark)',
                   }}>{isValidated ? '確定済み' : isSubmitted ? '送信済み' : '入力中'}</span>
                 </div>
                 {isValidated ? (
                   <div>
-                    <div style={{ textAlign: 'center', padding: '6px 0 10px' }}>
-                      <div style={{ fontFamily: 'monospace', fontSize: '27px', fontWeight: 500, color: (myResult?.point ?? 0) >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0 10px' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(myResult?.rank ?? 0)}位</span>
+                      <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace' }}>素点 {((myResult?.score ?? 0) / 100).toLocaleString()}00</span>
+                      <span style={{ flex: 1 }} />
+                      <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 700, color: (myResult?.point ?? 0) >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
                         {formatPoint(myResult?.point ?? 0)}
-                      </div>
-                      <div style={{ fontSize: '10.5px', color: 'var(--mist)', marginTop: '2px' }}>{Math.floor(myResult?.rank ?? 0)}位</div>
-                      <div style={{ fontSize: '10px', color: 'var(--mist)', marginTop: '1px', fontFamily: 'monospace' }}>素点 {((myResult?.score ?? 0) / 100).toLocaleString()}00</div>
+                      </span>
                     </div>
                     <div style={{ borderTop: '1px solid var(--paper)', paddingTop: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
@@ -544,6 +639,10 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
               <div key={s.player.id} style={{
                 padding: '8px 15px', borderBottom: '1px solid var(--paper)',
                 background: isMe ? 'var(--cyan-pale)' : 'transparent',
+                animation: isMe
+                  ? `popIn 0.3s ease ${i * 40}ms both, mePulse 0.9s ease ${i * 40 + 350}ms both`
+                  : 'slideInDown 0.25s ease both',
+                animationDelay: isMe ? undefined : `${i * 40}ms`,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--mist)', width: '20px', textAlign: 'center' }}>{i + 1}</div>
