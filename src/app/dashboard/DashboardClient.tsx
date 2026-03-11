@@ -548,31 +548,31 @@ export default function DashboardClient({ tournaments }: Props) {
           <div
             onClick={() => setShowForm(true)}
             style={{
-              background: 'rgba(255,255,255,0.03)', border: '1.5px dashed rgba(255,255,255,0.14)',
-              borderRadius: '16px', cursor: 'pointer',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', minHeight: '140px', gap: '10px',
+              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '14px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center',
+              padding: '18px 20px', gap: '14px',
               transition: 'all 0.18s',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.07)'
-              e.currentTarget.style.borderColor = 'rgba(173,165,130,0.55)'
-              e.currentTarget.style.boxShadow = '0 4px 28px rgba(0,0,0,0.4)'
+              e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
+              e.currentTarget.style.borderColor = 'rgba(173,165,130,0.4)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'
-              e.currentTarget.style.boxShadow = 'none'
+              e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
             }}
           >
             <div style={{
-              width: '36px', height: '36px',
-              background: 'linear-gradient(135deg, #ADA582, #7A7455)',
-              borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '20px', color: '#fff', fontWeight: 300,
-              boxShadow: '0 2px 8px rgba(122,116,85,0.3)',
+              width: '40px', height: '40px', borderRadius: '50%',
+              border: '1.5px solid rgba(173,165,130,0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '18px', color: 'var(--cyan-deep)', fontWeight: 300, flexShrink: 0,
             }}>+</div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--slate)', letterSpacing: '-0.01em' }}>新しい大会を作成</div>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.01em' }}>新しい大会を作成</div>
+              <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '2px' }}>大会情報を入力して開始</div>
+            </div>
           </div>
         </div>
       </div>

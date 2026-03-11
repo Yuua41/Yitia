@@ -35,13 +35,17 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   const [swapping, setSwapping] = useState(false)
   const [extraSticks, setExtraSticks] = useState<Record<string, boolean>>({})
   const [validating, setValidating] = useState<string | null>(null)
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ score: true, adjustment: false, standings: false })
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ score: false, adjustment: false, standings: false })
   const [displayAbsTotal, setDisplayAbsTotal] = useState(0)
   const [showRank, setShowRank] = useState(false)
   const [flashTableIds, setFlashTableIds] = useState<Set<string>>(new Set())
   const hasAnimated = useRef(false)
   const prevTablesRef = useRef(tables)
   const isFirstRenderRef = useRef(true)
+  const standingsHasOpened = useRef(false)
+  const [standingsAnimate, setStandingsAnimate] = useState(false)
+  const scoreHasOpened = useRef(false)
+  const [scoreAnimate, setScoreAnimate] = useState(false)
 
   const noSeat = tournament.config.seatMode === 'none'
   const allowPlayerEntry = tournament.config.allowPlayerEntry !== false
@@ -112,15 +116,30 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   }
 
   function getMyTable(roundNum: number) {
-    return localTables.find(t =>
+    return enrichedTables.find(t =>
       t.round_number === roundNum &&
       (t as any).results?.some((r: Result) => r.player_id === player.id)
     )
   }
 
+  // Enrich submitted-but-not-validated tables with calculated points
+  const enrichedTables = localTables.map(t => {
+    if (t.is_submitted && !t.is_validated) {
+      const results = (t as any).results as Result[]
+      if (results?.length) {
+        const calculated = calcTableResults(results, tournament.config)
+        return { ...t, results: calculated.map(c => {
+          const orig = results.find(r => r.id === c.id)
+          return { ...orig, ...c }
+        }) }
+      }
+    }
+    return t
+  })
+
   const standings = calcStandings(
     localPlayers,
-    localTables.filter(t => t.is_validated),
+    enrichedTables.filter(t => t.is_submitted),
     tournament.num_rounds
   )
 
@@ -170,12 +189,23 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
     prevTablesRef.current = localTables
     if (changedIds.size > 0) {
       setFlashTableIds(changedIds)
+      standingsHasOpened.current = false // re-enable animations on next open
+      scoreHasOpened.current = false
       const timer = setTimeout(() => setFlashTableIds(new Set()), 1500)
       return () => clearTimeout(timer)
     }
   }, [localTables])
 
   function toggleSection(key: string) {
+    const opening = !openSections[key]
+    if (key === 'standings' && opening) {
+      setStandingsAnimate(!standingsHasOpened.current)
+      standingsHasOpened.current = true
+    }
+    if (key === 'score' && opening) {
+      setScoreAnimate(!scoreHasOpened.current)
+      scoreHasOpened.current = true
+    }
     setOpenSections(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
@@ -325,6 +355,18 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           from { transform: scaleX(0); }
           to { transform: scaleX(1); }
         }
+        @keyframes pointSlideIn {
+          from { opacity: 0; transform: translateX(12px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes detailFadeIn {
+          from { opacity: 0; max-height: 0; }
+          to { opacity: 1; max-height: 60px; }
+        }
+        @keyframes medalPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.15); }
+        }
       `}</style>
       <div style={{ maxWidth: '450px', margin: '0 auto' }}>
         <div style={{
@@ -337,11 +379,11 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
             pointerEvents: 'none',
             animation: 'breathe 3s ease-in-out infinite',
           }} />
-          <div style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: '8px' }}>
+          <div style={{ fontSize: '11px', fontFamily: 'monospace', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: '8px' }}>
             Yitia — Player View
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-            <div style={{ fontFamily: 'serif', fontSize: '22px', fontWeight: 800, color: '#fff', letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+            <div style={{ fontFamily: 'serif', fontSize: '24px', fontWeight: 800, color: '#fff', letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
               {localPlayer.name}
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -349,7 +391,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                 {myTotal >= 0 ? '+' : '▲'}{displayAbsTotal.toFixed(1)}
               </div>
               <div style={{
-                fontFamily: 'serif', fontSize: '16px', fontWeight: 800,
+                fontFamily: 'serif', fontSize: '18px', fontWeight: 800,
                 marginTop: '4px', letterSpacing: '0.05em',
                 opacity: showRank ? 1 : 0,
                 transform: showRank ? 'translateY(0)' : 'translateY(6px)',
@@ -368,14 +410,14 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         </div>
 
         <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-          <div onClick={() => toggleSection('score')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: openSections.score ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
+          <div onClick={() => toggleSection('score')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '15px', fontWeight: 700, borderBottom: openSections.score ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>{allowPlayerEntry ? 'スコア入力・卓確認' : '卓確認'}</span>
-            <span style={{ fontSize: '10px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.score ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+            <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.score ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
           </div>
           {openSections.score && Array.from({ length: tournament.num_rounds }, (_, i) => i + 1).map(roundNum => {
             const myTable = getMyTable(roundNum)
             if (!myTable) return (
-              <div key={roundNum} style={{ padding: '11px 15px', borderBottom: '1px solid var(--paper)', fontSize: '12.5px', color: 'var(--mist)', animation: 'slideInDown 0.25s ease both', animationDelay: `${(roundNum - 1) * 60}ms` }}>
+              <div key={roundNum} style={{ padding: '11px 15px', borderBottom: '1px solid var(--paper)', fontSize: '13.5px', color: 'var(--mist)', ...(scoreAnimate ? { animation: 'slideInDown 0.25s ease both', animationDelay: `${(roundNum - 1) * 60}ms` } : {}) }}>
                 {roundNum}回戦 — 卓なし
               </div>
             )
@@ -384,18 +426,18 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
             const isValidated = myTable.is_validated
             const isSubmitted = myTable.is_submitted
             return (
-              <div key={roundNum} style={{ padding: '11px 15px', borderBottom: '1px solid var(--paper)', animation: flashTableIds.has(myTable.id) ? 'flashGold 1.2s ease' : 'slideInDown 0.25s ease both', animationDelay: flashTableIds.has(myTable.id) ? '0ms' : `${(roundNum - 1) * 60}ms` }}>
+              <div key={roundNum} style={{ padding: '11px 15px', borderBottom: '1px solid var(--paper)', ...(flashTableIds.has(myTable.id) ? { animation: 'flashGold 1.2s ease' } : scoreAnimate ? { animation: 'slideInDown 0.25s ease both', animationDelay: `${(roundNum - 1) * 60}ms` } : {}) }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <div style={{ fontSize: '12.5px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {roundNum}回戦 — 卓{myTable.table_number}
                     {!noSeat && (
-                      <span style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--mist)' }}>
+                      <span style={{ fontSize: '10.5px', fontFamily: 'monospace', color: 'var(--mist)' }}>
                         ({SEAT_LABELS[myResult?.seat_index ?? 0]}家)
                       </span>
                     )}
                   </div>
                   <span style={{
-                    fontSize: '9.5px', padding: '2px 7px', borderRadius: '9px', fontFamily: 'monospace',
+                    fontSize: '10.5px', padding: '2px 7px', borderRadius: '9px', fontFamily: 'monospace',
                     background: isValidated
                       ? 'linear-gradient(90deg, var(--cyan-pale) 25%, rgba(200,197,160,0.38) 50%, var(--cyan-pale) 75%)'
                       : isSubmitted ? 'rgba(74,222,128,0.12)' : 'var(--gold-pale)',
@@ -407,16 +449,16 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                 {isValidated ? (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0 10px' }}>
-                      <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(myResult?.rank ?? 0)}位</span>
-                      <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace' }}>素点 {((myResult?.score ?? 0) / 100).toLocaleString()}00</span>
+                      <span style={{ fontSize: '12px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(myResult?.rank ?? 0)}位</span>
+                      <span style={{ fontSize: '12px', color: 'var(--mist)', fontFamily: 'monospace' }}>素点 {((myResult?.score ?? 0) / 100).toLocaleString()}00</span>
                       <span style={{ flex: 1 }} />
-                      <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 700, color: (myResult?.point ?? 0) >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: '24px', fontWeight: 700, color: (myResult?.point ?? 0) >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
                         {formatPoint(myResult?.point ?? 0)}
                       </span>
                     </div>
                     <div style={{ borderTop: '1px solid var(--paper)', paddingTop: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)' }}>卓{myTable.table_number} 全員の結果</div>
+                        <div style={{ fontSize: '10.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)' }}>卓{myTable.table_number} 全員の結果</div>
                       </div>
                       {sortResults(results).map((r, ri) => {
                         const rPlayer = localPlayers.find(p => p.id === r.player_id)
@@ -427,12 +469,12 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                             <div style={{ width: '18px', height: '18px', borderRadius: noSeat ? '4px' : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: noSeat ? '10px' : '9px', fontWeight: 700, fontFamily: noSeat ? 'monospace' : 'serif', background: sc2.bg, color: sc2.color, flexShrink: 0 }}>
                               {noSeat ? `${ri + 1}` : SEAT_LABELS[r.seat_index]}
                             </div>
-                            <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
+                            <div style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
                               {rPlayer?.name}
                             </div>
-                            <span style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace', minWidth: '38px', textAlign: 'right' }}>{(r.score / 100).toLocaleString()}00</span>
-                            <span style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(r.rank)}位</span>
-                            <span style={{ fontFamily: 'monospace', fontSize: '11.5px', fontWeight: 600, minWidth: '52px', textAlign: 'right', color: r.point >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                            <span style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace', minWidth: '38px', textAlign: 'right' }}>{(r.score / 100).toLocaleString()}00</span>
+                            <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(r.rank)}位</span>
+                            <span style={{ fontFamily: 'monospace', fontSize: '12.5px', fontWeight: 600, minWidth: '52px', textAlign: 'right', color: r.point >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
                               {formatPoint(r.point)}
                             </span>
                           </div>
@@ -442,31 +484,51 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   </div>
                 ) : isSubmitted ? (
                   <div>
-                    <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: '#4ade80', marginBottom: '8px' }}>
-                      卓{myTable.table_number} 送信済みスコア
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 0 10px' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(myResult?.rank ?? 0)}位</span>
+                      <span style={{ fontSize: '12px', color: 'var(--mist)', fontFamily: 'monospace' }}>素点 {((myResult?.score ?? 0) / 100).toLocaleString()}00</span>
+                      <span style={{ flex: 1 }} />
+                      <span style={{ fontFamily: 'monospace', fontSize: '24px', fontWeight: 700, color: (myResult?.point ?? 0) >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                        {formatPoint(myResult?.point ?? 0)}
+                      </span>
                     </div>
-                    {sortResults(results).map((r, ri) => {
-                      const rPlayer = localPlayers.find(p => p.id === r.player_id)
-                      const isMe = r.player_id === player.id
-                      const sc2 = noSeat ? NUM_COLOR : SEAT_COLORS[r.seat_index]
-                      return (
-                        <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0', borderBottom: '1px solid var(--paper)' }}>
-                          <div style={{ width: '18px', height: '18px', borderRadius: noSeat ? '4px' : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: noSeat ? '10px' : '9px', fontWeight: 700, fontFamily: noSeat ? 'monospace' : 'serif', background: sc2.bg, color: sc2.color, flexShrink: 0 }}>
-                            {noSeat ? `${ri + 1}` : SEAT_LABELS[r.seat_index]}
+                    <div style={{ borderTop: '1px solid var(--paper)', paddingTop: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <div style={{ fontSize: '10.5px', fontFamily: 'monospace', color: '#4ade80' }}>卓{myTable.table_number} 送信済み（暫定）</div>
+                        {allowPlayerEntry && (
+                          <button onClick={() => handleRevertSubmit(myTable)} style={{
+                            padding: '3px 10px', fontSize: '10.5px', fontWeight: 600,
+                            background: 'rgba(255,255,255,0.08)', color: 'var(--mist)',
+                            border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px',
+                            cursor: 'pointer',
+                          }}>修正する</button>
+                        )}
+                      </div>
+                      {sortResults(results).map((r, ri) => {
+                        const rPlayer = localPlayers.find(p => p.id === r.player_id)
+                        const isMe = r.player_id === player.id
+                        const sc2 = noSeat ? NUM_COLOR : SEAT_COLORS[r.seat_index]
+                        return (
+                          <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0', borderBottom: '1px solid var(--paper)' }}>
+                            <div style={{ width: '18px', height: '18px', borderRadius: noSeat ? '4px' : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: noSeat ? '10px' : '9px', fontWeight: 700, fontFamily: noSeat ? 'monospace' : 'serif', background: sc2.bg, color: sc2.color, flexShrink: 0 }}>
+                              {noSeat ? `${ri + 1}` : SEAT_LABELS[r.seat_index]}
+                            </div>
+                            <div style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
+                              {rPlayer?.name}
+                            </div>
+                            <span style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace', minWidth: '38px', textAlign: 'right' }}>{(r.score / 100).toLocaleString()}00</span>
+                            <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(r.rank)}位</span>
+                            <span style={{ fontFamily: 'monospace', fontSize: '12.5px', fontWeight: 600, minWidth: '52px', textAlign: 'right', color: r.point >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                              {formatPoint(r.point)}
+                            </span>
                           </div>
-                          <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
-                            {rPlayer?.name}
-                          </div>
-                          <span style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: 600, color: r.score < 0 ? 'var(--red)' : 'var(--ink)' }}>
-                            {r.score < 0 ? '▲' : ''}{(Math.abs(r.score) / 100).toLocaleString()}00
-                          </span>
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
                   </div>
                 ) : allowPlayerEntry ? (
                   <div>
-                    <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '10.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)', marginBottom: '8px' }}>
                       卓{myTable.table_number} スコア入力（全員分）
                     </div>
                     {sortResults(results).map((r, ri) => {
@@ -492,7 +554,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                               }
                             } : undefined}
                             style={{
-                              flex: 1, fontSize: '12px', fontWeight: 600,
+                              flex: 1, fontSize: '13px', fontWeight: 600,
                               color: isMe ? 'var(--cyan-deep)' : 'var(--ink)',
                               cursor: noSeat ? 'pointer' : 'default',
                               padding: noSeat ? '2px 6px' : '0',
@@ -507,7 +569,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                             border: `1.5px solid ${sc.negative ? 'rgba(239,68,68,0.3)' : 'var(--border-md)'}`,
                             background: sc.negative ? 'var(--red-pale)' : 'var(--paper)',
                             color: sc.negative ? 'var(--red)' : 'var(--mist)',
-                            fontSize: '9px', fontWeight: 700, cursor: 'pointer',
+                            fontSize: '10px', fontWeight: 700, cursor: 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>▲</button>
                           <input
@@ -518,11 +580,11 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                             style={{
                               width: '80px', padding: '6px 8px',
                               border: '1.5px solid var(--border-md)', borderRadius: '6px',
-                              fontSize: '11.5px', fontWeight: 600, textAlign: 'right',
+                              fontSize: '13px', fontWeight: 600, textAlign: 'right',
                               fontFamily: 'monospace', background: 'var(--paper)', color: '#fff', outline: 'none',
                             }}
                           />
-                          <span style={{ fontSize: '9.5px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>00</span>
+                          <span style={{ fontSize: '10.5px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>00</span>
                         </div>
                       )
                     })}
@@ -531,17 +593,17 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                         flex: 1, padding: '8px',
                         background: submitting === myTable.id ? 'var(--mist)' : 'linear-gradient(135deg, #ADA582, #7A7455)',
                         color: '#fff', border: 'none', borderRadius: '7px',
-                        fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
+                        fontSize: '13.5px', fontWeight: 600, cursor: 'pointer',
                       }}>{submitting === myTable.id ? '送信中...' : 'スコアを送信'}</button>
                     </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '10.5px', color: 'var(--mist)', cursor: 'pointer' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '11.5px', color: 'var(--mist)', cursor: 'pointer' }}>
                       <input type="checkbox" checked={extraSticks[myTable.id] ?? false} onChange={e => setExtraSticks(s => ({ ...s, [myTable.id]: e.target.checked }))} />
                       卓外点棒あり（合計チェックをスキップ）
                     </label>
                   </div>
                 ) : (
                   <div>
-                    <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--mist)', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '10.5px', fontFamily: 'monospace', color: 'var(--mist)', marginBottom: '8px' }}>
                       卓{myTable.table_number} メンバー
                     </div>
                     {sortResults(results).map((r, ri) => {
@@ -553,13 +615,13 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                           <div style={{ width: '18px', height: '18px', borderRadius: noSeat ? '4px' : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: noSeat ? '10px' : '9px', fontWeight: 700, fontFamily: noSeat ? 'monospace' : 'serif', background: sc2.bg, color: sc2.color, flexShrink: 0 }}>
                             {noSeat ? `${ri + 1}` : SEAT_LABELS[r.seat_index]}
                           </div>
-                          <div style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
+                          <div style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
                             {rPlayer?.name}
                           </div>
                         </div>
                       )
                     })}
-                    <div style={{ marginTop: '10px', padding: '8px 12px', background: 'var(--paper)', borderRadius: '7px', fontSize: '11px', color: 'var(--mist)', textAlign: 'center' }}>
+                    <div style={{ marginTop: '10px', padding: '8px 12px', background: 'var(--paper)', borderRadius: '7px', fontSize: '12px', color: 'var(--mist)', textAlign: 'center' }}>
                       スコアは管理者が入力します
                     </div>
                   </div>
@@ -571,13 +633,13 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
         {/* 得点調整 (accordion, default closed) */}
         <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-          <div onClick={() => toggleSection('adjustment')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: openSections.adjustment ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
+          <div onClick={() => toggleSection('adjustment')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '15px', fontWeight: 700, borderBottom: openSections.adjustment ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>得点調整</span>
-            <span style={{ fontSize: '10px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.adjustment ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+            <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.adjustment ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
           </div>
           {openSections.adjustment && (
             <div style={{ padding: '12px 15px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--mist)', marginBottom: '8px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '8px' }}>
                 チョンボ等のペナルティや調整ポイントを入力してください
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -586,7 +648,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   border: `1.5px solid ${adjustmentNeg ? 'rgba(239,68,68,0.3)' : 'var(--border-md)'}`,
                   background: adjustmentNeg ? 'var(--red-pale)' : 'var(--paper)',
                   color: adjustmentNeg ? 'var(--red)' : 'var(--cyan-deep)',
-                  fontSize: '12px', fontWeight: 700, cursor: 'pointer',
+                  fontSize: '13px', fontWeight: 700, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>{adjustmentNeg ? '▲' : '+'}</button>
                 <input
@@ -597,11 +659,11 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   style={{
                     flex: 1, padding: '6px 8px',
                     border: '1.5px solid var(--border-md)', borderRadius: '6px',
-                    fontSize: '13px', fontWeight: 600, textAlign: 'right',
+                    fontSize: '14px', fontWeight: 600, textAlign: 'right',
                     fontFamily: 'monospace', background: 'var(--paper)', color: '#fff', outline: 'none',
                   }}
                 />
-                <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>pt</span>
+                <span style={{ fontSize: '12px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>pt</span>
                 <button
                   onClick={async () => {
                     setSavingAdjustment(true)
@@ -617,12 +679,12 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     padding: '6px 14px', flexShrink: 0,
                     background: savingAdjustment ? 'var(--mist)' : 'linear-gradient(135deg, #ADA582, #7A7455)',
                     color: '#fff', border: 'none', borderRadius: '7px',
-                    fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                    fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                   }}
                 >{savingAdjustment ? '保存中...' : '保存'}</button>
               </div>
               {(localPlayer.bonus ?? 0) !== 0 && (
-                <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--mist)' }}>
+                <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--mist)' }}>
                   現在の調整: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: localPlayer.bonus < 0 ? 'var(--red)' : 'var(--cyan-deep)' }}>
                     {formatPoint(localPlayer.bonus)}
                   </span>
@@ -634,23 +696,26 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
         {/* 全体成績 (accordion, default closed) */}
         <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-          <div onClick={() => toggleSection('standings')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '13.5px', fontWeight: 700, borderBottom: openSections.standings ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
+          <div onClick={() => toggleSection('standings')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '15px', fontWeight: 700, borderBottom: openSections.standings ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>全体成績</span>
-            <span style={{ fontSize: '10px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.standings ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+            <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.standings ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
           </div>
           {openSections.standings && standings.map((s, i) => {
             const isMe = s.player.id === player.id
             const barWidth = Math.abs(s.total) / standingsMaxAbs * 100
+            const anim = standingsAnimate
             return (
               <div key={s.player.id} style={{
                 padding: '8px 15px', borderBottom: '1px solid var(--paper)',
                 background: isMe ? 'var(--cyan-pale)' : 'transparent',
                 position: 'relative', overflow: 'hidden',
-                animation: isMe
-                  ? `popIn 0.3s ease ${i * 40}ms both, mePulse 0.9s ease ${i * 40 + 350}ms both`
-                  : 'slideInDown 0.25s ease both',
-                animationDelay: isMe ? undefined : `${i * 40}ms`,
+                ...(anim ? {
+                  animation: isMe
+                    ? `popIn 0.3s ease ${i * 50}ms both, mePulse 0.9s ease ${i * 50 + 400}ms both`
+                    : `slideInDown 0.3s ease ${i * 50}ms both`,
+                } : {}),
               }}>
+                {/* score bar */}
                 <div style={{
                   position: 'absolute', left: 0, top: 0, bottom: 0,
                   width: `${barWidth}%`,
@@ -658,24 +723,42 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     ? 'linear-gradient(90deg, rgba(173,165,130,0.08), rgba(173,165,130,0.15))'
                     : 'linear-gradient(90deg, rgba(239,68,68,0.06), rgba(239,68,68,0.12))',
                   transformOrigin: 'left',
-                  animation: `standingsBarGrow 0.6s ease ${i * 40 + 200}ms both`,
+                  ...(anim ? { animation: `standingsBarGrow 0.6s ease ${i * 50 + 200}ms both` } : {}),
                 }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
-                  <div style={{
-                    fontFamily: 'monospace', fontSize: i < 3 ? '12px' : '11px',
-                    fontWeight: i < 3 ? 700 : 400,
-                    color: i === 0 ? 'var(--gold)' : i < 3 ? 'var(--cyan-deep)' : 'var(--mist)',
-                    width: '20px', textAlign: 'center',
-                  }}>{i + 1}</div>
-                  <div style={{ flex: 1, fontSize: '12.5px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
+                  {i < 3 ? (
+                    <div style={{
+                      width: '22px', height: '22px', borderRadius: '50%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '12px',
+                      background: i === 0 ? 'linear-gradient(135deg, #D4AF37, #F5D060)' : i === 1 ? 'linear-gradient(135deg, #8C9298, #C0C8D0)' : 'linear-gradient(135deg, #A0522D, #CD8032)',
+                      color: i === 0 ? '#2a2000' : i === 1 ? '#1a1a2a' : '#2a1500',
+                      fontWeight: 800, fontFamily: 'monospace', flexShrink: 0,
+                      boxShadow: i === 0 ? '0 0 8px rgba(212,175,55,0.4)' : 'none',
+                      animation: anim && i === 0 ? `medalPulse 2s ease-in-out 600ms infinite` : 'none',
+                    }}>{i + 1}</div>
+                  ) : (
+                    <div style={{
+                      fontFamily: 'monospace', fontSize: '12px', fontWeight: 400,
+                      color: 'var(--mist)', width: '22px', textAlign: 'center', flexShrink: 0,
+                    }}>{i + 1}</div>
+                  )}
+                  <div style={{ flex: 1, fontSize: '13.5px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
                     {s.player.name}{isMe ? '（自分）' : ''}
                   </div>
-                  <div style={{ fontFamily: 'monospace', fontSize: '12.5px', fontWeight: 600, color: s.total >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                  <div style={{
+                    fontFamily: 'monospace', fontSize: '13.5px', fontWeight: 600,
+                    color: s.total >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+                    ...(anim ? { animation: `pointSlideIn 0.4s ease ${i * 50 + 150}ms both` } : {}),
+                  }}>
                     {formatPoint(s.total)}
                   </div>
                 </div>
                 {s.roundPoints.some(pt => pt !== null) && (
-                  <div style={{ marginTop: '4px', paddingLeft: '28px' }}>
+                  <div style={{
+                    marginTop: '4px', paddingLeft: '30px', overflow: 'hidden',
+                    ...(anim ? { animation: `detailFadeIn 0.5s ease ${i * 50 + 300}ms both` } : {}),
+                  }}>
                     <div style={{
                       display: 'grid',
                       gridTemplateColumns: `repeat(${tournament.num_rounds}, minmax(0, 1fr))`,
@@ -683,10 +766,11 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     }}>
                       {s.roundPoints.map((pt, ri) => (
                         <span key={ri} style={{
-                          fontSize: '9px', fontFamily: 'monospace', padding: '2px 3px',
+                          fontSize: '10px', fontFamily: 'monospace', padding: '2px 3px',
                           borderRadius: '4px', background: 'rgba(255,255,255,0.08)',
                           color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
                           textAlign: 'center', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden',
+                          ...(anim ? { animation: `popIn 0.25s ease ${i * 50 + 350 + ri * 80}ms both` } : {}),
                         }}>
                           R{ri + 1}:{pt !== null ? formatPoint(pt) : '—'}
                         </span>
@@ -695,7 +779,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     {(s.player.bonus ?? 0) !== 0 && (
                       <span style={{
                         display: 'inline-block', marginTop: '2px',
-                        fontSize: '9px', fontFamily: 'monospace', padding: '2px 5px',
+                        fontSize: '10px', fontFamily: 'monospace', padding: '2px 5px',
                         borderRadius: '4px', background: 'var(--red-pale)',
                         color: 'var(--red)',
                       }}>
@@ -709,7 +793,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           })}
         </div>
 
-        <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--mist)', padding: '8px 0 24px', fontFamily: 'monospace' }}>
+        <div style={{ textAlign: 'center', fontSize: '11px', color: 'var(--mist)', padding: '8px 0 24px', fontFamily: 'monospace' }}>
           Yitia — {tournament.name}
         </div>
       </div>
