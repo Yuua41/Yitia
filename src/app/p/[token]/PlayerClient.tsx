@@ -126,6 +126,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
   const myTotal = standings.find(s => s.player.id === player.id)?.total ?? 0
   const myRank = standings.findIndex(s => s.player.id === player.id) + 1
+  const standingsMaxAbs = Math.max(...standings.map(s => Math.abs(s.total)), 1)
 
   // ① カウントアップ: マウント時に 0 → myTotal を 800ms でカウント、終了後に順位を表示
   useEffect(() => {
@@ -316,6 +317,14 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           45% { box-shadow: inset 0 0 0 1px rgba(173,165,130,0.55); }
           100% { box-shadow: inset 0 0 0 1px rgba(173,165,130,0); }
         }
+        @keyframes rankShimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes standingsBarGrow {
+          from { transform: scaleX(0); }
+          to { transform: scaleX(1); }
+        }
       `}</style>
       <div style={{ maxWidth: '450px', margin: '0 auto' }}>
         <div style={{
@@ -340,11 +349,17 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                 {myTotal >= 0 ? '+' : '▲'}{displayAbsTotal.toFixed(1)}
               </div>
               <div style={{
-                fontFamily: 'serif', fontSize: '16px', fontWeight: 800, color: 'var(--gold)',
+                fontFamily: 'serif', fontSize: '16px', fontWeight: 800,
                 marginTop: '4px', letterSpacing: '0.05em',
                 opacity: showRank ? 1 : 0,
                 transform: showRank ? 'translateY(0)' : 'translateY(6px)',
                 transition: 'opacity 0.6s ease, transform 0.6s ease',
+                background: 'linear-gradient(90deg, var(--gold) 20%, rgba(255,240,200,0.95) 50%, var(--gold) 80%)',
+                backgroundSize: '200% auto',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                animation: showRank ? 'rankShimmer 3s linear infinite' : 'none',
               }}>
                 総合 {myRank}位
               </div>
@@ -402,10 +417,6 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     <div style={{ borderTop: '1px solid var(--paper)', paddingTop: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                         <div style={{ fontSize: '9.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)' }}>卓{myTable.table_number} 全員の結果</div>
-                        <button onClick={() => handleUnvalidate(myTable)} style={{
-                          padding: '3px 10px', background: 'var(--paper)', border: '1px solid var(--border-md)',
-                          borderRadius: '5px', fontSize: '10px', fontWeight: 600, color: 'var(--mist)', cursor: 'pointer',
-                        }}>スコア修正</button>
                       </div>
                       {sortResults(results).map((r, ri) => {
                         const rPlayer = localPlayers.find(p => p.id === r.player_id)
@@ -452,12 +463,6 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                         </div>
                       )
                     })}
-                    <button onClick={() => handleRevertSubmit(myTable)} style={{
-                      width: '100%', marginTop: '10px', padding: '8px',
-                      background: 'var(--paper)', color: 'var(--ink)',
-                      border: '1.5px solid var(--border-md)', borderRadius: '7px',
-                      fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
-                    }}>修正する</button>
                   </div>
                 ) : allowPlayerEntry ? (
                   <div>
@@ -635,17 +640,33 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           </div>
           {openSections.standings && standings.map((s, i) => {
             const isMe = s.player.id === player.id
+            const barWidth = Math.abs(s.total) / standingsMaxAbs * 100
             return (
               <div key={s.player.id} style={{
                 padding: '8px 15px', borderBottom: '1px solid var(--paper)',
                 background: isMe ? 'var(--cyan-pale)' : 'transparent',
+                position: 'relative', overflow: 'hidden',
                 animation: isMe
                   ? `popIn 0.3s ease ${i * 40}ms both, mePulse 0.9s ease ${i * 40 + 350}ms both`
                   : 'slideInDown 0.25s ease both',
                 animationDelay: isMe ? undefined : `${i * 40}ms`,
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: '11px', color: 'var(--mist)', width: '20px', textAlign: 'center' }}>{i + 1}</div>
+                <div style={{
+                  position: 'absolute', left: 0, top: 0, bottom: 0,
+                  width: `${barWidth}%`,
+                  background: s.total >= 0
+                    ? 'linear-gradient(90deg, rgba(173,165,130,0.08), rgba(173,165,130,0.15))'
+                    : 'linear-gradient(90deg, rgba(239,68,68,0.06), rgba(239,68,68,0.12))',
+                  transformOrigin: 'left',
+                  animation: `standingsBarGrow 0.6s ease ${i * 40 + 200}ms both`,
+                }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+                  <div style={{
+                    fontFamily: 'monospace', fontSize: i < 3 ? '12px' : '11px',
+                    fontWeight: i < 3 ? 700 : 400,
+                    color: i === 0 ? 'var(--gold)' : i < 3 ? 'var(--cyan-deep)' : 'var(--mist)',
+                    width: '20px', textAlign: 'center',
+                  }}>{i + 1}</div>
                   <div style={{ flex: 1, fontSize: '12.5px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
                     {s.player.name}{isMe ? '（自分）' : ''}
                   </div>

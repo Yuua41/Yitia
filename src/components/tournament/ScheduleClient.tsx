@@ -278,18 +278,18 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
         <div>
-          <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{tournament.name} › </span>
-          <span style={{ fontSize: '14px', fontWeight: 700 }}>卓組・成績入力</span>
+          <span style={{ fontSize: '12px', color: 'var(--mist)' }}>{tournament.name} › </span>
+          <span style={{ fontSize: '15px', fontWeight: 700 }}>卓組・成績入力</span>
         </div>
         <span style={{
           display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
-          fontSize: '10px', fontWeight: 700, fontFamily: 'monospace',
+          fontSize: '11px', fontWeight: 700, fontFamily: 'monospace',
           background: 'var(--paper)', color: 'var(--slate)', border: '1px solid var(--border)',
         }}>確定 {validatedCount}/{localTables.length}</span>
       </div>
       <div className="schedule-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>卓組・成績入力</div>
-        <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '18px' }}>
+        <div style={{ fontSize: '13px', color: 'var(--mist)', marginBottom: '18px' }}>
           {tournament.name} — R{activeRound} / {tournament.num_rounds}
         </div>
         <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '20px' }}>
@@ -299,7 +299,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
               <button key={r} onClick={() => setActiveRound(r)} style={{
                 padding: '6px 15px', borderRadius: '16px',
                 border: `1.5px solid ${activeRound === r ? 'var(--navy)' : 'var(--border-md)'}`,
-                fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'monospace',
+                fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'monospace',
                 background: activeRound === r ? 'var(--navy)' : 'transparent',
                 color: activeRound === r ? '#fff' : allDone ? 'var(--cyan-deep)' : 'var(--mist)',
               }}>R{r}{allDone ? ' ✓' : ''}</button>
@@ -328,8 +328,8 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
                   padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   background: statusBg, color: '#fff',
                 }}>
-                  <span style={{ fontFamily: 'serif', fontSize: '15px', fontWeight: 800 }}>卓 {table.table_number}</span>
-                  <span style={{ fontSize: '9px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.13)', padding: '2px 8px', borderRadius: '3px' }}>
+                  <span style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 800 }}>卓 {table.table_number}</span>
+                  <span style={{ fontSize: '10px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.13)', padding: '2px 8px', borderRadius: '3px' }}>
                     {statusLabel}
                   </span>
                 </div>
@@ -347,7 +347,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
                         <div style={{
                           width: '20px', height: '20px', borderRadius: noSeat ? '4px' : '50%',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: noSeat ? '11px' : '10px', fontWeight: 700, flexShrink: 0,
+                          fontSize: noSeat ? '12px' : '11px', fontWeight: 700, flexShrink: 0,
                           fontFamily: noSeat ? 'monospace' : 'serif',
                           background: seatColor.bg, color: seatColor.color,
                         }}>{seatLabel}</div>
@@ -380,7 +380,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
                               setDropTargetId(null)
                             }}
                             style={{
-                              flex: 1, fontSize: '12.5px', fontWeight: 600,
+                              flex: 1, fontSize: '13.5px', fontWeight: 600,
                               padding: '4px 8px', borderRadius: '6px', cursor: 'grab',
                               background: dropTargetId === result.id ? 'var(--cyan-pale)' : 'var(--paper)',
                               border: `1.5px dashed ${dropTargetId === result.id ? 'var(--cyan-deep)' : 'var(--border-md)'}`,
@@ -392,16 +392,16 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
                             {player?.seat_order != null ? `${player.seat_order + 1}. ` : ''}{player?.name ?? '?'}
                           </div>
                         ) : (
-                          <div style={{ flex: 1, fontSize: '12.5px', fontWeight: 600 }}>
+                          <div style={{ flex: 1, fontSize: '13.5px', fontWeight: 600 }}>
                             {player?.seat_order != null ? `${player.seat_order + 1}. ` : ''}{player?.name ?? '?'}
                           </div>
                         )}
                         {isValidated ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace' }}>{(result.score / 100).toLocaleString()}00</span>
+                            <span style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace' }}>{(result.score / 100).toLocaleString()}00</span>
                             <div style={{ textAlign: 'right', minWidth: '68px' }}>
-                              <div style={{ fontSize: '9px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(result.rank)}位</div>
-                              <div style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'monospace', color: result.point >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
+                              <div style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(result.rank)}位</div>
+                              <div style={{ fontSize: '14px', fontWeight: 700, fontFamily: 'monospace', color: result.point >= 0 ? 'var(--cyan-deep)' : 'var(--red)' }}>
                                 {formatPoint(result.point)}
                               </div>
                             </div>
@@ -413,7 +413,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
                               border: `1.5px solid ${sc.negative ? 'rgba(239,68,68,0.3)' : 'var(--border-md)'}`,
                               background: sc.negative ? 'var(--red-pale)' : 'var(--paper)',
                               color: sc.negative ? 'var(--red)' : 'var(--mist)',
-                              fontSize: '9px', fontWeight: 700, cursor: 'pointer',
+                              fontSize: '10px', fontWeight: 700, cursor: 'pointer',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                             }}>▲</button>
                             <input
@@ -424,11 +424,11 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
                               style={{
                                 width: '80px', padding: '6px 7px',
                                 background: 'var(--paper)', border: '1.5px solid var(--border-md)',
-                                borderRadius: '7px', fontSize: '13px', fontWeight: 600,
-                                textAlign: 'right', fontFamily: 'monospace', outline: 'none',
+                                borderRadius: '7px', fontSize: '14px', fontWeight: 600,
+                                textAlign: 'right', fontFamily: 'monospace', color: '#fff', outline: 'none',
                               }}
                             />
-                            <span style={{ fontSize: '9.5px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>00</span>
+                            <span style={{ fontSize: '10.5px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>00</span>
                           </>
                         )}
                       </div>
@@ -439,21 +439,21 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
                   {isValidated ? (
                     <>
                       {table.has_extra_sticks && (
-                        <div style={{ fontSize: '10.5px', color: 'var(--mist)', padding: '2px 4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ fontSize: '11.5px', color: 'var(--mist)', padding: '2px 4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span style={{ color: 'var(--cyan-deep)' }}>✓</span> 卓外点棒あり
                         </div>
                       )}
                       <button onClick={() => handleUnvalidate(table.id)} style={{
                         width: '100%', padding: '6px', background: 'transparent',
                         border: '1.5px solid var(--border-md)', borderRadius: '7px',
-                        fontSize: '11.5px', fontWeight: 600, cursor: 'pointer', color: 'var(--slate)',
+                        fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', color: 'var(--slate)',
                       }}>スコア修正</button>
                     </>
                   ) : (
                     <>
                       <label style={{
                         display: 'flex', alignItems: 'center', gap: '6px',
-                        fontSize: '11px', color: 'var(--mist)', cursor: 'pointer',
+                        fontSize: '12px', color: 'var(--mist)', cursor: 'pointer',
                         padding: '3px 4px', borderRadius: '5px',
                       }}>
                         <input
@@ -468,7 +468,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
                         width: '100%', padding: '8px',
                         background: saving === table.id ? 'var(--mist)' : 'var(--cyan-deep)',
                         border: 'none', borderRadius: '7px',
-                        fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', color: '#fff',
+                        fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', color: '#fff',
                       }}>{saving === table.id ? '確定中...' : 'スコア確定'}</button>
                     </>
                   )}
