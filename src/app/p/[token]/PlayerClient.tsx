@@ -28,7 +28,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   const [localPlayer, setLocalPlayer] = useState(player)
   const [scores, setScores] = useState<Record<string, { value: string; negative: boolean }>>({})
   const [submitting, setSubmitting] = useState<string | null>(null)
-  const [adjustmentInput, setAdjustmentInput] = useState(Math.abs(player.bonus ?? 0).toString())
+  const [adjustmentInput, setAdjustmentInput] = useState((player.bonus ?? 0) === 0 ? '' : Math.abs(player.bonus ?? 0).toString())
   const [adjustmentNeg, setAdjustmentNeg] = useState((player.bonus ?? 0) < 0)
   const [savingAdjustment, setSavingAdjustment] = useState(false)
   const [swapSource, setSwapSource] = useState<{ resultId: string; playerId: string } | null>(null)
@@ -67,7 +67,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
       const me = p.find(x => x.id === player.id)
       if (me) {
         setLocalPlayer(me)
-        setAdjustmentInput(Math.abs(me.bonus ?? 0).toString())
+        setAdjustmentInput((me.bonus ?? 0) === 0 ? '' : Math.abs(me.bonus ?? 0).toString())
         setAdjustmentNeg((me.bonus ?? 0) < 0)
       }
     }
@@ -514,7 +514,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                               width: '80px', padding: '6px 8px',
                               border: '1.5px solid var(--border-md)', borderRadius: '6px',
                               fontSize: '11.5px', fontWeight: 600, textAlign: 'right',
-                              fontFamily: 'monospace', background: 'var(--paper)', outline: 'none',
+                              fontFamily: 'monospace', background: 'var(--paper)', color: '#fff', outline: 'none',
                             }}
                           />
                           <span style={{ fontSize: '9.5px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>00</span>
@@ -593,7 +593,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     flex: 1, padding: '6px 8px',
                     border: '1.5px solid var(--border-md)', borderRadius: '6px',
                     fontSize: '13px', fontWeight: 600, textAlign: 'right',
-                    fontFamily: 'monospace', background: 'var(--paper)', outline: 'none',
+                    fontFamily: 'monospace', background: 'var(--paper)', color: '#fff', outline: 'none',
                   }}
                 />
                 <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>pt</span>

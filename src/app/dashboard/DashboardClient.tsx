@@ -634,13 +634,13 @@ export default function DashboardClient({ tournaments }: Props) {
             width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto',
             boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
           }}>
-            <div style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '20px' }}>新しい大会を作成</div>
+            <div style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '20px' }}>新しい大会を作成</div>
 
             <div style={{ marginBottom: '13px' }}>
               <label style={labelStyle}>大会名 *</label>
               <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="例：第1回 春季大会" />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '13px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '13px' }}>
               <div>
                 <label style={labelStyle}>開催日</label>
                 <input type="date" value={heldOn} onChange={e => setHeldOn(e.target.value)} style={inputStyle} />
@@ -689,7 +689,7 @@ export default function DashboardClient({ tournaments }: Props) {
                   ))}
                 </div>
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '5px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--mist)', marginTop: '5px' }}>
                 プレイヤー1〜{playerCount} として登録されます。名前は大会設定で一括変更できます。
                 {playerCount % 4 !== 0 && (
                   <span style={{ color: 'var(--slate)', marginLeft: '4px' }}>
@@ -701,7 +701,7 @@ export default function DashboardClient({ tournaments }: Props) {
 
             <div style={{ marginBottom: '16px' }}>
               <label style={labelStyle}>備考</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: '70px', resize: 'vertical', lineHeight: 1.65 }} />
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, height: 'auto', padding: '10px 12px', minHeight: '70px', resize: 'vertical', lineHeight: 1.65 }} />
             </div>
 
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
@@ -733,22 +733,22 @@ export default function DashboardClient({ tournaments }: Props) {
 }
 
 const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: '10px', fontWeight: 700,
+  display: 'block', fontSize: '12px', fontWeight: 700,
   letterSpacing: '0.14em', textTransform: 'uppercase',
   color: 'var(--mist)', marginBottom: '5px',
 }
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 12px',
+  width: '100%', height: '44px', padding: '0 12px',
   background: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.13)',
-  borderRadius: '9px', fontSize: '13px', color: 'var(--ink)', outline: 'none',
-  fontFamily: 'inherit',
+  borderRadius: '9px', fontSize: '15px', color: 'var(--ink)', outline: 'none',
+  fontFamily: 'inherit', boxSizing: 'border-box',
 }
 const btnPrimary: React.CSSProperties = {
-  padding: '8px 20px', background: 'linear-gradient(135deg, #ADA582, #7A7455)', color: '#fff',
-  border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+  padding: '10px 22px', background: 'linear-gradient(135deg, #ADA582, #7A7455)', color: '#fff',
+  border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
 }
 const btnOutline: React.CSSProperties = {
-  padding: '8px 18px', background: 'rgba(255,255,255,0.05)',
+  padding: '10px 20px', background: 'rgba(255,255,255,0.05)',
   border: '1.5px solid rgba(255,255,255,0.14)', color: 'var(--slate)',
-  borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+  borderRadius: '8px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
 }
