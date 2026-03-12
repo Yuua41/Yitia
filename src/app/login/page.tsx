@@ -29,29 +29,30 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'radial-gradient(ellipse 80% 60% at 30% 20%, rgba(173,165,130,0.12) 0%, transparent 60%), var(--navy)',
+      background: 'radial-gradient(ellipse 80% 60% at 30% 20%, rgba(0,240,255,0.08) 0%, transparent 60%), var(--paper)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '16px',
     }}>
       <div style={{
-        background: 'rgba(255,255,255,0.06)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        border: '1px solid rgba(255,255,255,0.12)',
+        background: 'rgba(15,21,40,0.75)',
+        backdropFilter: 'blur(30px)',
+        WebkitBackdropFilter: 'blur(30px)',
+        border: '1px solid rgba(0,240,255,0.15)',
         borderRadius: '16px',
         padding: '40px 36px',
         width: '100%',
         maxWidth: '360px',
-        boxShadow: '0 24px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)',
+        boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 0 40px rgba(0,240,255,0.05), inset 0 1px 0 rgba(0,240,255,0.1)',
       }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
               width: '34px', height: '34px',
-              background: 'linear-gradient(135deg, #c8c5a0, #AD82A9 180%)',
+              background: 'linear-gradient(135deg, #00f0ff, #ff00aa 180%)',
+              boxShadow: '0 2px 12px rgba(0,240,255,0.35)',
               borderRadius: '8px',
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
               padding: '6px', gap: '1.5px',
@@ -59,12 +60,12 @@ export default function LoginPage() {
               {[1,0,1,0,1,0,1,0,1].map((show, i) => (
                 <div key={i} style={{
                   borderRadius: '50%',
-                  background: show ? '#1a2f2d' : 'transparent',
+                  background: show ? '#0a0e1a' : 'transparent',
                   opacity: show ? 0.82 : 0,
                 }} />
               ))}
             </div>
-            <span style={{ fontFamily: 'monospace', fontSize: '26px', fontWeight: 500, color: 'var(--ink)', letterSpacing: '0.04em' }}>
+            <span style={{ fontFamily: 'monospace', fontSize: '26px', fontWeight: 500, color: 'var(--ink)', letterSpacing: '0.04em', textShadow: '0 0 10px rgba(0,240,255,0.4)' }}>
               Yitia
             </span>
           </div>
@@ -85,7 +86,7 @@ export default function LoginPage() {
               required
               style={{
                 width: '100%', padding: '11px 14px',
-                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
+                background: 'rgba(0,240,255,0.04)', border: '1px solid rgba(0,240,255,0.12)',
                 borderRadius: '12px', fontSize: '14px', color: 'var(--ink)', outline: 'none',
               }}
             />
@@ -101,7 +102,7 @@ export default function LoginPage() {
               required
               style={{
                 width: '100%', padding: '11px 14px',
-                background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.13)',
+                background: 'rgba(0,240,255,0.04)', border: '1px solid rgba(0,240,255,0.12)',
                 borderRadius: '12px', fontSize: '14px', color: 'var(--ink)', outline: 'none',
               }}
             />
@@ -118,7 +119,8 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%', padding: '11px',
-              background: loading ? 'var(--mist)' : 'linear-gradient(135deg, #ADA582, #7A7455)',
+              background: loading ? 'var(--mist)' : 'linear-gradient(135deg, #00c8d4, #00a0aa)',
+              boxShadow: loading ? 'none' : '0 0 20px rgba(0,240,255,0.25)',
               color: '#fff', border: 'none', borderRadius: '12px',
               fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
               marginTop: '8px', letterSpacing: '0.01em',

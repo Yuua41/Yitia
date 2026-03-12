@@ -16,10 +16,10 @@ const SEAT_LABELS = ['東', '南', '西', '北']
 const SEAT_COLORS = [
   { bg: 'rgba(250,204,21,0.18)', color: '#fbbf24' },
   { bg: 'rgba(96,165,250,0.18)', color: '#60a5fa' },
-  { bg: 'rgba(74,222,128,0.18)', color: '#4ade80' },
+  { bg: 'rgba(0,255,170,0.18)', color: '#00ffaa' },
   { bg: 'rgba(192,132,252,0.18)', color: '#c084fc' },
 ]
-const NUM_COLOR = { bg: 'rgba(255,255,255,0.12)', color: 'var(--slate)' }
+const NUM_COLOR = { bg: 'rgba(0,240,255,0.12)', color: 'var(--slate)' }
 
 export default function PlayerClient({ player, tournament, players, tables }: Props) {
   const supabase = createClient()
@@ -333,9 +333,9 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           from { opacity: 0; transform: translateY(-7px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes flashGold {
+        @keyframes flashCyan {
           0% { background-color: transparent; }
-          20% { background-color: rgba(173,165,130,0.22); }
+          20% { background-color: rgba(0,240,255,0.22); }
           100% { background-color: transparent; }
         }
         @keyframes popIn {
@@ -343,9 +343,9 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes mePulse {
-          0% { box-shadow: inset 0 0 0 1px rgba(173,165,130,0); }
-          45% { box-shadow: inset 0 0 0 1px rgba(173,165,130,0.55); }
-          100% { box-shadow: inset 0 0 0 1px rgba(173,165,130,0); }
+          0% { box-shadow: inset 0 0 0 1px rgba(0,240,255,0); }
+          45% { box-shadow: inset 0 0 0 1px rgba(0,240,255,0.55); }
+          100% { box-shadow: inset 0 0 0 1px rgba(0,240,255,0); }
         }
         @keyframes rankShimmer {
           0% { background-position: -200% center; }
@@ -375,7 +375,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         }}>
           <div style={{
             position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px',
-            background: `radial-gradient(circle, ${myTotal >= 0 ? 'rgba(173,165,130,0.35)' : 'rgba(239,68,68,0.28)'}, transparent 65%)`,
+            background: `radial-gradient(circle, ${myTotal >= 0 ? 'rgba(0,240,255,0.35)' : 'rgba(239,68,68,0.28)'}, transparent 65%)`,
             pointerEvents: 'none',
             animation: 'breathe 3s ease-in-out infinite',
           }} />
@@ -396,7 +396,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                 opacity: showRank ? 1 : 0,
                 transform: showRank ? 'translateY(0)' : 'translateY(6px)',
                 transition: 'opacity 0.6s ease, transform 0.6s ease',
-                background: 'linear-gradient(90deg, var(--gold) 20%, rgba(255,240,200,0.95) 50%, var(--gold) 80%)',
+                background: 'linear-gradient(90deg, #00f0ff 20%, #ff00aa 50%, #00f0ff 80%)',
                 backgroundSize: '200% auto',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -409,7 +409,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           </div>
         </div>
 
-        <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+        <div style={{ background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
           <div onClick={() => toggleSection('score')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '15px', fontWeight: 700, borderBottom: openSections.score ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>{allowPlayerEntry ? 'スコア入力・卓確認' : '卓確認'}</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.score ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -426,7 +426,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
             const isValidated = myTable.is_validated
             const isSubmitted = myTable.is_submitted
             return (
-              <div key={roundNum} style={{ padding: '11px 15px', borderBottom: '1px solid var(--paper)', ...(flashTableIds.has(myTable.id) ? { animation: 'flashGold 1.2s ease' } : scoreAnimate ? { animation: 'slideInDown 0.25s ease both', animationDelay: `${(roundNum - 1) * 60}ms` } : {}) }}>
+              <div key={roundNum} style={{ padding: '11px 15px', borderBottom: '1px solid var(--paper)', ...(flashTableIds.has(myTable.id) ? { animation: 'flashCyan 1.2s ease' } : scoreAnimate ? { animation: 'slideInDown 0.25s ease both', animationDelay: `${(roundNum - 1) * 60}ms` } : {}) }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {roundNum}回戦 — 卓{myTable.table_number}
@@ -439,11 +439,11 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   <span style={{
                     fontSize: '10.5px', padding: '2px 7px', borderRadius: '9px', fontFamily: 'monospace',
                     background: isValidated
-                      ? 'linear-gradient(90deg, var(--cyan-pale) 25%, rgba(200,197,160,0.38) 50%, var(--cyan-pale) 75%)'
-                      : isSubmitted ? 'rgba(74,222,128,0.12)' : 'var(--gold-pale)',
+                      ? 'linear-gradient(90deg, var(--cyan-pale) 25%, rgba(0,240,255,0.38) 50%, var(--cyan-pale) 75%)'
+                      : isSubmitted ? 'rgba(0,255,170,0.12)' : 'var(--gold-pale)',
                     backgroundSize: isValidated ? '200% auto' : 'auto',
                     animation: isValidated ? 'shimmer 2.5s linear infinite' : 'none',
-                    color: isValidated ? 'var(--cyan-deep)' : isSubmitted ? '#4ade80' : 'var(--gold-dark)',
+                    color: isValidated ? 'var(--cyan-deep)' : isSubmitted ? '#00ffaa' : 'var(--gold-dark)',
                   }}>{isValidated ? '確定済み' : isSubmitted ? '送信済み' : '入力中'}</span>
                 </div>
                 {isValidated ? (
@@ -494,12 +494,12 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     </div>
                     <div style={{ borderTop: '1px solid var(--paper)', paddingTop: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <div style={{ fontSize: '10.5px', fontFamily: 'monospace', color: '#4ade80' }}>卓{myTable.table_number} 送信済み（暫定）</div>
+                        <div style={{ fontSize: '10.5px', fontFamily: 'monospace', color: '#00ffaa' }}>卓{myTable.table_number} 送信済み（暫定）</div>
                         {allowPlayerEntry && (
                           <button onClick={() => handleRevertSubmit(myTable)} style={{
                             padding: '3px 10px', fontSize: '10.5px', fontWeight: 600,
-                            background: 'rgba(255,255,255,0.08)', color: 'var(--mist)',
-                            border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px',
+                            background: 'rgba(0,240,255,0.06)', color: 'var(--mist)',
+                            border: '1px solid rgba(0,240,255,0.12)', borderRadius: '6px',
                             cursor: 'pointer',
                           }}>修正する</button>
                         )}
@@ -591,7 +591,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
                       <button onClick={() => submitScores(myTable)} disabled={submitting === myTable.id} style={{
                         flex: 1, padding: '8px',
-                        background: submitting === myTable.id ? 'var(--mist)' : 'linear-gradient(135deg, #ADA582, #7A7455)',
+                        background: submitting === myTable.id ? 'var(--mist)' : 'linear-gradient(135deg, #00c8d4, #00a0aa)',
                         color: '#fff', border: 'none', borderRadius: '7px',
                         fontSize: '13.5px', fontWeight: 600, cursor: 'pointer',
                       }}>{submitting === myTable.id ? '送信中...' : 'スコアを送信'}</button>
@@ -632,7 +632,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         </div>
 
         {/* 得点調整 (accordion, default closed) */}
-        <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+        <div style={{ background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
           <div onClick={() => toggleSection('adjustment')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '15px', fontWeight: 700, borderBottom: openSections.adjustment ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>得点調整</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.adjustment ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -677,7 +677,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   disabled={savingAdjustment}
                   style={{
                     padding: '6px 14px', flexShrink: 0,
-                    background: savingAdjustment ? 'var(--mist)' : 'linear-gradient(135deg, #ADA582, #7A7455)',
+                    background: savingAdjustment ? 'var(--mist)' : 'linear-gradient(135deg, #00c8d4, #00a0aa)',
                     color: '#fff', border: 'none', borderRadius: '7px',
                     fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                   }}
@@ -695,7 +695,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         </div>
 
         {/* 全体成績 (accordion, default closed) */}
-        <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+        <div style={{ background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
           <div onClick={() => toggleSection('standings')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '15px', fontWeight: 700, borderBottom: openSections.standings ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>全体成績</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.standings ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -720,7 +720,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   position: 'absolute', left: 0, top: 0, bottom: 0,
                   width: `${barWidth}%`,
                   background: s.total >= 0
-                    ? 'linear-gradient(90deg, rgba(173,165,130,0.08), rgba(173,165,130,0.15))'
+                    ? 'linear-gradient(90deg, rgba(0,240,255,0.08), rgba(0,240,255,0.15))'
                     : 'linear-gradient(90deg, rgba(239,68,68,0.06), rgba(239,68,68,0.12))',
                   transformOrigin: 'left',
                   ...(anim ? { animation: `standingsBarGrow 0.6s ease ${i * 50 + 200}ms both` } : {}),
@@ -767,7 +767,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                       {s.roundPoints.map((pt, ri) => (
                         <span key={ri} style={{
                           fontSize: '10px', fontFamily: 'monospace', padding: '2px 3px',
-                          borderRadius: '4px', background: 'rgba(255,255,255,0.08)',
+                          borderRadius: '4px', background: 'rgba(0,240,255,0.06)',
                           color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
                           textAlign: 'center', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden',
                           ...(anim ? { animation: `popIn 0.25s ease ${i * 50 + 350 + ri * 80}ms both` } : {}),

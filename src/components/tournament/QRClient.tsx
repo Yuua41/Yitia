@@ -29,9 +29,9 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
       `}</style>
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <div className="no-print qr-header" style={{
-          height: '52px', background: 'rgba(14,26,24,0.82)',
+          height: '52px', background: 'rgba(10,14,30,0.85)',
           backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          borderBottom: '1px solid rgba(0,240,255,0.08)',
           padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         }}>
           <div>
@@ -46,7 +46,7 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
           </div>
           <div className="no-print" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
             <button onClick={() => window.print()} style={{
-              padding: '8px 16px', background: 'var(--gold)', color: 'var(--navy)',
+              padding: '8px 16px', background: '#5B6976', color: '#fff',
               border: 'none', borderRadius: '8px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
             }}>PDF出力</button>
           </div>
@@ -55,10 +55,10 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
               const adminUrl = `${origin}/a/${adminToken}`
               return (
                 <div style={{
-                  background: 'var(--navy)', border: '2px solid var(--cyan-deep)',
+                  background: 'rgba(15,21,40,0.6)', border: '2px solid var(--cyan-deep)',
                   borderRadius: '12px', padding: '20px', textAlign: 'center',
                   marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' as const, justifyContent: 'center',
-                  boxShadow: '0 2px 12px rgba(61,125,115,0.15)',
+                  boxShadow: '0 2px 16px rgba(0,240,255,0.15)',
                 }}>
                   <div style={{ background: '#fff', borderRadius: '10px', padding: '8px', flexShrink: 0 }}>
                     <QRCode value={adminUrl} size={110} />
@@ -88,9 +88,9 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
                 const url = `${origin}/p/${player.token}`
                 return (
                   <div key={player.id} style={{
-                    background: 'rgba(255,255,255,0.06)',
+                    background: 'rgba(15,21,40,0.5)',
                     backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255,255,255,0.09)',
+                    border: '1px solid rgba(0,240,255,0.10)',
                     borderRadius: '12px', padding: '16px', textAlign: 'center',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
                   }}>
@@ -123,7 +123,7 @@ function QRCode({ value, size }: { value: string; size: number }) {
       QRCodeLib.toCanvas(canvasRef.current!, value, {
         width: size,
         margin: 1,
-        color: { dark: '#1a2f2d', light: '#ffffff' },
+        color: { dark: '#0a0e1a', light: '#ffffff' },
       })
     })
   }, [value, size])

@@ -88,17 +88,19 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
     if (rank === 1) return {
       background: 'linear-gradient(135deg, #D4AF37, #F5D060)',
       color: '#2a2000',
-      boxShadow: '0 0 8px rgba(212,175,55,0.4)',
+      boxShadow: '0 0 12px rgba(212,175,55,0.5), 0 0 4px rgba(212,175,55,0.3)',
     }
     if (rank === 2) return {
       background: 'linear-gradient(135deg, #8C9298, #C0C8D0)',
       color: '#1a1a2a',
+      boxShadow: '0 0 8px rgba(192,200,208,0.3)',
     }
     if (rank === 3) return {
       background: 'linear-gradient(135deg, #A0522D, #CD8032)',
       color: '#2a1500',
+      boxShadow: '0 0 8px rgba(205,128,50,0.3)',
     }
-    return { background: 'var(--paper)', color: 'var(--slate)' }
+    return { background: 'var(--paper)', color: 'var(--slate)', border: '1px solid rgba(0,240,255,0.08)' }
   }
 
   const thStyle = (key?: SortKey): React.CSSProperties => ({
@@ -172,9 +174,9 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
         }
       `}</style>
       <div className="standings-header" style={{
-        height: '52px', background: 'rgba(14,26,24,0.82)',
+        height: '52px', background: 'rgba(10,14,30,0.85)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
+        borderBottom: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
         <div>
@@ -189,7 +191,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
           }}>CSV出力</button>
           {isOwner && (
             <button onClick={saveAdjustments} disabled={savingAdj} style={{
-              padding: '6px 14px', background: 'var(--gold)', color: 'var(--navy)',
+              padding: '6px 14px', background: '#9EA18A', color: '#0a0e1a',
               border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
               cursor: 'pointer', opacity: savingAdj ? 0.6 : 1,
             }}>
@@ -201,7 +203,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
       <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{
           fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px',
-          background: 'linear-gradient(90deg, var(--ink) 20%, var(--gold) 50%, var(--ink) 80%)',
+          background: 'linear-gradient(90deg, var(--ink) 20%, var(--cyan) 40%, var(--gold) 60%, var(--ink) 80%)',
           backgroundSize: '200% auto',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
@@ -219,7 +221,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
           }}>CSV出力</button>
           {isOwner && (
             <button onClick={saveAdjustments} disabled={savingAdj} style={{
-              padding: '8px 16px', background: 'var(--gold)', color: 'var(--navy)',
+              padding: '8px 16px', background: '#9EA18A', color: '#0a0e1a',
               border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
               cursor: 'pointer', opacity: savingAdj ? 0.6 : 1, flex: 1,
             }}>
@@ -230,7 +232,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
 
         {/* Desktop: Table View */}
         <div className="standings-table-view">
-          <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)', overflowX: 'auto' }}>
+          <div style={{ background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
               <thead>
                 <tr>
@@ -253,7 +255,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                       animation: `stRowSlide 0.3s ease ${idx * 40}ms both`,
                       transition: 'background 0.15s',
                     }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,240,255,0.04)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                       <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
@@ -304,7 +306,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                           position: 'absolute', right: 0, top: 0, bottom: 0,
                           width: `${barWidth}%`,
                           background: total >= 0
-                            ? 'linear-gradient(270deg, rgba(173,165,130,0.12), transparent)'
+                            ? 'linear-gradient(270deg, rgba(0,240,255,0.12), transparent)'
                             : 'linear-gradient(270deg, rgba(239,68,68,0.10), transparent)',
                           transformOrigin: 'right',
                           animation: `stBarGrow 0.6s ease ${idx * 40 + 200}ms both`,
@@ -331,9 +333,9 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
             const barWidth = Math.abs(total) / maxAbs * 100
             return (
               <div key={player.id} style={{
-                background: 'rgba(255,255,255,0.05)',
+                background: 'rgba(15,21,40,0.5)',
                 backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px',
+                border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px',
                 padding: '12px 14px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
                 position: 'relative', overflow: 'hidden',
                 animation: `stCardPop 0.3s ease ${idx * 50}ms both`,
@@ -343,7 +345,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                   position: 'absolute', left: 0, top: 0, bottom: 0,
                   width: `${barWidth}%`,
                   background: total >= 0
-                    ? 'linear-gradient(90deg, rgba(173,165,130,0.06), rgba(173,165,130,0.14))'
+                    ? 'linear-gradient(90deg, rgba(0,240,255,0.06), rgba(0,240,255,0.14))'
                     : 'linear-gradient(90deg, rgba(239,68,68,0.05), rgba(239,68,68,0.11))',
                   transformOrigin: 'left',
                   animation: `stBarGrow 0.6s ease ${idx * 50 + 200}ms both`,
@@ -369,7 +371,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                   {roundPoints.map((pt, i) => (
                     <span key={i} style={{
                       fontSize: '10px', fontFamily: 'monospace', padding: '2px 6px',
-                      borderRadius: '4px', background: 'rgba(255,255,255,0.08)',
+                      borderRadius: '4px', background: 'rgba(0,240,255,0.06)',
                       color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
                       fontWeight: 600,
                       animation: `stChipPop 0.2s ease ${idx * 50 + 300 + i * 60}ms both`,
@@ -408,7 +410,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
 
         {/* Point Progression Chart */}
         {tournament.num_rounds > 0 && ranked.length > 0 && (
-          <PointChart ranked={ranked} numRounds={tournament.num_rounds} />
+          <PointChart ranked={ranked} numRounds={tournament.num_rounds} adjustments={adjustments} />
         )}
       </div>
     </div>
@@ -431,7 +433,7 @@ interface ChartEntry {
   rank: number
 }
 
-function PointChart({ ranked, numRounds }: { ranked: ChartEntry[]; numRounds: number }) {
+function PointChart({ ranked, numRounds, adjustments }: { ranked: ChartEntry[]; numRounds: number; adjustments: Record<string, number> }) {
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [progress, setProgress] = useState(0) // 0 → numRounds, float for smooth animation
@@ -489,11 +491,12 @@ function PointChart({ ranked, numRounds }: { ranked: ChartEntry[]; numRounds: nu
   // Compute cumulative points per player
   const topN = ranked.slice(0, 20) // limit to top 20
   const cumulativeData = topN.map(entry => {
-    const cumulative: number[] = [0] // start at 0
-    let sum = 0
+    const adj = adjustments[entry.player.id] ?? (entry.player.bonus ?? 0)
+    const cumulative: number[] = [adj] // start from adjustment
+    let sum = adj
     for (let r = 0; r < numRounds; r++) {
       sum += entry.roundPoints[r] ?? 0
-      cumulative.push(sum)
+      cumulative.push(Math.round(sum * 10) / 10)
     }
     return { player: entry.player, cumulative, rank: entry.rank }
   })
@@ -521,9 +524,9 @@ function PointChart({ ranked, numRounds }: { ranked: ChartEntry[]; numRounds: nu
   return (
     <div ref={containerRef} style={{
       marginTop: '24px',
-      background: 'rgba(255,255,255,0.05)',
+      background: 'rgba(15,21,40,0.5)',
       backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-      border: '1px solid rgba(255,255,255,0.09)',
+      border: '1px solid rgba(0,240,255,0.10)',
       borderRadius: '12px',
       padding: '16px 8px 12px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -586,7 +589,7 @@ function PointChart({ ranked, numRounds }: { ranked: ChartEntry[]; numRounds: nu
         {Array.from({ length: numRounds + 1 }, (_, i) => (
           <line key={`vl-${i}`}
             x1={scaleX(i)} y1={marginTop} x2={scaleX(i)} y2={marginTop + chartHeight}
-            stroke={i <= progress ? 'rgba(255,255,255,0.05)' : 'transparent'}
+            stroke={i <= progress ? 'rgba(15,21,40,0.5)' : 'transparent'}
             strokeWidth={1}
             style={{ transition: 'stroke 0.3s' }} />
         ))}

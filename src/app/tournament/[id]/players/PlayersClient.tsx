@@ -135,9 +135,9 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
       `}</style>
 
       <div className="players-header" style={{
-        height: '52px', background: 'rgba(14,26,24,0.82)',
+        height: '52px', background: 'rgba(10,14,30,0.85)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
+        borderBottom: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
         <div>
@@ -160,9 +160,9 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
 
           {/* 参加者一覧 */}
           <div style={{
-            background: 'rgba(255,255,255,0.05)',
+            background: 'rgba(15,21,40,0.5)',
             backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-            border: '1.5px solid rgba(255,255,255,0.09)',
+            border: '1.5px solid rgba(0,240,255,0.10)',
             borderRadius: '12px', overflow: 'hidden',
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
           }}>
@@ -267,7 +267,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
             }}>
               <div style={{
                 width: '24px', height: '24px', borderRadius: '50%',
-                background: 'var(--cyan-pale)', border: '1px solid rgba(61,125,115,0.2)',
+                background: 'var(--cyan-pale)', border: '1px solid rgba(0,240,255,0.2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '12px', fontWeight: 700, color: 'var(--cyan-deep)', flexShrink: 0,
               }}>+</div>
@@ -312,7 +312,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
               {['連絡先', 'メモ', 'プロ同卓設定'].map(label => (
                 <span key={label} style={{
                   padding: '5px 12px', borderRadius: '6px',
-                  background: 'rgba(255,255,255,0.07)', border: '1px solid var(--border)',
+                  background: 'rgba(0,240,255,0.05)', border: '1px solid var(--border)',
                   fontSize: '11px', color: 'var(--mist)',
                 }}>{label}</span>
               ))}
@@ -348,11 +348,11 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: 'rgba(16,28,26,0.96)',
+              background: 'rgba(10,14,30,0.96)',
               backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-              border: '1px solid rgba(255,255,255,0.11)',
+              border: '1px solid rgba(0,240,255,0.12)',
               borderRadius: '16px', padding: '28px',
-              textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(0,240,255,0.08)',
               maxWidth: '300px', width: '90%',
             }}
           >
@@ -375,8 +375,8 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
             <button
               onClick={() => setQrPlayerId(null)}
               style={{
-                padding: '7px 20px', background: 'rgba(255,255,255,0.08)',
-                border: '1px solid rgba(255,255,255,0.13)', borderRadius: '8px',
+                padding: '7px 20px', background: 'rgba(0,240,255,0.08)',
+                border: '1px solid rgba(0,240,255,0.15)', borderRadius: '8px',
                 fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: 'var(--slate)',
               }}
             >閉じる</button>
@@ -395,7 +395,7 @@ function QRCode({ value, size }: { value: string; size: number }) {
       QRCodeLib.toCanvas(canvasRef.current!, value, {
         width: size,
         margin: 1,
-        color: { dark: '#1a2f2d', light: '#ffffff' },
+        color: { dark: '#0a0e1a', light: '#ffffff' },
       })
     })
   }, [value, size])

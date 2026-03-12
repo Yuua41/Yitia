@@ -16,10 +16,10 @@ const SEAT_LABELS = ['東', '南', '西', '北']
 const SEAT_COLORS = [
   { bg: 'rgba(250,204,21,0.18)', color: '#fbbf24' },
   { bg: 'rgba(96,165,250,0.18)', color: '#60a5fa' },
-  { bg: 'rgba(74,222,128,0.18)', color: '#4ade80' },
+  { bg: 'rgba(0,255,170,0.18)', color: '#00ffaa' },
   { bg: 'rgba(192,132,252,0.18)', color: '#c084fc' },
 ]
-const NUM_COLOR = { bg: 'rgba(255,255,255,0.12)', color: 'var(--slate)' }
+const NUM_COLOR = { bg: 'rgba(0,240,255,0.12)', color: 'var(--slate)' }
 
 export default function ScheduleClient({ tournament, players, tables, isOwner: _isOwner }: Props) {
   const supabase = createClient()
@@ -272,9 +272,9 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
         }
       `}</style>
       <div className="schedule-header" style={{
-        height: '52px', background: 'rgba(14,26,24,0.82)',
+        height: '52px', background: 'rgba(10,14,30,0.85)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
+        borderBottom: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
         <div>
@@ -314,13 +314,13 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
             const hasExtra = extraSticks[table.id] ?? false
 
             const statusLabel = isValidated ? '✓ 確定済み' : isSubmitted ? '確定待ち' : '入力中'
-            const statusBg = isValidated ? '#7A7455' : isSubmitted ? '#b45309' : 'var(--navy-mid)'
+            const statusBg = isValidated ? '#00a0aa' : isSubmitted ? '#b45309' : 'var(--navy-mid)'
 
             return (
               <div key={table.id} style={{
-                background: 'rgba(255,255,255,0.05)',
+                background: 'rgba(15,21,40,0.5)',
                 backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-                border: `1.5px solid ${isValidated ? 'rgba(173,165,130,0.4)' : isSubmitted ? 'rgba(180,83,9,0.45)' : 'rgba(255,255,255,0.09)'}`,
+                border: `1.5px solid ${isValidated ? 'rgba(0,240,255,0.4)' : isSubmitted ? 'rgba(180,83,9,0.45)' : 'rgba(0,240,255,0.10)'}`,
                 borderRadius: '12px', overflow: 'hidden',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
               }}>
@@ -329,7 +329,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
                   background: statusBg, color: '#fff',
                 }}>
                   <span style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 800 }}>卓 {table.table_number}</span>
-                  <span style={{ fontSize: '10px', fontFamily: 'monospace', background: 'rgba(255,255,255,0.13)', padding: '2px 8px', borderRadius: '3px' }}>
+                  <span style={{ fontSize: '10px', fontFamily: 'monospace', background: 'rgba(0,240,255,0.12)', padding: '2px 8px', borderRadius: '3px' }}>
                     {statusLabel}
                   </span>
                 </div>

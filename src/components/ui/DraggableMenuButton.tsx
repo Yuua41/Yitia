@@ -58,7 +58,7 @@ export default function DraggableMenuButton({ onClick, storageKey = 'hamburger-p
     if (!dragging.current) return
     const dx = e.clientX - startPos.current.x
     const dy = e.clientY - startPos.current.y
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasMoved.current = true
+    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) hasMoved.current = true
     if (!hasMoved.current) return
     const newPos = clamp(startBtn.current.x - dx, startBtn.current.y - dy)
     setPos(newPos)
@@ -93,13 +93,13 @@ export default function DraggableMenuButton({ onClick, storageKey = 'hamburger-p
         alignItems: 'center',
         justifyContent: 'center',
         background: 'var(--navy)',
-        border: '1px solid rgba(173,165,130,0.4)',
+        border: '1px solid rgba(0,240,255,0.35)',
         borderRadius: '12px',
-        color: '#c8c5a0',
+        color: '#00f0ff',
         fontSize: '22px',
         cursor: 'grab',
         touchAction: 'none',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+        boxShadow: '0 2px 16px rgba(0,240,255,0.25), 0 2px 12px rgba(0,0,0,0.4)',
         userSelect: 'none',
         WebkitUserSelect: 'none',
       }}
