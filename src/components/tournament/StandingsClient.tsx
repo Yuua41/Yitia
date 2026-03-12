@@ -44,6 +44,8 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
     return sortDir === 'asc' ? va - vb : vb - va
   })
 
+  const maxAbs = Math.max(...sorted.map(s => Math.abs(s.total)), 1)
+
   async function saveAdjustments() {
     setSavingAdj(true)
     for (const [playerId, bonus] of Object.entries(adjustments)) {
@@ -82,6 +84,23 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
     URL.revokeObjectURL(url)
   }
 
+  function rankBadgeStyle(rank: number): React.CSSProperties {
+    if (rank === 1) return {
+      background: 'linear-gradient(135deg, #D4AF37, #F5D060)',
+      color: '#2a2000',
+      boxShadow: '0 0 8px rgba(212,175,55,0.4)',
+    }
+    if (rank === 2) return {
+      background: 'linear-gradient(135deg, #8C9298, #C0C8D0)',
+      color: '#1a1a2a',
+    }
+    if (rank === 3) return {
+      background: 'linear-gradient(135deg, #A0522D, #CD8032)',
+      color: '#2a1500',
+    }
+    return { background: 'var(--paper)', color: 'var(--slate)' }
+  }
+
   const thStyle = (key?: SortKey): React.CSSProperties => ({
     padding: '8px 12px', textAlign: 'left',
     fontSize: '9.5px', fontFamily: 'monospace', letterSpacing: '0.12em',
@@ -106,6 +125,34 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
           .standings-header-btns { display: none !important; }
           .standings-content { padding: 16px !important; }
           .standings-content-btns { display: flex !important; }
+        }
+        @keyframes stRowSlide {
+          from { opacity: 0; transform: translateY(-6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes stBarGrow {
+          from { transform: scaleX(0); }
+          to { transform: scaleX(1); }
+        }
+        @keyframes stPointSlide {
+          from { opacity: 0; transform: translateX(10px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes stMedalPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.12); }
+        }
+        @keyframes stCardPop {
+          from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes stChipPop {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes stShimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
         }
       `}</style>
       <div className="standings-header" style={{
@@ -173,21 +220,25 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                 </tr>
               </thead>
               <tbody>
-                {sorted.map(({ player, roundPoints, total, rank, isTied }) => {
-                  const rkBg = rank === 1 ? 'var(--gold)' : rank === 2 ? 'var(--slate)' : rank === 3 ? '#94a3b8' : 'var(--paper)'
-                  const rkColor = rank <= 3 ? '#fff' : 'var(--slate)'
+                {sorted.map(({ player, roundPoints, total, rank, isTied }, idx) => {
+                  const badge = rankBadgeStyle(rank)
                   const adj = adjustments[player.id] ?? 0
+                  const barWidth = Math.abs(total) / maxAbs * 100
                   return (
-                    <tr key={player.id}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--paper)')}
+                    <tr key={player.id} style={{
+                      animation: `stRowSlide 0.3s ease ${idx * 40}ms both`,
+                      transition: 'background 0.15s',
+                    }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                       <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
                           <span style={{
-                            width: '22px', height: '22px', borderRadius: '50%',
+                            width: '24px', height: '24px', borderRadius: '50%',
                             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '11px', fontWeight: 800, fontFamily: 'serif',
-                            background: rkBg, color: rkColor,
+                            fontSize: '12px', fontWeight: 800, fontFamily: 'monospace',
+                            ...badge,
+                            animation: rank === 1 ? 'stMedalPulse 2.5s ease-in-out 600ms infinite' : 'none',
                           }}>{rank}</span>
                           {isTied && <span style={{ fontSize: '9px', fontFamily: 'monospace', color: 'var(--mist)', fontWeight: 700 }}>T</span>}
                         </span>
@@ -224,10 +275,20 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                           }}>{adj !== 0 ? formatPoint(adj) : '—'}</span>
                         )}
                       </td>
-                      <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)', textAlign: 'right' }}>
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)', textAlign: 'right', position: 'relative' }}>
+                        <div style={{
+                          position: 'absolute', right: 0, top: 0, bottom: 0,
+                          width: `${barWidth}%`,
+                          background: total >= 0
+                            ? 'linear-gradient(270deg, rgba(173,165,130,0.12), transparent)'
+                            : 'linear-gradient(270deg, rgba(239,68,68,0.10), transparent)',
+                          transformOrigin: 'right',
+                          animation: `stBarGrow 0.6s ease ${idx * 40 + 200}ms both`,
+                        }} />
                         <strong style={{
-                          fontFamily: 'monospace', fontSize: '14px',
+                          fontFamily: 'monospace', fontSize: '14px', position: 'relative',
                           color: total >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+                          animation: `stPointSlide 0.4s ease ${idx * 40 + 150}ms both`,
                         }}>{formatPoint(total)}</strong>
                       </td>
                     </tr>
@@ -240,23 +301,36 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
 
         {/* Mobile: Card View */}
         <div className="standings-card-view" style={{ flexDirection: 'column', gap: '10px' }}>
-          {sorted.map(({ player, roundPoints, total, rank }) => {
-            const rkBg = rank === 1 ? 'var(--gold)' : rank === 2 ? 'var(--slate)' : rank === 3 ? '#94a3b8' : 'var(--paper)'
-            const rkColor = rank <= 3 ? '#fff' : 'var(--slate)'
+          {sorted.map(({ player, roundPoints, total, rank }, idx) => {
+            const badge = rankBadgeStyle(rank)
             const adj = adjustments[player.id] ?? 0
+            const barWidth = Math.abs(total) / maxAbs * 100
             return (
               <div key={player.id} style={{
                 background: 'rgba(255,255,255,0.05)',
                 backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
                 border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px',
                 padding: '12px 14px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                position: 'relative', overflow: 'hidden',
+                animation: `stCardPop 0.3s ease ${idx * 50}ms both`,
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                {/* score bar */}
+                <div style={{
+                  position: 'absolute', left: 0, top: 0, bottom: 0,
+                  width: `${barWidth}%`,
+                  background: total >= 0
+                    ? 'linear-gradient(90deg, rgba(173,165,130,0.06), rgba(173,165,130,0.14))'
+                    : 'linear-gradient(90deg, rgba(239,68,68,0.05), rgba(239,68,68,0.11))',
+                  transformOrigin: 'left',
+                  animation: `stBarGrow 0.6s ease ${idx * 50 + 200}ms both`,
+                }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', position: 'relative' }}>
                   <span style={{
-                    width: '28px', height: '28px', borderRadius: '50%',
+                    width: '30px', height: '30px', borderRadius: '50%',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '13px', fontWeight: 800, fontFamily: 'serif',
-                    background: rkBg, color: rkColor, flexShrink: 0,
+                    fontSize: '13px', fontWeight: 800, fontFamily: 'monospace',
+                    flexShrink: 0, ...badge,
+                    animation: rank === 1 ? 'stMedalPulse 2.5s ease-in-out 600ms infinite' : 'none',
                   }}>{rank}</span>
                   <div style={{ flex: 1, fontSize: '13.5px', fontWeight: 700 }}>
                     {player.seat_order + 1}. {player.name}
@@ -264,21 +338,23 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                   <strong style={{
                     fontFamily: 'monospace', fontSize: '16px',
                     color: total >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+                    animation: `stPointSlide 0.4s ease ${idx * 50 + 150}ms both`,
                   }}>{formatPoint(total)}</strong>
                 </div>
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px', position: 'relative' }}>
                   {roundPoints.map((pt, i) => (
                     <span key={i} style={{
                       fontSize: '10px', fontFamily: 'monospace', padding: '2px 6px',
-                      borderRadius: '4px', background: 'var(--paper)',
+                      borderRadius: '4px', background: 'rgba(255,255,255,0.08)',
                       color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
                       fontWeight: 600,
+                      animation: `stChipPop 0.2s ease ${idx * 50 + 300 + i * 60}ms both`,
                     }}>
                       R{i + 1}:{pt !== null ? formatPoint(pt) : '-'}
                     </span>
                   ))}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--mist)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--mist)', position: 'relative' }}>
                   <span>調整:</span>
                   {isOwner ? (
                     <input
