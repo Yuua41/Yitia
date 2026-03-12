@@ -181,5 +181,6 @@ function findBestSeatAssignment(
 export function formatPoint(v: number): string {
   const abs = Math.abs(v)
   const formatted = abs.toFixed(1)
+  if (v === 0) return `±${formatted}`
   return `${v < 0 ? '▲' : '+'}${formatted}`
 }

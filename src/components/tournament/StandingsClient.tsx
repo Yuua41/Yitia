@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { calcStandings, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table } from '@/types'
@@ -165,6 +165,10 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
         @keyframes stTitleShimmer {
           0% { background-position: -200% center; }
           100% { background-position: 200% center; }
+        }
+        @keyframes stChartFade {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
       <div className="standings-header" style={{
@@ -401,6 +405,333 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
             )
           })}
         </div>
+
+        {/* Point Progression Chart */}
+        {tournament.num_rounds > 0 && ranked.length > 0 && (
+          <PointChart ranked={ranked} numRounds={tournament.num_rounds} />
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Animated Line Chart ─── */
+
+const CHART_COLORS = [
+  '#D4AF37', '#62c8e8', '#e86280', '#8BE88B', '#c49be8',
+  '#e8a84c', '#4ce8c4', '#e8e84c', '#e87c4c', '#8888e8',
+  '#e84ca0', '#4ca0e8', '#b8e84c', '#e84c4c', '#4ce8e8',
+  '#c888d8', '#d8c870', '#70d8a0', '#d87088', '#88b0d8',
+]
+
+interface ChartEntry {
+  player: Player
+  roundPoints: (number | null)[]
+  total: number
+  rank: number
+}
+
+function PointChart({ ranked, numRounds }: { ranked: ChartEntry[]; numRounds: number }) {
+  const svgRef = useRef<SVGSVGElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [progress, setProgress] = useState(0) // 0 → numRounds, float for smooth animation
+  const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null)
+  const [containerWidth, setContainerWidth] = useState(600)
+  const [isVisible, setIsVisible] = useState(false)
+  const hasAnimated = useRef(false)
+
+  // Observe container width for responsive SVG
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width)
+      }
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // Trigger animation when chart scrolls into viewport
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting && !hasAnimated.current) setIsVisible(true) },
+      { threshold: 0.2 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  // Smooth animation: starts when chart becomes visible
+  useEffect(() => {
+    if (!isVisible) return
+    hasAnimated.current = true
+    setProgress(0)
+    const duration = numRounds * 500 // 500ms per round
+    let raf: number
+    let start: number | null = null
+    function animate(ts: number) {
+      if (start === null) start = ts
+      const elapsed = ts - start
+      const t = Math.min(elapsed / duration, 1)
+      // ease-out cubic for a decelerating feel
+      const eased = 1 - Math.pow(1 - t, 3)
+      setProgress(eased * numRounds)
+      if (t < 1) raf = requestAnimationFrame(animate)
+    }
+    raf = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(raf)
+  }, [isVisible, numRounds])
+
+  // Compute cumulative points per player
+  const topN = ranked.slice(0, 20) // limit to top 20
+  const cumulativeData = topN.map(entry => {
+    const cumulative: number[] = [0] // start at 0
+    let sum = 0
+    for (let r = 0; r < numRounds; r++) {
+      sum += entry.roundPoints[r] ?? 0
+      cumulative.push(sum)
+    }
+    return { player: entry.player, cumulative, rank: entry.rank }
+  })
+
+  // Chart dimensions
+  const marginLeft = 50
+  const marginRight = 16
+  const marginTop = 16
+  const marginBottom = 32
+  const chartWidth = containerWidth - marginLeft - marginRight
+  const height = 280
+  const chartHeight = height - marginTop - marginBottom
+
+  // Scale
+  const allValues = cumulativeData.flatMap(d => d.cumulative)
+  const minVal = Math.min(0, ...allValues)
+  const maxVal = Math.max(0, ...allValues)
+  const range = maxVal - minVal || 1
+  const padding = range * 0.1
+
+  const scaleX = (round: number) => marginLeft + (round / numRounds) * chartWidth
+  const scaleY = (val: number) => marginTop + chartHeight - ((val - minVal + padding) / (range + padding * 2)) * chartHeight
+
+
+  return (
+    <div ref={containerRef} style={{
+      marginTop: '24px',
+      background: 'rgba(255,255,255,0.05)',
+      backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+      border: '1px solid rgba(255,255,255,0.09)',
+      borderRadius: '12px',
+      padding: '16px 8px 12px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+      animation: 'stChartFade 0.5s ease 0.3s both',
+    }}>
+      <div style={{
+        fontSize: '13px', fontWeight: 700, marginBottom: '8px', paddingLeft: '8px',
+        color: 'var(--ink)',
+      }}>ポイント推移</div>
+      <svg
+        ref={svgRef}
+        width={containerWidth}
+        height={height}
+        style={{ display: 'block', overflow: 'visible' }}
+      >
+        {/* Grid lines — always include 0 */}
+        {(() => {
+          // Build nice rounded grid values that always include 0
+          const rawStep = (maxVal - minVal + padding * 2) / 4
+          // Round step to a nice number (10, 20, 25, 50, 100, etc.)
+          const mag = Math.pow(10, Math.floor(Math.log10(Math.max(rawStep, 1))))
+          const niceSteps = [1, 2, 2.5, 5, 10]
+          const niceStep = niceSteps.find(s => s * mag >= rawStep)! * mag
+          const gridVals = new Set<number>()
+          gridVals.add(0) // always show zero
+          // Add grid lines above and below 0
+          for (let v = niceStep; v <= maxVal + padding; v += niceStep) gridVals.add(Math.round(v))
+          for (let v = -niceStep; v >= minVal - padding; v -= niceStep) gridVals.add(Math.round(v))
+          return Array.from(gridVals).sort((a, b) => a - b).map(val => {
+            const y = scaleY(val)
+            const isZero = val === 0
+            return (
+              <g key={`grid-${val}`}>
+                <line x1={marginLeft} y1={y} x2={marginLeft + chartWidth} y2={y}
+                  stroke={isZero ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)'}
+                  strokeWidth={1}
+                  strokeDasharray={isZero ? '4 3' : 'none'} />
+                <text x={marginLeft - 6} y={y + 3.5}
+                  fill={isZero ? 'var(--ink)' : 'var(--mist)'}
+                  fontSize="9" fontFamily="monospace" textAnchor="end"
+                  fontWeight={isZero ? 700 : 400}>
+                  {Number.isInteger(val) ? val : val.toFixed(1)}
+                </text>
+              </g>
+            )
+          })
+        })()}
+
+        {/* Round labels */}
+        {Array.from({ length: numRounds + 1 }, (_, i) => (
+          <text key={`rl-${i}`} x={scaleX(i)} y={height - 6}
+            fill={i <= progress ? 'var(--mist)' : 'rgba(255,255,255,0.1)'}
+            fontSize="9" fontFamily="monospace" textAnchor="middle"
+            style={{ transition: 'fill 0.3s' }}>
+            {i === 0 ? '開始' : `R${i}`}
+          </text>
+        ))}
+
+        {/* Vertical round markers */}
+        {Array.from({ length: numRounds + 1 }, (_, i) => (
+          <line key={`vl-${i}`}
+            x1={scaleX(i)} y1={marginTop} x2={scaleX(i)} y2={marginTop + chartHeight}
+            stroke={i <= progress ? 'rgba(255,255,255,0.05)' : 'transparent'}
+            strokeWidth={1}
+            style={{ transition: 'stroke 0.3s' }} />
+        ))}
+
+        {/* Lines */}
+        {cumulativeData.map((data, idx) => {
+          const color = CHART_COLORS[idx % CHART_COLORS.length]
+          const isHovered = hoveredPlayer === data.player.id
+          const isAnyHovered = hoveredPlayer !== null
+          const opacity = isAnyHovered ? (isHovered ? 1 : 0.12) : 0.75
+          const strokeW = isHovered ? 3 : 1.8
+
+          // Build path up to progress (smooth interpolation between rounds)
+          const completedRounds = Math.floor(progress)
+          const frac = progress - completedRounds
+          const points: string[] = []
+          for (let r = 0; r <= Math.min(completedRounds, numRounds); r++) {
+            points.push(`${scaleX(r)},${scaleY(data.cumulative[r])}`)
+          }
+          // Interpolate to fractional position between rounds
+          if (frac > 0 && completedRounds < numRounds) {
+            const nextR = completedRounds + 1
+            const prevVal = data.cumulative[completedRounds]
+            const nextVal = data.cumulative[nextR]
+            const interpVal = prevVal + (nextVal - prevVal) * frac
+            const interpX = scaleX(completedRounds + frac)
+            const interpY = scaleY(interpVal)
+            points.push(`${interpX},${interpY}`)
+          }
+          const d = points.length > 0 ? `M${points.join('L')}` : ''
+
+          // End position for dot & tooltip
+          const endRound = Math.min(progress, numRounds)
+          const endComplete = Math.floor(endRound)
+          const endFrac = endRound - endComplete
+          let endX: number, endY: number
+          if (endFrac > 0 && endComplete < numRounds) {
+            const prevVal = data.cumulative[endComplete]
+            const nextVal = data.cumulative[endComplete + 1]
+            endX = scaleX(endRound)
+            endY = scaleY(prevVal + (nextVal - prevVal) * endFrac)
+          } else {
+            endX = scaleX(endComplete)
+            endY = scaleY(data.cumulative[endComplete])
+          }
+
+          return (
+            <g key={data.player.id}
+              onMouseEnter={() => setHoveredPlayer(data.player.id)}
+              onMouseLeave={() => setHoveredPlayer(null)}
+              style={{ cursor: 'pointer' }}>
+              {/* Wider invisible hit area */}
+              <path d={d} fill="none" stroke="transparent" strokeWidth={12} />
+              {/* Visible line */}
+              <path
+                d={d}
+                fill="none"
+                stroke={color}
+                strokeWidth={strokeW}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity={opacity}
+                style={{ transition: 'opacity 0.2s, stroke-width 0.2s' }}
+              />
+              {/* End dot */}
+              {progress > 0 && (
+                <circle
+                  cx={endX}
+                  cy={endY}
+                  r={isHovered ? 5 : 3}
+                  fill={color}
+                  opacity={opacity}
+                  style={{ transition: 'r 0.2s, opacity 0.2s' }}
+                />
+              )}
+              {/* Label on hover */}
+              {isHovered && progress > 0 && (() => {
+                const lastR = Math.min(Math.floor(progress), numRounds)
+                const cx = endX
+                const cy = endY
+                const labelRight = cx > marginLeft + chartWidth * 0.7
+                return (
+                  <g>
+                    <rect
+                      x={labelRight ? cx - 78 : cx + 8}
+                      y={cy - 20}
+                      width={70} height={28}
+                      rx={5}
+                      fill="rgba(0,0,0,0.8)"
+                      stroke={color}
+                      strokeWidth={1}
+                    />
+                    <text
+                      x={labelRight ? cx - 43 : cx + 43}
+                      y={cy - 8}
+                      fill="#fff"
+                      fontSize="9" fontFamily="monospace" fontWeight="700"
+                      textAnchor="middle">
+                      {data.player.name}
+                    </text>
+                    <text
+                      x={labelRight ? cx - 43 : cx + 43}
+                      y={cy + 3}
+                      fill={color}
+                      fontSize="10" fontFamily="monospace" fontWeight="700"
+                      textAnchor="middle">
+                      {formatPoint(data.cumulative[lastR])}
+                    </text>
+                  </g>
+                )
+              })()}
+            </g>
+          )
+        })}
+      </svg>
+
+      {/* Legend */}
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: '4px 10px',
+        padding: '8px 8px 0', fontSize: '10px', fontFamily: 'monospace',
+      }}>
+        {cumulativeData.map((data, idx) => {
+          const color = CHART_COLORS[idx % CHART_COLORS.length]
+          const isHovered = hoveredPlayer === data.player.id
+          return (
+            <span
+              key={data.player.id}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                cursor: 'pointer',
+                opacity: hoveredPlayer && !isHovered ? 0.3 : 1,
+                transition: 'opacity 0.2s',
+              }}
+              onMouseEnter={() => setHoveredPlayer(data.player.id)}
+              onMouseLeave={() => setHoveredPlayer(null)}>
+              <span style={{
+                width: '8px', height: '8px', borderRadius: '50%',
+                background: color, display: 'inline-block', flexShrink: 0,
+              }} />
+              <span style={{ color: isHovered ? '#fff' : 'var(--mist)', fontWeight: isHovered ? 700 : 400, transition: 'color 0.2s' }}>
+                {data.rank}. {data.player.name}
+              </span>
+            </span>
+          )
+        })}
       </div>
     </div>
   )

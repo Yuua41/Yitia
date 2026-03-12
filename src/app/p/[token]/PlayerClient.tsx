@@ -144,7 +144,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   )
 
   const myTotal = standings.find(s => s.player.id === player.id)?.total ?? 0
-  const myRank = standings.findIndex(s => s.player.id === player.id) + 1
+  const myRank = standings.find(s => s.player.id === player.id)?.rank ?? standings.length
   const standingsMaxAbs = Math.max(...standings.map(s => Math.abs(s.total)), 1)
 
   // ① カウントアップ: マウント時に 0 → myTotal を 800ms でカウント、終了後に順位を表示
