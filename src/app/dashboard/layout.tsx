@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import DraggableMenuButton from '@/components/ui/DraggableMenuButton'
 
 const NAV_ITEMS = [
   { label: '大会一覧', href: '/dashboard' },
@@ -38,18 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             transform: translateX(0);
           }
           .dash-hamburger {
-            display: flex !important;
-            position: fixed;
-            bottom: 10px; left: 10px;
-            z-index: 999;
-            width: 40px; height: 40px;
-            align-items: center; justify-content: center;
-            background: var(--navy);
-            border: 1px solid rgba(173,165,130,0.4);
-            border-radius: 8px;
-            color: #c8c5a0;
-            font-size: 22px;
-            cursor: pointer;
+            display: block !important;
           }
           .dash-overlay {
             display: block;
@@ -64,13 +54,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
       `}</style>
 
-      <button
-        className="dash-hamburger"
-        onClick={() => setSidebarOpen(true)}
-        style={{ display: 'none' }}
-      >
-        ☰
-      </button>
+      <div className="dash-hamburger" style={{ display: 'none' }}>
+        <DraggableMenuButton onClick={() => setSidebarOpen(true)} storageKey="dash-hamburger-pos" />
+      </div>
 
       {sidebarOpen && (
         <div className="dash-overlay" onClick={() => setSidebarOpen(false)} />

@@ -154,6 +154,18 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
           0% { background-position: -200% center; }
           100% { background-position: 200% center; }
         }
+        @keyframes stTitleFade {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes stSubFade {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes stTitleShimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
       `}</style>
       <div className="standings-header" style={{
         height: '52px', background: 'rgba(14,26,24,0.82)',
@@ -183,8 +195,16 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
         </div>
       </div>
       <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
-        <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>総合成績</div>
-        <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '12px' }}>
+        <div style={{
+          fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px',
+          background: 'linear-gradient(90deg, var(--ink) 20%, var(--gold) 50%, var(--ink) 80%)',
+          backgroundSize: '200% auto',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          animation: 'stTitleFade 0.5s ease both, stTitleShimmer 4s linear 1s infinite',
+        }}>総合成績</div>
+        <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '12px', animation: 'stSubFade 0.6s ease 0.2s both' }}>
           {tournament.name} — {tables.length} / {tournament.num_rounds * Math.floor(players.length / 4)} 試合確定済み
         </div>
         <div className="standings-content-btns" style={{ gap: '8px', marginBottom: '16px' }}>

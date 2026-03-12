@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import DraggableMenuButton from '@/components/ui/DraggableMenuButton'
 import type { Tournament } from '@/types'
 
 interface Props {
@@ -49,18 +50,7 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
             transform: translateX(0);
           }
           .tournament-hamburger {
-            display: flex !important;
-            position: fixed;
-            bottom: 10px; left: 10px;
-            z-index: 999;
-            width: 40px; height: 40px;
-            align-items: center; justify-content: center;
-            background: var(--navy);
-            border: 1px solid rgba(173,165,130,0.4);
-            border-radius: 8px;
-            color: #c8c5a0;
-            font-size: 22px;
-            cursor: pointer;
+            display: block !important;
           }
           .tournament-overlay {
             display: block;
@@ -75,13 +65,9 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
         }
       `}</style>
 
-      <button
-        className="tournament-hamburger"
-        onClick={() => setSidebarOpen(true)}
-        style={{ display: 'none' }}
-      >
-        ☰
-      </button>
+      <div className="tournament-hamburger" style={{ display: 'none' }}>
+        <DraggableMenuButton onClick={() => setSidebarOpen(true)} storageKey="tournament-hamburger-pos" />
+      </div>
 
       {sidebarOpen && (
         <div className="tournament-overlay" onClick={() => setSidebarOpen(false)} />

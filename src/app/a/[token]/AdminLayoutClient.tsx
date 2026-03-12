@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import DraggableMenuButton from '@/components/ui/DraggableMenuButton'
 import type { Tournament } from '@/types'
 
 interface Props {
@@ -39,18 +40,7 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
             transform: translateX(0);
           }
           .admin-hamburger {
-            display: flex !important;
-            position: fixed;
-            bottom: 10px; left: 10px;
-            z-index: 999;
-            width: 40px; height: 40px;
-            align-items: center; justify-content: center;
-            background: var(--navy);
-            border: 1px solid rgba(173,165,130,0.4);
-            border-radius: 8px;
-            color: #c8c5a0;
-            font-size: 22px;
-            cursor: pointer;
+            display: block !important;
           }
           .admin-overlay {
             display: block;
@@ -65,13 +55,9 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
         }
       `}</style>
 
-      <button
-        className="admin-hamburger"
-        onClick={() => setSidebarOpen(true)}
-        style={{ display: 'none' }}
-      >
-        ☰
-      </button>
+      <div className="admin-hamburger" style={{ display: 'none' }}>
+        <DraggableMenuButton onClick={() => setSidebarOpen(true)} storageKey="admin-hamburger-pos" />
+      </div>
 
       {sidebarOpen && (
         <div className="admin-overlay" onClick={() => setSidebarOpen(false)} />
