@@ -155,7 +155,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
         <div style={{ maxWidth: '600px' }}>
           <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>参加者</div>
           <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '18px' }}>
-            名前をクリックして編集できます
+            鉛筆アイコンで名前を編集できます
           </div>
 
           {/* 参加者一覧 */}
@@ -199,21 +199,25 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
                     }}
                   />
                 ) : (
-                  <div
-                    onClick={() => startEdit(player)}
-                    style={{
-                      flex: 1, padding: '5px 10px',
-                      borderRadius: '7px', fontSize: '13px', fontWeight: 600,
-                      color: 'var(--ink)', cursor: 'pointer',
-                      border: '1.5px solid transparent',
-                      transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--paper)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
+                  <div style={{ flex: 1, padding: '5px 10px', fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
                     {player.name}
                   </div>
                 )}
+
+                <button
+                  onClick={() => startEdit(player)}
+                  title="名前を編集"
+                  style={{
+                    fontSize: '13px',
+                    color: 'var(--mist)', background: 'var(--paper)',
+                    border: '1px solid var(--border)', borderRadius: '5px',
+                    padding: '3px 7px', cursor: 'pointer',
+                    flexShrink: 0, transition: 'color 0.1s, border-color 0.1s',
+                    lineHeight: 1,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--cyan-deep)'; e.currentTarget.style.borderColor = 'rgba(0,240,255,0.3)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                >✏️</button>
 
                 <button
                   onClick={() => handleDeletePlayer(player)}

@@ -24,6 +24,13 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
     Object.fromEntries(players.map(p => [p.id, p.bonus]))
   )
   const [savingAdj, setSavingAdj] = useState(false)
+  const [revealedCol, setRevealedCol] = useState(0)
+
+  useEffect(() => {
+    if (revealedCol >= tournament.num_rounds) return
+    const t = setTimeout(() => setRevealedCol(c => c + 1), 220)
+    return () => clearTimeout(t)
+  }, [revealedCol, tournament.num_rounds])
 
   const ranked = calcStandings(localPlayers, tables, tournament.num_rounds, adjustments)
 
@@ -172,6 +179,10 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
           from { opacity: 0; transform: translateY(12px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes stCellReveal {
+          from { opacity: 0; transform: translateY(-6px) scale(0.92); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
       `}</style>
       <div className="standings-header" style={{
         height: '52px', background: 'rgba(10,14,30,0.85)',
@@ -277,6 +288,8 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                           padding: '10px 12px', borderBottom: '1px solid var(--paper)',
                           fontFamily: 'monospace', fontWeight: 600,
                           color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+                          opacity: i < revealedCol ? 1 : 0,
+                          animation: i < revealedCol ? `stCellReveal 0.25s ease-out both` : 'none',
                         }}>{pt === null ? '—' : formatPoint(pt)}</td>
                       ))}
                       <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)' }}>
@@ -374,7 +387,8 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                       borderRadius: '4px', background: 'rgba(0,240,255,0.06)',
                       color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
                       fontWeight: 600,
-                      animation: `stChipPop 0.2s ease ${idx * 50 + 300 + i * 60}ms both`,
+                      opacity: i < revealedCol ? 1 : 0,
+                      animation: i < revealedCol ? `stChipPop 0.2s ease ${idx * 50 + 300 + i * 60}ms both` : 'none',
                     }}>
                       R{i + 1}:{pt !== null ? formatPoint(pt) : '-'}
                     </span>

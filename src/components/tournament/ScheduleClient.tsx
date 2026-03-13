@@ -270,6 +270,10 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
           animation: swap-flash 1.2s ease-out;
           border-radius: 6px;
         }
+        @keyframes scCardSlide {
+          from { opacity: 0; transform: translateY(18px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
       `}</style>
       <div className="schedule-header" style={{
         height: '52px', background: 'rgba(10,14,30,0.85)',
@@ -307,7 +311,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
           })}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: '14px' }}>
-          {roundTables.map(table => {
+          {roundTables.map((table, idx) => {
             const results: Result[] = (table as any).results ?? []
             const isValidated = table.is_validated
             const isSubmitted = table.is_submitted
@@ -317,8 +321,10 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
             const statusBg = isValidated ? '#00a0aa' : isSubmitted ? '#b45309' : 'var(--navy-mid)'
 
             return (
-              <div key={table.id} style={{
+              <div key={`${table.id}-${activeRound}`} style={{
                 background: 'rgba(15,21,40,0.5)',
+                animation: 'scCardSlide 0.35s ease-out both',
+                animationDelay: `${idx * 60}ms`,
                 backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
                 border: `1.5px solid ${isValidated ? 'rgba(0,240,255,0.4)' : isSubmitted ? 'rgba(180,83,9,0.45)' : 'rgba(0,240,255,0.10)'}`,
                 borderRadius: '12px', overflow: 'hidden',
