@@ -229,7 +229,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
         <HeaderIcons />
       </div>
       <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div style={{
             fontFamily: 'serif', fontSize: '20px', fontWeight: 800,
             background: 'linear-gradient(90deg, var(--ink) 20%, var(--cyan) 40%, var(--gold) 60%, var(--ink) 80%)',
@@ -241,8 +241,8 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
           }}>総合成績</div>
           <div className="standings-header-btns" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button onClick={exportCSV} style={{
-              padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
-              border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+              padding: '6px 14px', background: 'transparent', color: '#AD30F2',
+              border: '1.5px solid #AD30F2', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
               cursor: 'pointer',
             }}>CSV出力</button>
             {isOwner && (
@@ -261,8 +261,8 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
         </div>
         <div className="standings-content-btns" style={{ gap: '8px', marginBottom: '16px' }}>
           <button onClick={exportCSV} style={{
-            padding: '8px 16px', background: 'transparent', color: 'var(--cyan-deep)',
-            border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+            padding: '8px 16px', background: 'transparent', color: '#AD30F2',
+            border: '1.5px solid #AD30F2', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
             cursor: 'pointer', flex: 1,
           }}>CSV出力</button>
           {isOwner && (

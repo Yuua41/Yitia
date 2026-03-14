@@ -22,6 +22,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
   const [qrPlayerId, setQrPlayerId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const addInputRef = useRef<HTMLInputElement>(null)
 
   // 未保存状態でのページ離脱アラート
   useEffect(() => {
@@ -171,7 +172,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
 
       <div className="players-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: '600px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>参加者</div>
               <span style={{
@@ -180,40 +181,61 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
                 background: 'var(--paper)', color: 'var(--slate)', border: '1px solid var(--border)',
               }}>{players.length}名</span>
             </div>
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              style={{
-                padding: '5px 14px', borderRadius: '7px',
-                background: 'transparent', color: 'var(--cyan-deep)',
-                border: '1.5px solid var(--cyan-deep)', fontSize: '12px', fontWeight: 600,
-                cursor: 'pointer', opacity: refreshing ? 0.6 : 1,
-                display: 'flex', alignItems: 'center', gap: '5px',
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                <path d="M21 3v5h-5"/>
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                <path d="M3 21v-5h5"/>
-              </svg>
-              {refreshing ? '保存中...' : '保存'}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={() => {
+                  addInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  setTimeout(() => addInputRef.current?.focus(), 400)
+                }}
+                style={{
+                  padding: '5px 14px', borderRadius: '7px',
+                  background: 'transparent', color: '#AD30F2',
+                  border: '1.5px solid #AD30F2', fontSize: '12px', fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <line x1="19" y1="8" x2="19" y2="14"/>
+                  <line x1="22" y1="11" x2="16" y2="11"/>
+                </svg>
+                追加
+              </button>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                style={{
+                  padding: '5px 14px', borderRadius: '7px',
+                  background: 'transparent', color: 'var(--cyan-deep)',
+                  border: '1.5px solid var(--cyan-deep)', fontSize: '12px', fontWeight: 600,
+                  cursor: 'pointer', opacity: refreshing ? 0.6 : 1,
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                  <path d="M21 3v5h-5"/>
+                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                  <path d="M3 21v-5h5"/>
+                </svg>
+                {refreshing ? '保存中...' : '保存'}
+              </button>
+            </div>
           </div>
 
           {/* 参加者一覧 */}
-          <div style={{
-            background: 'rgba(15,21,40,0.5)',
-            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-            border: '1.5px solid rgba(0,240,255,0.10)',
-            borderRadius: '12px', overflow: 'hidden',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-          }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {players.map((player, idx) => (
               <div key={player.id} style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '10px 16px',
-                borderBottom: '1px solid var(--border)',
+                padding: '12px 16px',
+                background: 'rgba(15,21,40,0.5)',
+                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                border: '1.5px solid rgba(0,240,255,0.10)',
+                borderRadius: '10px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
               }}>
                 <div style={{
                   width: '24px', height: '24px', borderRadius: '50%',
@@ -310,7 +332,11 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
             {/* 参加者追加 */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: '10px',
-              padding: '10px 16px',
+              padding: '12px 16px',
+              background: 'rgba(15,21,40,0.5)',
+              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+              border: '1.5px dashed rgba(0,240,255,0.15)',
+              borderRadius: '10px',
             }}>
               <div style={{
                 width: '24px', height: '24px', borderRadius: '50%',
@@ -319,6 +345,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
                 fontSize: '12px', fontWeight: 700, color: 'var(--cyan-deep)', flexShrink: 0,
               }}>+</div>
               <input
+                ref={addInputRef}
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') handleAddPlayer() }}

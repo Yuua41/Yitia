@@ -253,7 +253,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
       {/* コンテンツ */}
       <div className="settings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: '600px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>大会設定</div>
             {isDraft && (
               <button onClick={() => handleSave('dashboard')} disabled={saving} style={{
@@ -528,37 +528,18 @@ export default function SettingsClient({ tournament, players, templates }: Props
             )}
           </div>
 
-          {/* ステータスセクション */}
-          {isDraft && (
+          {/* 終了済み通知 */}
+          {tournament.status === 'finished' && (
             <div style={{
-              background: 'rgba(15,21,40,0.5)',
-              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-              border: '1.5px solid rgba(0,240,255,0.10)',
-              borderRadius: '12px', padding: '18px', marginBottom: '14px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              background: 'rgba(0,255,170,0.1)', border: '1.5px solid rgba(0,255,170,0.2)',
+              borderRadius: '12px', padding: '14px 18px',
+              fontSize: '12px', color: '#00ffaa', lineHeight: 1.6,
             }}>
-              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '14px' }}>ステータス</div>
-              <div style={{ fontSize: '12px', color: 'var(--slate)', marginBottom: '14px', lineHeight: 1.6 }}>
-                大会を開始すると、選手がスコアを入力できるようになります。<br />
-                開始後はルール設定の変更ができなくなります。
-              </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={() => handleSave()} disabled={saving} style={{
-                  flex: 1, padding: '12px', background: saving ? 'var(--mist)' : 'var(--cyan-deep)',
-                  color: '#fff', border: 'none', borderRadius: '10px',
-                  fontSize: '14px', fontWeight: 700, cursor: 'pointer',
-                }}>{saving ? '更新中...' : '更新'}</button>
-                <button onClick={handleStart} disabled={starting} style={{
-                  flex: 1, padding: '12px', background: starting ? 'var(--mist)' : 'linear-gradient(135deg, #ff00aa, #cc0088)',
-                  color: '#fff', border: 'none', borderRadius: '10px',
-                  fontSize: '14px', fontWeight: 700, cursor: 'pointer',
-                  boxShadow: '0 2px 12px rgba(255,0,170,0.3)',
-                }}>{starting ? '開始中...' : '大会を開始する'}</button>
-              </div>
+              この大会は終了しています。
             </div>
           )}
 
-          {/* 進行中: 終了ボタン */}
+          {/* 進行中: プレイヤー入力制御 */}
           {tournament.status === 'ongoing' && (
             <div style={{
               background: 'rgba(15,21,40,0.5)',
@@ -567,16 +548,10 @@ export default function SettingsClient({ tournament, players, templates }: Props
               borderRadius: '12px', padding: '18px', marginBottom: '14px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
             }}>
-              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '14px' }}>ステータス</div>
-              <div style={{ fontSize: '12px', color: 'var(--slate)', marginBottom: '14px', lineHeight: 1.6 }}>
-                この大会は進行中のため、設定の変更はできません。<br />
-                全ての対局が終了したら大会を終了してください。
-              </div>
-
-              {/* プレイヤー入力制御 */}
+              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '14px' }}>プレイヤー設定</div>
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '12px 14px', marginBottom: '12px',
+                padding: '12px 14px',
                 background: 'var(--paper)', border: '1.5px solid var(--border)',
                 borderRadius: '9px',
               }}>
@@ -610,28 +585,74 @@ export default function SettingsClient({ tournament, players, templates }: Props
                   }} />
                 </button>
               </div>
-
-              <button onClick={handleFinish} disabled={finishing} style={{
-                width: '100%', padding: '12px',
-                background: finishing ? 'var(--mist)' : 'var(--navy)',
-                color: '#fff', border: 'none', borderRadius: '10px',
-                fontSize: '14px', fontWeight: 700, cursor: 'pointer',
-              }}>{finishing ? '終了処理中...' : '大会を終了する'}</button>
-            </div>
-          )}
-
-          {/* 終了済み通知 */}
-          {tournament.status === 'finished' && (
-            <div style={{
-              background: 'rgba(0,255,170,0.1)', border: '1.5px solid rgba(0,255,170,0.2)',
-              borderRadius: '12px', padding: '14px 18px',
-              fontSize: '12px', color: '#00ffaa', lineHeight: 1.6,
-            }}>
-              この大会は終了しています。
             </div>
           )}
         </div>
       </div>
+
+      {/* 下部固定ステータスバー */}
+      {isDraft && (
+        <div className="settings-header" style={{
+          borderTop: '1px solid rgba(0,240,255,0.08)',
+          background: 'rgba(10,14,30,0.92)',
+          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          flexShrink: 0,
+        }}>
+          <div style={{ maxWidth: '600px', padding: '14px 0', display: 'flex', gap: '10px' }}>
+            <button onClick={() => handleSave()} disabled={saving} style={{
+              flex: 1, padding: '10px', background: 'transparent', color: 'var(--cyan-deep)',
+              border: '1.5px solid var(--cyan-deep)', borderRadius: '8px',
+              fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+              opacity: saving ? 0.6 : 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M3 21v-5h5"/>
+              </svg>
+              {saving ? '保存中...' : '保存'}
+            </button>
+            <button onClick={handleStart} disabled={starting} style={{
+              flex: 1, padding: '10px', background: 'transparent', color: '#AD30F2',
+              border: '1.5px solid #AD30F2', borderRadius: '8px',
+              fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+              opacity: starting ? 0.6 : 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              {starting ? '開始中...' : '大会を開始する'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {tournament.status === 'ongoing' && (
+        <div className="settings-header" style={{
+          borderTop: '1px solid rgba(0,240,255,0.08)',
+          background: 'rgba(10,14,30,0.92)',
+          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          flexShrink: 0,
+        }}>
+          <div style={{ maxWidth: '600px', padding: '14px 0', display: 'flex', gap: '10px' }}>
+            <button onClick={handleFinish} disabled={finishing} style={{
+              flex: 1, padding: '10px', background: 'transparent', color: '#AD30F2',
+              border: '1.5px solid #AD30F2', borderRadius: '8px',
+              fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+              opacity: finishing ? 0.6 : 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+              </svg>
+              {finishing ? '終了処理中...' : '大会を終了する'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

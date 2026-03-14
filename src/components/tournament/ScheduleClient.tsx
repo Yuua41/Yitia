@@ -324,7 +324,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
         <HeaderIcons />
       </div>
       <div className="schedule-content" style={{ flex: 1, overflowY: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>卓組・成績入力</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{
@@ -532,10 +532,17 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
                       </label>
                       <button onClick={() => handleValidate(table)} disabled={saving === table.id} style={{
                         width: '100%', padding: '8px',
-                        background: saving === table.id ? 'var(--mist)' : 'var(--cyan-deep)',
-                        border: 'none', borderRadius: '7px',
-                        fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', color: '#fff',
-                      }}>{saving === table.id ? '確定中...' : 'スコア確定'}</button>
+                        background: 'transparent', color: 'var(--cyan-deep)',
+                        border: '1.5px solid var(--cyan-deep)', borderRadius: '7px',
+                        fontSize: '13.5px', fontWeight: 600, cursor: 'pointer',
+                        opacity: saving === table.id ? 0.6 : 1,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                      }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        {saving === table.id ? '確定中...' : 'スコア確定'}
+                      </button>
                     </>
                   )}
                 </div>

@@ -259,7 +259,7 @@ export default function DashboardClient({ tournaments }: Props) {
     const sampleConfig: RuleConfig = {
       startingPoints: 25000,
       returnPoints: 30000,
-      uma: [20, 10, -10, -20],
+      uma: [30, 10, -10, -30],
       tieBreak: 'split',
       seatMode: 'random',
       umaMode: 'simple',
@@ -748,7 +748,7 @@ export default function DashboardClient({ tournaments }: Props) {
                   style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid rgba(0,240,255,0.12)', background: 'rgba(0,240,255,0.04)', color: 'var(--ink)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 >＋</button>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                  {[8, 12, 16, 20, 24, 28, 32].map(n => (
+                  {[8, 12, 16, 20, 24, 28, 32, 36, 40].map(n => (
                     <button
                       key={n}
                       type="button"
@@ -764,14 +764,13 @@ export default function DashboardClient({ tournaments }: Props) {
                   ))}
                 </div>
               </div>
-              <div style={{ fontSize: '12px', color: 'var(--mist)', marginTop: '5px' }}>
-                プレイヤー1〜{playerCount} として登録されます。名前は大会設定で一括変更できます。
-                {playerCount % 4 !== 0 && (
-                  <span style={{ color: 'var(--slate)', marginLeft: '4px' }}>
+              {playerCount % 4 !== 0 && (
+                <div style={{ fontSize: '12px', color: 'var(--mist)', marginTop: '5px' }}>
+                  <span style={{ color: 'var(--slate)' }}>
                     （{4 - playerCount % 4}名の黒子を追加して{playerCount + (4 - playerCount % 4)}名に調整されます）
                   </span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             <div style={{ marginBottom: '16px' }}>
@@ -781,8 +780,13 @@ export default function DashboardClient({ tournaments }: Props) {
 
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowForm(false)} style={btnOutline}>キャンセル</button>
-              <button onClick={handleCreate} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}>
-                {saving ? '作成中...' : '大会を作成する →'}
+              <button onClick={handleCreate} disabled={saving} style={{
+                padding: '10px 22px', background: 'transparent',
+                color: 'var(--cyan-deep)', border: '1.5px solid var(--cyan-deep)',
+                borderRadius: '7px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
+                opacity: saving ? 0.6 : 1,
+              }}>
+                {saving ? '作成中...' : '大会を作成する'}
               </button>
             </div>
           </div>

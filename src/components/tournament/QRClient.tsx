@@ -21,9 +21,21 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
           .qr-content { padding: 16px !important; }
         }
         @media print {
-          body * { visibility: hidden; }
-          #qr-print-area, #qr-print-area * { visibility: visible; }
-          #qr-print-area { position: absolute; top: 0; left: 0; width: 100%; }
+          body, body * { visibility: hidden; }
+          #qr-print-area, #qr-print-area * { visibility: visible !important; }
+          #qr-print-area {
+            position: absolute; top: 0; left: 0; width: 100%;
+            background: #fff !important; color: #000 !important;
+          }
+          #qr-print-area div {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            border-color: #ccc !important;
+            color: #000 !important;
+            box-shadow: none !important;
+          }
+          #qr-print-area canvas { visibility: visible !important; }
           .no-print { display: none !important; }
           .qr-grid { grid-template-columns: repeat(4, 1fr) !important; }
         }
@@ -39,11 +51,11 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
           <HeaderIcons />
         </div>
         <div className="qr-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
-          <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>QRコード</div>
-          <div className="no-print" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-            <button onClick={() => window.print()} style={{
-              padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
-              border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>QRコード</div>
+            <button className="no-print" onClick={() => window.print()} style={{
+              padding: '6px 14px', background: 'transparent', color: '#AD30F2',
+              border: '1.5px solid #AD30F2', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
             }}>PDF出力</button>
           </div>
           <div id="qr-print-area">
@@ -119,7 +131,7 @@ function QRCode({ value, size }: { value: string; size: number }) {
       QRCodeLib.toCanvas(canvasRef.current!, value, {
         width: size,
         margin: 1,
-        color: { dark: '#0a0e1a', light: '#ffffff' },
+        color: { dark: '#000000', light: '#ffffff' },
       })
     })
   }, [value, size])
