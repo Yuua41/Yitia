@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import type { Tournament, Player } from '@/types'
+import HeaderIcons from '@/components/ui/HeaderIcons'
 
 interface Props {
   tournament: Tournament
@@ -34,10 +35,8 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
           borderBottom: '1px solid rgba(0,240,255,0.08)',
           padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         }}>
-          <div>
-            <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{tournament.name} › </span>
-            <span style={{ fontSize: '14px', fontWeight: 700 }}>QRコード</span>
-          </div>
+          <span style={{ fontSize: '14px', fontWeight: 700 }}>QRコード</span>
+          <HeaderIcons />
         </div>
         <div className="qr-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
           <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>QRコード</div>
@@ -46,8 +45,8 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
           </div>
           <div className="no-print" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
             <button onClick={() => window.print()} style={{
-              padding: '8px 16px', background: '#5B6976', color: '#fff',
-              border: 'none', borderRadius: '8px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
+              padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
+              border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
             }}>PDF出力</button>
           </div>
           <div id="qr-print-area">

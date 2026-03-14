@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { nanoid } from 'nanoid'
 import type { Tournament, Player } from '@/types'
+import HeaderIcons from '@/components/ui/HeaderIcons'
 
 interface Props {
   tournament: Tournament
@@ -20,6 +21,29 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
   const [adding, setAdding] = useState(false)
   const [qrPlayerId, setQrPlayerId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+
+  // 未保存状態でのページ離脱アラート
+  useEffect(() => {
+    if (!editingId) return
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault() }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [editingId])
+
+  async function handleRefresh() {
+    setRefreshing(true)
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .eq('tournament_id', tournament.id)
+      .order('seat_order')
+    if (!error && data) {
+      setPlayers(data)
+      showToast('保存しました')
+    }
+    setRefreshing(false)
+  }
 
   function showToast(msg: string) {
     setToast(msg)
@@ -59,6 +83,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
     setEditingId(null)
     setEditName('')
     setSaving(false)
+    showToast('保存しました')
   }
 
   async function handleDeletePlayer(player: Player) {
@@ -140,22 +165,43 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
         borderBottom: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
-        <div>
-          <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{tournament.name} › </span>
-          <span style={{ fontSize: '14px', fontWeight: 700 }}>参加者</span>
-        </div>
-        <span style={{
-          display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
-          fontSize: '10px', fontWeight: 700, fontFamily: 'monospace',
-          background: 'var(--paper)', color: 'var(--slate)', border: '1px solid var(--border)',
-        }}>{players.length}名</span>
+        <span style={{ fontSize: '14px', fontWeight: 700 }}>参加者</span>
+        <HeaderIcons />
       </div>
 
       <div className="players-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: '600px' }}>
-          <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>参加者</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>参加者</div>
+              <span style={{
+                display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
+                fontSize: '10px', fontWeight: 700, fontFamily: 'monospace',
+                background: 'var(--paper)', color: 'var(--slate)', border: '1px solid var(--border)',
+              }}>{players.length}名</span>
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              style={{
+                padding: '5px 14px', borderRadius: '7px',
+                background: 'transparent', color: 'var(--cyan-deep)',
+                border: '1.5px solid var(--cyan-deep)', fontSize: '12px', fontWeight: 600,
+                cursor: 'pointer', opacity: refreshing ? 0.6 : 1,
+                display: 'flex', alignItems: 'center', gap: '5px',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M3 21v-5h5"/>
+              </svg>
+              {refreshing ? '保存中...' : '保存'}
+            </button>
+          </div>
           <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '18px' }}>
-            鉛筆アイコンで名前を編集できます
+            鉛筆アイコンで名前を編集できます（変更は即時保存されます）
           </div>
 
           {/* 参加者一覧 */}

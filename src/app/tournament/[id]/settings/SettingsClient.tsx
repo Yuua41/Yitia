@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Tournament, Player, RuleTemplate, RuleConfig } from '@/types'
 import { nanoid } from 'nanoid'
+import HeaderIcons from '@/components/ui/HeaderIcons'
 
 interface Props {
   tournament: Tournament
@@ -34,6 +35,17 @@ export default function SettingsClient({ tournament, players, templates }: Props
   const [saving, setSaving] = useState(false)
   const [starting, setStarting] = useState(false)
   const [finishing, setFinishing] = useState(false)
+
+  // 未保存状態の追跡
+  const initialSnapshot = useRef(JSON.stringify({ name: tournament.name, heldOn: tournament.held_on ?? '', notes: tournament.notes ?? '', numRounds: tournament.num_rounds, config: tournament.config, playerText: players.map(p => p.name).join('\n') }))
+  const isDirty = isDraft && JSON.stringify({ name, heldOn, notes, numRounds, config: { ...config, uma: getUma() }, playerText }) !== initialSnapshot.current
+
+  useEffect(() => {
+    if (!isDirty) return
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault() }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [isDirty])
 
   function applyTemplate(tplId: string) {
     setSelectedTemplate(tplId)
@@ -217,14 +229,6 @@ export default function SettingsClient({ tournament, players, templates }: Props
     router.refresh()
   }
 
-  const statusLabel = () => {
-    if (tournament.status === 'ongoing') return { text: '進行中', color: 'var(--cyan-deep)', bg: 'var(--cyan-pale)' }
-    if (tournament.status === 'finished') return { text: '完了', color: '#00ffaa', bg: 'rgba(0,255,170,0.12)' }
-    return { text: '開催前', color: '#ff00aa', bg: 'var(--gold-pale)' }
-  }
-
-  const s = statusLabel()
-
   return (
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <style>{`
@@ -242,26 +246,23 @@ export default function SettingsClient({ tournament, players, templates }: Props
         borderBottom: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 700, letterSpacing: '0.04em' }}>設定</span>
-          <span style={{
-            display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
-            fontSize: '10px', fontWeight: 700, fontFamily: 'monospace',
-            background: s.bg, color: s.color,
-          }}>{s.text}</span>
-        </div>
-        {isDraft && (
-          <button onClick={() => handleSave('dashboard')} disabled={saving} style={{
-            padding: '6px 16px', background: saving ? 'var(--mist)' : 'var(--cyan-deep)', color: '#fff',
-            border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-          }}>{saving ? '保存中...' : '保存'}</button>
-        )}
+        <span style={{ fontSize: '14px', fontWeight: 700 }}>設定</span>
+        <HeaderIcons />
       </div>
 
       {/* コンテンツ */}
       <div className="settings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: '600px' }}>
-          <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>設定</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+            <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>設定</div>
+            {isDraft && (
+              <button onClick={() => handleSave('dashboard')} disabled={saving} style={{
+                padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
+                border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+                cursor: 'pointer', opacity: saving ? 0.6 : 1,
+              }}>{saving ? '保存中...' : '保存'}</button>
+            )}
+          </div>
           <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '20px' }}>
             {isDraft ? '大会開始前にルールや基本情報を設定できます' : 'この大会の設定内容です'}
           </div>
@@ -281,8 +282,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
           {/* 大会情報カード */}
           <div style={{
-            background: 'rgba(15,21,40,0.5)',
-            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+            background: 'var(--navy)',
             border: '1.5px solid rgba(0,240,255,0.10)',
             borderRadius: '12px', padding: '18px', marginBottom: '14px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -331,8 +331,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
           {/* 参加者カード */}
           <div style={{
-            background: 'rgba(15,21,40,0.5)',
-            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+            background: 'var(--navy)',
             border: '1.5px solid rgba(0,240,255,0.10)',
             borderRadius: '12px', padding: '18px', marginBottom: '14px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',

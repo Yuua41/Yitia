@@ -11,7 +11,14 @@ export default function DashboardLoading() {
         padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div className="skeleton-pulse" style={{ width: '80px', height: '17px' }} />
-        <div className="skeleton-pulse" style={{ width: '110px', height: '28px', borderRadius: '8px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="skeleton-pulse" style={{ width: '110px', height: '28px', borderRadius: '8px' }} />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="skeleton-pulse" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+            <div className="skeleton-pulse" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+            <div className="skeleton-pulse" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+          </div>
+        </div>
       </div>
 
       {/* Grid skeleton */}

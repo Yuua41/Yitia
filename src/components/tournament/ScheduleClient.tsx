@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { calcTableResults, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table, Result } from '@/types'
+import HeaderIcons from '@/components/ui/HeaderIcons'
 
 interface Props {
   tournament: Tournament
@@ -31,7 +32,35 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
   const [dragInfo, setDragInfo] = useState<{ resultId: string; playerId: string } | null>(null)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
   const [swappedIds, setSwappedIds] = useState<string[]>([])
+  const [refreshing, setRefreshing] = useState(false)
 
+  async function handleRefresh() {
+    setRefreshing(true)
+    const { data, error } = await supabase
+      .from('tables')
+      .select('*, results(*)')
+      .eq('tournament_id', tournament.id)
+      .order('round_number')
+      .order('table_index')
+    if (!error && data) {
+      setLocalTables(data as Table[])
+      // Re-init scores from refreshed data
+      const s: Record<string, { value: string; negative: boolean }> = {}
+      ;(data as Table[]).forEach(t => {
+        if (t.is_submitted && !t.is_validated) {
+          const results = (t as any).results as Result[]
+          results?.forEach(r => {
+            if (r.score !== 0) {
+              s[r.id] = { value: (Math.abs(r.score) / 100).toString(), negative: r.score < 0 }
+            }
+          })
+        }
+      })
+      setScores(s)
+      initialScoresRef.current = JSON.stringify(s)
+    }
+    setRefreshing(false)
+  }
 
   // Initialize scores from submitted tables
   const initScores = () => {
@@ -49,6 +78,16 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
     return s
   }
   const [scores, setScores] = useState<Record<string, { value: string; negative: boolean }>>(initScores)
+  const initialScoresRef = useRef(JSON.stringify(initScores()))
+
+  // 未保存スコアがある場合のページ離脱アラート
+  useEffect(() => {
+    const isDirty = JSON.stringify(scores) !== initialScoresRef.current
+    if (!isDirty) return
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault() }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [scores])
 
   const isDraft = tournament.status === 'draft'
   const canSwap = tournament.status !== 'finished'
@@ -281,18 +320,39 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
         borderBottom: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
-        <div>
-          <span style={{ fontSize: '12px', color: 'var(--mist)' }}>{tournament.name} › </span>
-          <span style={{ fontSize: '15px', fontWeight: 700 }}>卓組・成績入力</span>
-        </div>
-        <span style={{
-          display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
-          fontSize: '11px', fontWeight: 700, fontFamily: 'monospace',
-          background: 'var(--paper)', color: 'var(--slate)', border: '1px solid var(--border)',
-        }}>確定 {validatedCount}/{localTables.length}</span>
+        <span style={{ fontSize: '15px', fontWeight: 700 }}>卓組・成績入力</span>
+        <HeaderIcons />
       </div>
       <div className="schedule-content" style={{ flex: 1, overflowY: 'auto' }}>
-        <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>卓組・成績入力</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+          <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>卓組・成績入力</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{
+              display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
+              fontSize: '11px', fontWeight: 700, fontFamily: 'monospace',
+              background: 'var(--paper)', color: 'var(--slate)', border: '1px solid var(--border)',
+            }}>確定 {validatedCount}/{localTables.length}</span>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              style={{
+                padding: '5px 14px', borderRadius: '7px',
+                background: 'transparent', color: 'var(--cyan-deep)',
+                border: '1.5px solid var(--cyan-deep)', fontSize: '12px', fontWeight: 600,
+                cursor: 'pointer', opacity: refreshing ? 0.6 : 1,
+                display: 'flex', alignItems: 'center', gap: '5px',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M3 21v-5h5"/>
+              </svg>
+              {refreshing ? '更新中...' : '更新'}
+            </button>
+          </div>
+        </div>
         <div style={{ fontSize: '13px', color: 'var(--mist)', marginBottom: '18px' }}>
           {tournament.name} — R{activeRound} / {tournament.num_rounds}
         </div>

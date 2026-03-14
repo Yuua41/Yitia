@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import DraggableMenuButton from '@/components/ui/DraggableMenuButton'
 import type { Tournament } from '@/types'
 
@@ -14,8 +13,6 @@ interface Props {
 
 export default function TournamentLayoutClient({ children, tournament }: Props) {
   const pathname = usePathname()
-  const router = useRouter()
-  const supabase = createClient()
   const base = `/tournament/${tournament.id}`
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -26,12 +23,6 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
     { label: '全体成績', href: `${base}/standings` },
     { label: 'QRコード', href: `${base}/qr` },
   ]
-
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
-  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -158,10 +149,6 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
               ← 大会一覧に戻る
             </div>
           </Link>
-          <button onClick={handleLogout} style={{
-            width: '100%', padding: '6px 10px', background: 'none', border: 'none',
-            cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontSize: '11.5px', textAlign: 'left',
-          }}>ログアウト</button>
         </div>
       </aside>
       <div className="tournament-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>

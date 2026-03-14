@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { calcTableResults } from '@/lib/mahjong/calculator'
 import type { Tournament, RuleConfig, Result } from '@/types'
 import { nanoid } from 'nanoid'
+import HeaderIcons from '@/components/ui/HeaderIcons'
 
 interface Props {
   tournaments: Tournament[]
@@ -491,19 +492,23 @@ export default function DashboardClient({ tournaments }: Props) {
         padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
         <span style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em' }}>大会一覧</span>
-        <button
-          onClick={handleCreateSample}
-          disabled={seeding}
-          style={{
-            padding: '5px 12px', background: 'transparent',
-            border: '1px solid var(--border-md)', borderRadius: '8px',
-            fontSize: '11px', color: 'var(--mist)', cursor: 'pointer',
-            fontWeight: 500, whiteSpace: 'nowrap',
-          }}
-        >{seeding ? '作成中...' : 'サンプルデータを作成'}</button>
+        <HeaderIcons />
       </div>
 
       <div className="dash-content" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--mist)' }}>{tournaments.length}件の大会</div>
+          <button
+            onClick={handleCreateSample}
+            disabled={seeding}
+            style={{
+              padding: '5px 14px', background: 'transparent',
+              border: '1.5px solid var(--cyan-deep)', borderRadius: '7px',
+              fontSize: '12px', color: 'var(--cyan-deep)', cursor: 'pointer',
+              fontWeight: 600, whiteSpace: 'nowrap',
+            }}
+          >{seeding ? '作成中...' : 'サンプルデータを作成'}</button>
+        </div>
 
         <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
           {tournaments.map(t => {

@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import DraggableMenuButton from '@/components/ui/DraggableMenuButton'
 
@@ -11,16 +10,8 @@ const NAV_ITEMS = [
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
   const pathname = usePathname()
-  const supabase = createClient()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
-  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -145,29 +136,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        {/* Footer */}
-        <div style={{ padding: '10px 8px', borderTop: '1px solid rgba(0,240,255,0.08)' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            padding: '8px 10px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px',
-          }}>
-            <div style={{
-              width: '24px', height: '24px', background: 'var(--gold)',
-              borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '10px', color: '#fff', fontWeight: 700, flexShrink: 0,
-            }}>A</div>
-            <button
-              onClick={handleLogout}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: '11px', color: 'rgba(255,255,255,0.45)',
-                textAlign: 'left', flex: 1,
-              }}
-            >
-              ログアウト
-            </button>
-          </div>
-        </div>
+        <div style={{ flex: 1 }} />
       </aside>
 
       {/* Main */}

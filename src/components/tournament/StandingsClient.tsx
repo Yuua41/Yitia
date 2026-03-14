@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { calcStandings, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table } from '@/types'
+import HeaderIcons from '@/components/ui/HeaderIcons'
 
 interface Props {
   tournament: Tournament
@@ -190,37 +191,37 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
         borderBottom: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
-        <div>
-          <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{tournament.name} › </span>
-          <span style={{ fontSize: '14px', fontWeight: 700 }}>全体成績</span>
-        </div>
-        <div className="standings-header-btns" style={{ display: 'flex', gap: '6px' }}>
-          <button onClick={exportCSV} style={{
-            padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
-            border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
-            cursor: 'pointer',
-          }}>CSV出力</button>
-          {isOwner && (
-            <button onClick={saveAdjustments} disabled={savingAdj} style={{
-              padding: '6px 14px', background: '#9EA18A', color: '#0a0e1a',
-              border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
-              cursor: 'pointer', opacity: savingAdj ? 0.6 : 1,
-            }}>
-              {savingAdj ? '保存中...' : '調整を保存'}
-            </button>
-          )}
-        </div>
+        <span style={{ fontSize: '14px', fontWeight: 700 }}>全体成績</span>
+        <HeaderIcons />
       </div>
       <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
-        <div style={{
-          fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px',
-          background: 'linear-gradient(90deg, var(--ink) 20%, var(--cyan) 40%, var(--gold) 60%, var(--ink) 80%)',
-          backgroundSize: '200% auto',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          animation: 'stTitleFade 0.5s ease both, stTitleShimmer 4s linear 1s infinite',
-        }}>総合成績</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+          <div style={{
+            fontFamily: 'serif', fontSize: '20px', fontWeight: 800,
+            background: 'linear-gradient(90deg, var(--ink) 20%, var(--cyan) 40%, var(--gold) 60%, var(--ink) 80%)',
+            backgroundSize: '200% auto',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            animation: 'stTitleFade 0.5s ease both, stTitleShimmer 4s linear 1s infinite',
+          }}>総合成績</div>
+          <div className="standings-header-btns" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button onClick={exportCSV} style={{
+              padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
+              border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+              cursor: 'pointer',
+            }}>CSV出力</button>
+            {isOwner && (
+              <button onClick={saveAdjustments} disabled={savingAdj} style={{
+                padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
+                border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+                cursor: 'pointer', opacity: savingAdj ? 0.6 : 1,
+              }}>
+                {savingAdj ? '保存中...' : '調整を保存'}
+              </button>
+            )}
+          </div>
+        </div>
         <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '12px', animation: 'stSubFade 0.6s ease 0.2s both' }}>
           {tournament.name} — {tables.length} / {tournament.num_rounds * Math.floor(players.length / 4)} 試合確定済み
         </div>
@@ -232,8 +233,8 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
           }}>CSV出力</button>
           {isOwner && (
             <button onClick={saveAdjustments} disabled={savingAdj} style={{
-              padding: '8px 16px', background: '#9EA18A', color: '#0a0e1a',
-              border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+              padding: '8px 16px', background: 'transparent', color: 'var(--cyan-deep)',
+              border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
               cursor: 'pointer', opacity: savingAdj ? 0.6 : 1, flex: 1,
             }}>
               {savingAdj ? '保存中...' : '調整を保存'}
