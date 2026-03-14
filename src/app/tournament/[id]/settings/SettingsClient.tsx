@@ -279,7 +279,8 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
           {/* 大会情報カード */}
           <div style={{
-            background: 'var(--navy)',
+            background: 'rgba(15,21,40,0.5)',
+            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
             border: '1.5px solid rgba(0,240,255,0.10)',
             borderRadius: '12px', padding: '18px', marginBottom: '14px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -328,7 +329,8 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
           {/* 参加者カード */}
           <div style={{
-            background: 'var(--navy)',
+            background: 'rgba(15,21,40,0.5)',
+            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
             border: '1.5px solid rgba(0,240,255,0.10)',
             borderRadius: '12px', padding: '18px', marginBottom: '14px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -391,7 +393,8 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
           {/* ルール設定カード */}
           <div style={{
-            background: 'var(--navy)', borderRadius: '12px', padding: '18px', marginBottom: '14px',
+            background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+            borderRadius: '12px', padding: '18px', marginBottom: '14px',
             color: '#fff',
           }}>
             <div style={cfgLabelStyle}>持ち点 / 返し</div>
@@ -528,7 +531,8 @@ export default function SettingsClient({ tournament, players, templates }: Props
           {/* ステータスセクション */}
           {isDraft && (
             <div style={{
-              background: 'var(--navy)',
+              background: 'rgba(15,21,40,0.5)',
+              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
               border: '1.5px solid rgba(0,240,255,0.10)',
               borderRadius: '12px', padding: '18px', marginBottom: '14px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -557,7 +561,8 @@ export default function SettingsClient({ tournament, players, templates }: Props
           {/* 進行中: 終了ボタン */}
           {tournament.status === 'ongoing' && (
             <div style={{
-              background: 'var(--navy)',
+              background: 'rgba(15,21,40,0.5)',
+              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
               border: '1.5px solid rgba(0,240,255,0.10)',
               borderRadius: '12px', padding: '18px', marginBottom: '14px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
