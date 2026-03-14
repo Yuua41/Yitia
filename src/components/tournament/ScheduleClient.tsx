@@ -320,7 +320,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
         borderBottom: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
-        <span style={{ fontSize: '15px', fontWeight: 700 }}>卓組・成績入力</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
         <HeaderIcons />
       </div>
       <div className="schedule-content" style={{ flex: 1, overflowY: 'auto' }}>

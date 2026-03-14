@@ -20,7 +20,7 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
     { label: '大会設定', href: `${base}/settings` },
     { label: '参加者', href: `${base}/players` },
     { label: '卓組・成績入力', href: `${base}/schedule` },
-    { label: '全体成績', href: `${base}/standings` },
+    { label: '総合成績', href: `${base}/standings` },
     { label: 'QRコード', href: `${base}/qr` },
   ]
 
@@ -102,10 +102,6 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
           <div style={{ fontSize: '9px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.22)', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '4px', marginLeft: '38px' }}>
             Mahjong Taikai Manager
           </div>
-        </div>
-        <div style={{ padding: '12px 18px 8px' }}>
-          <div style={{ fontSize: '8px', fontFamily: 'monospace', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', marginBottom: '6px' }}>現在の大会</div>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.7)', lineHeight: 1.35 }}>{tournament.name}</div>
         </div>
         <div style={{ height: '1px', background: 'rgba(0,240,255,0.08)', margin: '4px 0' }} />
         <div style={{ padding: '4px 8px', marginTop: '4px' }}>

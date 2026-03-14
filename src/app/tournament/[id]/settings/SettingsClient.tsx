@@ -246,7 +246,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
         borderBottom: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
-        <span style={{ fontSize: '14px', fontWeight: 700 }}>設定</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
         <HeaderIcons />
       </div>
 
@@ -254,7 +254,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
       <div className="settings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: '600px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
-            <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>設定</div>
+            <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>大会設定</div>
             {isDraft && (
               <button onClick={() => handleSave('dashboard')} disabled={saving} style={{
                 padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
@@ -262,9 +262,6 @@ export default function SettingsClient({ tournament, players, templates }: Props
                 cursor: 'pointer', opacity: saving ? 0.6 : 1,
               }}>{saving ? '保存中...' : '保存'}</button>
             )}
-          </div>
-          <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '20px' }}>
-            {isDraft ? '大会開始前にルールや基本情報を設定できます' : 'この大会の設定内容です'}
           </div>
 
           {/* テンプレート選択 */}

@@ -165,7 +165,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
         borderBottom: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
-        <span style={{ fontSize: '14px', fontWeight: 700 }}>参加者</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
         <HeaderIcons />
       </div>
 
@@ -199,9 +199,6 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
               </svg>
               {refreshing ? '保存中...' : '保存'}
             </button>
-          </div>
-          <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '18px' }}>
-            鉛筆アイコンで名前を編集できます（変更は即時保存されます）
           </div>
 
           {/* 参加者一覧 */}

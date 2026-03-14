@@ -1,7 +1,9 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useState, useRef, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 const iconBtn: React.CSSProperties = {
   width: '32px', height: '32px',
@@ -21,9 +23,39 @@ function hoverOut(e: React.MouseEvent<HTMLButtonElement>) {
   e.currentTarget.style.background = 'transparent'
 }
 
+const dropdownStyle: React.CSSProperties = {
+  position: 'absolute', top: '100%', right: 0, marginTop: '6px',
+  background: 'var(--navy)', border: '1px solid rgba(0,240,255,0.15)',
+  borderRadius: '10px', padding: '6px 0', minWidth: '180px',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+  zIndex: 100,
+}
+
+const menuItemStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: '8px',
+  padding: '10px 16px', fontSize: '12.5px', color: 'var(--mist)',
+  cursor: 'pointer', transition: 'background 0.12s',
+  textDecoration: 'none', border: 'none', background: 'transparent', width: '100%',
+}
+
 export default function HeaderIcons() {
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createClient()
+  const [openMenu, setOpenMenu] = useState<'notification' | 'settings' | 'user' | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenu(null)
+      }
+    }
+    if (openMenu) {
+      document.addEventListener('mousedown', handleClick)
+      return () => document.removeEventListener('mousedown', handleClick)
+    }
+  }, [openMenu])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -31,46 +63,120 @@ export default function HeaderIcons() {
     router.refresh()
   }
 
+  // Extract tournament base path for settings menu links
+  const tournamentMatch = pathname.match(/^\/tournament\/[^/]+/)
+  const tournamentBase = tournamentMatch ? tournamentMatch[0] : null
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      {/* 通知ベル（プレースホルダー） */}
-      <button
-        title="通知"
-        style={{ ...iconBtn, opacity: 0.5, cursor: 'default' }}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
-          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
-        </svg>
-      </button>
+    <div ref={menuRef} style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+      {/* 通知ベル */}
+      <div style={{ position: 'relative' }}>
+        <button
+          title="通知"
+          style={iconBtn}
+          onMouseEnter={hoverIn}
+          onMouseLeave={hoverOut}
+          onClick={() => setOpenMenu(openMenu === 'notification' ? null : 'notification')}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+          </svg>
+        </button>
+        {openMenu === 'notification' && (
+          <div style={dropdownStyle}>
+            <div style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--mist)', textAlign: 'center' }}>
+              通知はありません
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* 設定歯車（プレースホルダー） */}
-      <button
-        title="設定"
-        style={{ ...iconBtn, opacity: 0.5, cursor: 'default' }}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-          <circle cx="12" cy="12" r="3"/>
-        </svg>
-      </button>
+      {/* 設定歯車 → メニュー */}
+      <div style={{ position: 'relative' }}>
+        <button
+          title="設定"
+          style={iconBtn}
+          onMouseEnter={hoverIn}
+          onMouseLeave={hoverOut}
+          onClick={() => setOpenMenu(openMenu === 'settings' ? null : 'settings')}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+        {openMenu === 'settings' && (
+          <div style={dropdownStyle}>
+            {tournamentBase && (
+              <Link
+                href={`${tournamentBase}/settings`}
+                style={menuItemStyle}
+                onClick={() => setOpenMenu(null)}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,240,255,0.08)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span>大会設定</span>
+              </Link>
+            )}
+            <Link
+              href="/dashboard"
+              style={menuItemStyle}
+              onClick={() => setOpenMenu(null)}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,240,255,0.08)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/>
+              </svg>
+              <span>大会一覧</span>
+            </Link>
+          </div>
+        )}
+      </div>
 
-      {/* アバター＋ログアウト */}
-      <button
-        onClick={handleLogout}
-        title="ログアウト"
-        style={iconBtn}
-        onMouseEnter={hoverIn}
-        onMouseLeave={hoverOut}
-      >
-        <div style={{
-          width: '26px', height: '26px',
-          background: 'var(--gold)',
-          borderRadius: '50%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '10px', color: '#fff', fontWeight: 700,
-        }}>A</div>
-      </button>
+      {/* アバター → ログアウト確認 */}
+      <div style={{ position: 'relative' }}>
+        <button
+          title="アカウント"
+          style={iconBtn}
+          onMouseEnter={hoverIn}
+          onMouseLeave={hoverOut}
+          onClick={() => setOpenMenu(openMenu === 'user' ? null : 'user')}
+        >
+          <div style={{
+            width: '26px', height: '26px',
+            background: 'var(--gold)',
+            borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '10px', color: '#fff', fontWeight: 700,
+          }}>A</div>
+        </button>
+        {openMenu === 'user' && (
+          <div style={dropdownStyle}>
+            <button
+              style={menuItemStyle}
+              onClick={handleLogout}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,0,100,0.1)'; e.currentTarget.style.color = '#ff6b9d' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--mist)' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              <span>ログアウト</span>
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

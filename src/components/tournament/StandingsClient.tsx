@@ -16,6 +16,43 @@ interface Props {
 type SortKey = 'rank' | 'name' | 'total'
 type SortDir = 'asc' | 'desc'
 
+function CountUpScore({ value, delay = 0, fontSize = '14px', className }: { value: number; delay?: number; fontSize?: string; className?: string }) {
+  const [display, setDisplay] = useState(0)
+  const animatedRef = useRef(false)
+  const elRef = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    const el = elRef.current
+    if (!el) return
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !animatedRef.current) {
+        animatedRef.current = true
+        const start = performance.now() + delay
+        const duration = 800
+        function tick(now: number) {
+          const elapsed = now - start
+          if (elapsed < 0) { requestAnimationFrame(tick); return }
+          const t = Math.min(elapsed / duration, 1)
+          const eased = 1 - Math.pow(1 - t, 3)
+          setDisplay(Math.round(eased * value * 10) / 10)
+          if (t < 1) requestAnimationFrame(tick)
+          else setDisplay(value)
+        }
+        requestAnimationFrame(tick)
+      }
+    }, { threshold: 0.1 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [value, delay])
+
+  return (
+    <strong ref={elRef} className={className} style={{
+      fontFamily: 'monospace', fontSize, position: 'relative',
+      color: value >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+    }}>{formatPoint(display)}</strong>
+  )
+}
+
 export default function StandingsClient({ tournament, players, tables, isOwner }: Props) {
   const supabase = createClient()
   const [localPlayers, setLocalPlayers] = useState(players)
@@ -191,7 +228,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
         borderBottom: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
       }}>
-        <span style={{ fontSize: '14px', fontWeight: 700 }}>全体成績</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
         <HeaderIcons />
       </div>
       <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
@@ -325,11 +362,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                           transformOrigin: 'right',
                           animation: `stBarGrow 0.6s ease ${idx * 40 + 200}ms both`,
                         }} />
-                        <strong style={{
-                          fontFamily: 'monospace', fontSize: '14px', position: 'relative',
-                          color: total >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
-                          animation: `stPointSlide 0.4s ease ${idx * 40 + 150}ms both`,
-                        }}>{formatPoint(total)}</strong>
+                        <CountUpScore value={total} delay={idx * 40 + 150} fontSize="14px" />
                       </td>
                     </tr>
                   )
@@ -375,11 +408,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                   <div style={{ flex: 1, fontSize: '13.5px', fontWeight: 700 }}>
                     {player.seat_order + 1}. {player.name}
                   </div>
-                  <strong style={{
-                    fontFamily: 'monospace', fontSize: '16px',
-                    color: total >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
-                    animation: `stPointSlide 0.4s ease ${idx * 50 + 150}ms both`,
-                  }}>{formatPoint(total)}</strong>
+                  <CountUpScore value={total} delay={idx * 50 + 150} fontSize="16px" />
                 </div>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px', position: 'relative' }}>
                   {roundPoints.map((pt, i) => (

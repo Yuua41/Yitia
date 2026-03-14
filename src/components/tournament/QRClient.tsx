@@ -35,14 +35,11 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
           borderBottom: '1px solid rgba(0,240,255,0.08)',
           padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         }}>
-          <span style={{ fontSize: '14px', fontWeight: 700 }}>QRコード</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
           <HeaderIcons />
         </div>
         <div className="qr-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
           <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>QRコード</div>
-          <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '18px' }}>
-            参加者にQRを見せるとスコア入力・成績確認ができます
-          </div>
           <div className="no-print" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
             <button onClick={() => window.print()} style={{
               padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
