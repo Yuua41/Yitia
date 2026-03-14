@@ -10,6 +10,7 @@ export default async function DashboardPage() {
   const { data: tournaments } = await supabase
     .from('tournaments')
     .select('*, players(id)')
+    .eq('owner_id', user.id)
     .order('created_at', { ascending: false })
 
   return (

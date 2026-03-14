@@ -393,7 +393,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
               }}>
                 <div style={{
                   padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  background: statusBg, color: 'var(--logo-dot)',
+                  background: statusBg, color: '#fff',
                 }}>
                   <span style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 800 }}>卓 {table.table_number}</span>
                   <span style={{ fontSize: '10px', fontFamily: 'monospace', background: 'var(--cyan-pale)', padding: '2px 8px', borderRadius: '3px' }}>
@@ -492,7 +492,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
                                 width: '80px', padding: '6px 7px',
                                 background: 'var(--paper)', border: '1.5px solid var(--border-md)',
                                 borderRadius: '7px', fontSize: '14px', fontWeight: 600,
-                                textAlign: 'right', fontFamily: 'monospace', color: '#fff', outline: 'none',
+                                textAlign: 'right', fontFamily: 'monospace', color: 'var(--ink)', outline: 'none',
                               }}
                             />
                             <span style={{ fontSize: '10.5px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>00</span>

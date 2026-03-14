@@ -44,12 +44,16 @@ export default function HeaderIcons() {
   const [openMenu, setOpenMenu] = useState<'notification' | 'settings' | 'user' | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const [isDark, setIsDark] = useState(true)
+  const [userEmail, setUserEmail] = useState('')
 
   useEffect(() => {
     const saved = localStorage.getItem('theme')
     const dark = saved !== 'light'
     setIsDark(dark)
     document.body.setAttribute('data-theme', dark ? 'dark' : 'light')
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) setUserEmail(data.user.email)
+    })
   }, [])
 
   function toggleTheme() {
@@ -147,7 +151,7 @@ export default function HeaderIcons() {
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                 <circle cx="12" cy="7" r="4"/>
               </svg>
-              <span>プロフィール</span>
+              <span>プロフィール(未実装)</span>
             </button>
           </div>
         )}
@@ -156,7 +160,7 @@ export default function HeaderIcons() {
       {/* アバター → ログアウト確認 */}
       <div style={{ position: 'relative' }}>
         <button
-          title="アカウント"
+          title={userEmail || 'アカウント'}
           style={iconBtn}
           onMouseEnter={hoverIn}
           onMouseLeave={hoverOut}
@@ -172,6 +176,11 @@ export default function HeaderIcons() {
         </button>
         {openMenu === 'user' && (
           <div style={dropdownStyle}>
+            {userEmail && (
+              <div style={{ padding: '8px 16px 6px', fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace', borderBottom: '1px solid var(--border)', marginBottom: '4px', wordBreak: 'break-all' }}>
+                {userEmail}
+              </div>
+            )}
             <Link
               href="/dashboard"
               style={menuItemStyle}

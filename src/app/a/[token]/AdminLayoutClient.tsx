@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import DraggableMenuButton from '@/components/ui/DraggableMenuButton'
@@ -16,6 +16,16 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
   const pathname = usePathname()
   const base = `/a/${token}`
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Force dark mode on admin pages
+  useEffect(() => {
+    const prev = document.body.getAttribute('data-theme')
+    document.body.setAttribute('data-theme', 'dark')
+    return () => {
+      if (prev) document.body.setAttribute('data-theme', prev)
+      else document.body.removeAttribute('data-theme')
+    }
+  }, [])
 
   const navItems = [
     { label: '卓組・成績入力', href: `${base}/schedule` },
