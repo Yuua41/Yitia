@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { calcTableResults } from '@/lib/mahjong/calculator'
 import type { Tournament, RuleConfig, Result } from '@/types'
 import { nanoid } from 'nanoid'
+import HeaderIcons from '@/components/ui/HeaderIcons'
 
 interface Props {
   tournaments: Tournament[]
@@ -265,15 +266,15 @@ export default function DashboardClient({ tournaments }: Props) {
       rounding: 'none',
     }
 
-    // --- 完了済み大会 ---
+    // --- 完了済み大会 (32人 8回戦) ---
     const { data: t1, error: e1 } = await supabase
       .from('tournaments')
       .insert({
         owner_id: user.id,
         name: '第42回 春季麻雀大会',
         held_on: '2026-03-01',
-        notes: 'サンプルデータ。25000点持ち30000点返し、ウマ30-10。',
-        num_rounds: 4,
+        notes: 'サンプル。25000点持ち30000点返し、ウマ20-10。同点は分け。',
+        num_rounds: 8,
         config: sampleConfig,
         admin_token: nanoid(12),
         status: 'finished',
@@ -287,27 +288,97 @@ export default function DashboardClient({ tournaments }: Props) {
       return
     }
 
-    const names8 = ['佐藤', '田中', '鈴木', '山田', '渡辺', '高橋', '伊藤', '中村']
+    const names32 = [
+      '佐藤', '田中', '鈴木', '山田', '渡辺', '高橋', '伊藤', '中村',
+      '小林', '加藤', '吉田', '山口', '松本', '井上', '木村', '清水',
+      '林', '斎藤', '山本', '池田', '橋本', '阿部', '石川', '前田',
+      '藤田', '小川', '岡田', '後藤', '長谷川', '石井', '村上', '近藤',
+    ]
     const { data: p1 } = await supabase
       .from('players')
-      .insert(names8.map((n, i) => ({
+      .insert(names32.map((n, i) => ({
         tournament_id: t1.id, name: n, seat_order: i, token: nanoid(12),
-        bonus: i === 2 ? -20 : 0, // 鈴木にチョンボ -20
+        bonus: i === 2 ? -20 : i === 15 ? -10 : 0,
       })))
       .select()
 
     if (!p1) { setSeeding(false); return }
 
-    // 卓割り + スコア (各卓の合計 = 100000)
+    // 32人を8卓に割り振り × 8ラウンド
+    // 各卓合計 = 100000、リアルなバリエーション（大勝ち→大負け等ジグザグ）
     const rounds1: { r: number; t: number; pi: number[]; sc: number[] }[] = [
-      { r: 1, t: 1, pi: [0,1,2,3], sc: [35000,28000,22000,15000] },
-      { r: 1, t: 2, pi: [4,5,6,7], sc: [42000,25000,18000,15000] },
-      { r: 2, t: 1, pi: [0,4,1,5], sc: [30000,30000,25000,15000] },
-      { r: 2, t: 2, pi: [2,6,3,7], sc: [38000,32000,20000,10000] },
-      { r: 3, t: 1, pi: [0,6,3,5], sc: [45000,22000,18000,15000] },
-      { r: 3, t: 2, pi: [1,7,2,4], sc: [33000,27000,23000,17000] },
-      { r: 4, t: 1, pi: [0,7,2,5], sc: [28000,28000,28000,16000] },
-      { r: 4, t: 2, pi: [1,6,3,4], sc: [40000,30000,20000,10000] },
+      // R1 — 初戦：波乱含み
+      { r:1, t:1, pi:[0,1,2,3],     sc:[12000,35200,39800,13000] },
+      { r:1, t:2, pi:[4,5,6,7],     sc:[42100,18900,15000,24000] },
+      { r:1, t:3, pi:[8,9,10,11],   sc:[9500,38000,22500,30000] },
+      { r:1, t:4, pi:[12,13,14,15], sc:[31500,15500,41000,12000] },
+      { r:1, t:5, pi:[16,17,18,19], sc:[24000,29000,11000,36000] },
+      { r:1, t:6, pi:[20,21,22,23], sc:[16000,43800,26200,14000] },
+      { r:1, t:7, pi:[24,25,26,27], sc:[33100,10000,24900,32000] },
+      { r:1, t:8, pi:[28,29,30,31], sc:[22000,37000,13000,28000] },
+      // R2 — 巻き返しラウンド
+      { r:2, t:1, pi:[0,5,10,15],   sc:[41000,14000,31000,14000] },
+      { r:2, t:2, pi:[1,4,11,14],   sc:[18000,26700,42300,13000] },
+      { r:2, t:3, pi:[2,7,8,13],    sc:[15500,35000,28000,21500] },
+      { r:2, t:4, pi:[3,6,9,12],    sc:[28000,20000,27000,25000] },
+      { r:2, t:5, pi:[16,21,26,31], sc:[15000,25500,39500,20000] },
+      { r:2, t:6, pi:[17,20,27,30], sc:[33000,16000,22000,29000] },
+      { r:2, t:7, pi:[18,23,24,29], sc:[14000,46000,18000,22000] },
+      { r:2, t:8, pi:[19,22,25,28], sc:[30000,15000,25000,30000] },
+      // R3 — 混戦：同点あり
+      { r:3, t:1, pi:[0,7,9,14],    sc:[15000,21000,37500,26500] },
+      { r:3, t:2, pi:[1,6,8,15],    sc:[25000,25000,25000,25000] },
+      { r:3, t:3, pi:[2,5,11,12],   sc:[43200,13000,24800,19000] },
+      { r:3, t:4, pi:[3,4,10,13],   sc:[14000,34000,22000,30000] },
+      { r:3, t:5, pi:[16,23,25,30], sc:[28500,21000,28500,22000] },
+      { r:3, t:6, pi:[17,22,24,31], sc:[14000,27000,19000,40000] },
+      { r:3, t:7, pi:[18,21,27,28], sc:[32000,16000,28000,24000] },
+      { r:3, t:8, pi:[19,20,26,29], sc:[18000,36000,26000,20000] },
+      // R4 — 上位陣が沈む展開
+      { r:4, t:1, pi:[0,6,11,13],   sc:[28000,16000,28000,28000] },
+      { r:4, t:2, pi:[1,7,10,12],   sc:[14000,27500,38500,20000] },
+      { r:4, t:3, pi:[2,4,9,15],    sc:[25000,25000,25000,25000] },
+      { r:4, t:4, pi:[3,5,8,14],    sc:[14000,44000,18000,24000] },
+      { r:4, t:5, pi:[16,22,27,29], sc:[35000,16000,28000,21000] },
+      { r:4, t:6, pi:[17,23,26,28], sc:[17000,23000,31000,29000] },
+      { r:4, t:7, pi:[18,20,25,31], sc:[13000,42500,25500,19000] },
+      { r:4, t:8, pi:[19,21,24,30], sc:[27000,20000,29000,24000] },
+      // R5 — 中盤：逆転の兆し
+      { r:5, t:1, pi:[0,4,8,12],    sc:[39000,15000,26000,20000] },
+      { r:5, t:2, pi:[1,5,9,13],    sc:[16000,33500,28500,22000] },
+      { r:5, t:3, pi:[2,6,10,14],   sc:[19000,27000,27000,27000] },
+      { r:5, t:4, pi:[3,7,11,15],   sc:[13000,23000,47000,17000] },
+      { r:5, t:5, pi:[16,20,24,28], sc:[30000,18000,30000,22000] },
+      { r:5, t:6, pi:[17,21,25,29], sc:[25500,17000,36500,21000] },
+      { r:5, t:7, pi:[18,22,26,30], sc:[41000,13000,18000,28000] },
+      { r:5, t:8, pi:[19,23,27,31], sc:[25000,25000,25000,25000] },
+      // R6 — 終盤戦突入
+      { r:6, t:1, pi:[0,13,22,31],  sc:[16000,23000,32000,29000] },
+      { r:6, t:2, pi:[1,12,23,30],  sc:[44500,13000,24500,18000] },
+      { r:6, t:3, pi:[2,15,20,29],  sc:[28000,19000,28000,25000] },
+      { r:6, t:4, pi:[3,14,21,28],  sc:[15000,37000,27000,21000] },
+      { r:6, t:5, pi:[4,9,18,27],   sc:[35500,16000,22000,26500] },
+      { r:6, t:6, pi:[5,8,19,26],   sc:[15000,40000,25000,20000] },
+      { r:6, t:7, pi:[6,11,16,25],  sc:[28000,19000,29000,24000] },
+      { r:6, t:8, pi:[7,10,17,24],  sc:[12000,43000,27000,18000] },
+      // R7 — 最終盤：大荒れ
+      { r:7, t:1, pi:[0,14,19,28],  sc:[22000,26000,26000,26000] },
+      { r:7, t:2, pi:[1,15,18,29],  sc:[14000,36000,28000,22000] },
+      { r:7, t:3, pi:[2,12,17,30],  sc:[41500,13000,26500,19000] },
+      { r:7, t:4, pi:[3,13,16,31],  sc:[30000,16000,30000,24000] },
+      { r:7, t:5, pi:[4,10,23,26],  sc:[17000,38000,25000,20000] },
+      { r:7, t:6, pi:[5,11,22,27],  sc:[33000,16000,23000,28000] },
+      { r:7, t:7, pi:[6,8,21,24],   sc:[14000,45000,23000,18000] },
+      { r:7, t:8, pi:[7,9,20,25],   sc:[28500,19000,28500,24000] },
+      // R8 — 最終戦：逆転劇
+      { r:8, t:1, pi:[0,11,17,26],  sc:[34000,16000,28000,22000] },
+      { r:8, t:2, pi:[1,10,16,27],  sc:[15000,39500,25500,20000] },
+      { r:8, t:3, pi:[2,9,19,24],   sc:[30000,17000,23000,30000] },
+      { r:8, t:4, pi:[3,8,18,25],   sc:[42000,14000,26000,18000] },
+      { r:8, t:5, pi:[4,15,21,30],  sc:[27000,19000,27000,27000] },
+      { r:8, t:6, pi:[5,14,20,31],  sc:[15000,37500,26500,21000] },
+      { r:8, t:7, pi:[6,13,23,28],  sc:[33000,16000,29000,22000] },
+      { r:8, t:8, pi:[7,12,22,29],  sc:[46000,13000,24000,17000] },
     ]
 
     for (const rd of rounds1) {
@@ -346,6 +417,7 @@ export default function DashboardClient({ tournaments }: Props) {
       .select().single()
 
     if (t2) {
+      const names8 = ['佐藤', '田中', '鈴木', '山田', '渡辺', '高橋', '伊藤', '中村']
       const { data: p2 } = await supabase
         .from('players')
         .insert(names8.map((n, i) => ({
@@ -382,7 +454,6 @@ export default function DashboardClient({ tournaments }: Props) {
               await supabase.from('results').update({ point: c.point, rank: c.rank }).eq('id', c.id)
             }
           } else {
-            // 未入力のラウンド
             const initResults = rd.pi.map((pIdx, seat) => ({
               table_id: tbl.id, player_id: p2[pIdx].id, seat_index: seat,
               score: 0, point: 0, rank: 0, is_negative_mode: false,
@@ -398,9 +469,9 @@ export default function DashboardClient({ tournaments }: Props) {
   }
 
   const statusLabel = (t: Tournament) => {
-    if (t.status === 'ongoing') return { text: '進行中', color: 'var(--cyan-deep)', bg: 'var(--cyan-pale)' }
-    if (t.status === 'finished') return { text: '完了', color: '#15803d', bg: '#f0fdf4' }
-    return { text: '下書き', color: 'var(--mist)', bg: 'var(--paper)' }
+    if (t.status === 'ongoing') return { text: '進行中', color: 'var(--cyan)', bg: 'var(--cyan-pale)' }
+    if (t.status === 'finished') return { text: '完了', color: 'var(--gold)', bg: 'var(--gold-pale)' }
+    return { text: '下書き', color: 'var(--mist)', bg: 'var(--hover-bg)' }
   }
 
   return (
@@ -413,105 +484,137 @@ export default function DashboardClient({ tournaments }: Props) {
         }
       `}</style>
       <div className="dash-header" style={{
-        height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
+        height: '56px',
+        background: 'var(--header-bg)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--header-border)',
         padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+        position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
-        <span style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 700, letterSpacing: '0.04em' }}>大会一覧</span>
+        <span style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em' }}>大会一覧</span>
+        <HeaderIcons />
       </div>
 
-      <div className="dash-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
-        <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>大会一覧</div>
-        <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div className="dash-content" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--mist)' }}>{tournaments.length}件の大会</div>
           <button
             onClick={handleCreateSample}
             disabled={seeding}
             style={{
-              padding: '3px 10px', background: 'transparent',
-              border: '1px solid var(--border-md)', borderRadius: '6px',
-              fontSize: '11px', color: 'var(--gold-dark)', cursor: 'pointer',
+              padding: '5px 14px', background: 'transparent',
+              border: '1.5px solid var(--cyan-deep)', borderRadius: '7px',
+              fontSize: '12px', color: 'var(--cyan-deep)', cursor: 'pointer',
               fontWeight: 600, whiteSpace: 'nowrap',
             }}
           >{seeding ? '作成中...' : 'サンプルデータを作成'}</button>
         </div>
 
-        <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
+        <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
           {tournaments.map(t => {
             const s = statusLabel(t)
             return (
               <div key={t.id} style={{
-                background: '#fff', border: '1.5px solid var(--border)',
-                borderRadius: '12px', padding: '18px', cursor: navigatingId ? 'wait' : 'pointer',
-                transition: 'all 0.15s', boxShadow: '0 1px 8px rgba(15,21,32,0.07)',
-                position: 'relative', overflow: 'hidden',
-                opacity: navigatingId && navigatingId !== t.id ? 0.5 : 1,
+                background: 'var(--card-bg)',
+                border: '1px solid var(--card-border)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                borderRadius: '16px', overflow: 'hidden',
+                cursor: navigatingId ? 'wait' : 'pointer',
+                transition: 'box-shadow 0.2s, background 0.2s, opacity 0.2s',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                opacity: navigatingId && navigatingId !== t.id ? 0.4 : 1,
+                position: 'relative',
               }}
-                onMouseEnter={e => !navigatingId && (e.currentTarget.style.transform = 'translateY(-2px)')}
-                onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
+                onMouseEnter={e => { if (!navigatingId) { e.currentTarget.style.boxShadow = '0 8px 36px rgba(0,0,0,0.15), 0 0 20px var(--hover-bg)'; e.currentTarget.style.background = 'var(--card-bg)' } }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)'; e.currentTarget.style.background = 'var(--card-bg)' }}
               >
+                {/* ステータスに応じた上部カラーバー */}
                 <div style={{
-                  position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
+                  height: '4px',
                   background: t.status === 'ongoing'
-                    ? 'linear-gradient(90deg, #abdad1, #8ecbc2)'
-                    : t.status === 'finished' ? '#f4a460' : 'var(--border-md)',
+                    ? 'linear-gradient(90deg, var(--cyan), var(--cyan-dim))'
+                    : t.status === 'finished' ? 'var(--gold)' : 'var(--border-md)',
                 }} />
 
-                <button
-                  onClick={e => { e.stopPropagation(); handleDuplicate(t) }}
-                  disabled={!!duplicatingId}
-                  title="複製"
-                  style={{
-                    position: 'absolute', top: '10px', right: '38px',
-                    width: '24px', height: '24px', borderRadius: '50%',
-                    background: 'transparent', border: '1px solid var(--border-md)',
-                    color: duplicatingId === t.id ? 'var(--cyan-deep)' : 'var(--mist)',
-                    fontSize: '11px', cursor: duplicatingId ? 'wait' : 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.13s',
-                  }}
-                  onMouseEnter={e => { if (!duplicatingId) { e.currentTarget.style.background = 'var(--cyan-pale)'; e.currentTarget.style.color = 'var(--cyan-deep)'; e.currentTarget.style.borderColor = 'rgba(61,125,115,0.3)' } }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = duplicatingId === t.id ? 'var(--cyan-deep)' : 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border-md)' }}
-                >{duplicatingId === t.id ? '…' : '⧉'}</button>
-
-                <button
-                  onClick={e => { e.stopPropagation(); setDeleteTarget(t) }}
-                  style={{
-                    position: 'absolute', top: '10px', right: '10px',
-                    width: '24px', height: '24px', borderRadius: '50%',
-                    background: 'transparent', border: '1px solid var(--border-md)',
-                    color: 'var(--mist)', fontSize: '11px', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.13s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-pale)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border-md)' }}
-                >✕</button>
-
-                <div
-                  onClick={() => { setNavigatingId(t.id); router.push(`/tournament/${t.id}/schedule`) }}
-                  style={{ paddingRight: '56px' }}
-                >
-                  <div style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 700, marginBottom: '5px' }}>
-                    {navigatingId === t.id ? <span style={{ fontSize: '12px', color: 'var(--mist)', fontWeight: 600 }}>Loading...</span> : t.name}
+                {/* ローディングシマー */}
+                {navigatingId === t.id && (
+                  <div style={{
+                    position: 'absolute', inset: 0, zIndex: 10,
+                    background: 'var(--header-bg)',
+                    backdropFilter: 'blur(3px)',
+                  }}>
+                    <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
+                      <div className="skeleton-pulse" style={{ width: '52px', height: '22px', borderRadius: '100px' }} />
+                      <div className="skeleton-pulse" style={{ width: '65%', height: '18px' }} />
+                      <div className="skeleton-pulse" style={{ width: '45%', height: '12px' }} />
+                    </div>
                   </div>
-                  <div style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace', marginBottom: '8px' }}>
-                    {t.held_on ?? '日程未定'} &nbsp;|&nbsp; {t.num_rounds}回戦 &nbsp;|&nbsp; {t.players?.length ?? 0}名
-                  </div>
-                  {t.notes && (
-                    <div style={{
-                      fontSize: '11.5px', color: 'var(--slate)',
-                      background: 'var(--paper)', borderRadius: '7px',
-                      padding: '7px 9px', border: '1px solid var(--border)',
-                      lineHeight: 1.5, marginBottom: '10px',
-                      display: '-webkit-box', WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                    } as React.CSSProperties}>{t.notes}</div>
-                  )}
-                  <div style={{ display: 'flex', gap: '6px' }}>
+                )}
+
+                {/* カード本体 */}
+                <div style={{ padding: '14px 16px 18px' }}>
+                  {/* 上段: ステータスバッジ + アクションボタン（近接・整列） */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                     <span style={{
-                      display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
-                      fontSize: '10px', fontWeight: 700, fontFamily: 'monospace',
+                      display: 'inline-flex', alignItems: 'center',
+                      padding: '3px 10px', borderRadius: '100px',
+                      fontSize: '10px', fontWeight: 600, letterSpacing: '0.04em',
                       background: s.bg, color: s.color,
                     }}>{s.text}</span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDuplicate(t) }}
+                        disabled={!!duplicatingId}
+                        title="複製"
+                        style={{
+                          width: '26px', height: '26px', borderRadius: '8px',
+                          background: 'transparent', border: '1px solid var(--border-md)',
+                          color: duplicatingId === t.id ? 'var(--cyan-deep)' : 'var(--mist)',
+                          fontSize: '11px', cursor: duplicatingId ? 'wait' : 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 0.13s',
+                        }}
+                        onMouseEnter={e => { if (!duplicatingId) { e.currentTarget.style.background = 'var(--cyan-pale)'; e.currentTarget.style.color = 'var(--cyan)' } }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--mist)' }}
+                      >{duplicatingId === t.id ? '…' : '⧉'}</button>
+                      <button
+                        onClick={e => { e.stopPropagation(); setDeleteTarget(t) }}
+                        style={{
+                          width: '26px', height: '26px', borderRadius: '8px',
+                          background: 'transparent', border: '1px solid var(--border-md)',
+                          color: 'var(--mist)', fontSize: '11px', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 0.13s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-pale)'; e.currentTarget.style.color = 'var(--red)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--mist)' }}
+                      >✕</button>
+                    </div>
+                  </div>
+
+                  {/* タイトル（コントラスト強調） */}
+                  <div onClick={() => { setNavigatingId(t.id); router.push(`/tournament/${t.id}/schedule`) }}>
+                    <div style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.3, marginBottom: '8px', color: 'var(--ink)' }}>
+                      {t.name}
+                    </div>
+                    {/* メタ情報（反復・整列） */}
+                    <div style={{ fontSize: '12px', color: 'var(--mist)', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <span>{t.held_on ?? '日程未定'}</span>
+                      <span style={{ opacity: 0.4 }}>·</span>
+                      <span>{t.num_rounds}回戦</span>
+                      <span style={{ opacity: 0.4 }}>·</span>
+                      <span>{t.players?.length ?? 0}名</span>
+                    </div>
+                    {t.notes && (
+                      <div style={{
+                        fontSize: '12px', color: 'var(--mist)',
+                        marginTop: '10px', lineHeight: 1.6,
+                        display: '-webkit-box', WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                      } as React.CSSProperties}>{t.notes}</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -521,17 +624,31 @@ export default function DashboardClient({ tournaments }: Props) {
           <div
             onClick={() => setShowForm(true)}
             style={{
-              background: 'transparent', border: '1.5px dashed var(--border-md)',
-              borderRadius: '12px', padding: '18px', cursor: 'pointer',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', minHeight: '148px', gap: '8px',
-              transition: 'all 0.15s',
+              background: 'var(--card-bg)', border: '1px solid var(--card-border)',
+              borderRadius: '14px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center',
+              padding: '18px 20px', gap: '14px',
+              transition: 'all 0.18s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.background = 'var(--gold-pale)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-md)'; e.currentTarget.style.background = 'transparent' }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'var(--card-bg)'
+              e.currentTarget.style.borderColor = 'var(--border-md)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'var(--card-bg)'
+              e.currentTarget.style.borderColor = 'var(--card-border)'
+            }}
           >
-            <div style={{ width: '40px', height: '40px', background: 'var(--gold-pale)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: 'var(--gold-dark)' }}>＋</div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold-dark)' }}>新しい大会を作成</div>
+            <div style={{
+              width: '40px', height: '40px', borderRadius: '50%',
+              border: '1.5px solid var(--border-md)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '18px', color: 'var(--cyan-deep)', fontWeight: 300, flexShrink: 0,
+            }}>+</div>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.01em' }}>新しい大会を作成</div>
+              <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '2px' }}>大会情報を入力して開始</div>
+            </div>
           </div>
         </div>
       </div>
@@ -544,15 +661,19 @@ export default function DashboardClient({ tournaments }: Props) {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
         }}>
           <div style={{
-            background: '#fff', borderRadius: '16px', padding: '28px',
+            background: 'var(--header-bg)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: '1px solid var(--card-border)',
+            borderRadius: '16px', padding: '28px',
             width: '100%', maxWidth: '380px',
-            boxShadow: '0 20px 60px rgba(15,21,32,0.2)',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
           }}>
             <div style={{ fontSize: '16px', marginBottom: '8px', color: 'var(--red)' }}>削除</div>
-            <div style={{ fontFamily: 'serif', fontSize: '17px', fontWeight: 800, marginBottom: '8px' }}>大会を削除しますか？</div>
+            <div style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: '8px' }}>大会を削除しますか？</div>
             <div style={{
-              fontSize: '13px', color: 'var(--slate)', marginBottom: '6px',
-              background: 'var(--paper)', padding: '10px 13px', borderRadius: '8px',
+              fontSize: '13px', color: 'var(--ink)', marginBottom: '6px',
+              background: 'var(--surface)', padding: '10px 13px', borderRadius: '8px',
               fontWeight: 600,
             }}>「{deleteTarget.name}」</div>
             <div style={{ fontSize: '12px', color: 'var(--red)', marginBottom: '22px' }}>
@@ -581,17 +702,21 @@ export default function DashboardClient({ tournaments }: Props) {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
         }}>
           <div style={{
-            background: '#fff', borderRadius: '16px', padding: 'clamp(20px, 4vw, 28px)',
+            background: 'var(--header-bg)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: '1px solid var(--card-border)',
+            borderRadius: '16px', padding: 'clamp(20px, 4vw, 28px)',
             width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto',
-            boxShadow: '0 20px 60px rgba(15,21,32,0.2)',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
           }}>
-            <div style={{ fontFamily: 'serif', fontSize: '18px', fontWeight: 800, marginBottom: '20px' }}>新しい大会を作成</div>
+            <div style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.02em', marginBottom: '20px' }}>新しい大会を作成</div>
 
             <div style={{ marginBottom: '13px' }}>
               <label style={labelStyle}>大会名 *</label>
               <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="例：第1回 春季大会" />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '13px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '13px' }}>
               <div>
                 <label style={labelStyle}>開催日</label>
                 <input type="date" value={heldOn} onChange={e => setHeldOn(e.target.value)} style={inputStyle} />
@@ -609,7 +734,7 @@ export default function DashboardClient({ tournaments }: Props) {
                 <button
                   type="button"
                   onClick={() => setPlayerCount(c => Math.max(4, c - 1))}
-                  style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid var(--border-md)', background: 'var(--paper)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                  style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid var(--border-md)', background: 'var(--surface)', color: 'var(--ink)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 >−</button>
                 <input
                   type="number"
@@ -621,44 +746,48 @@ export default function DashboardClient({ tournaments }: Props) {
                 <button
                   type="button"
                   onClick={() => setPlayerCount(c => c + 1)}
-                  style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid var(--border-md)', background: 'var(--paper)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                  style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid var(--border-md)', background: 'var(--surface)', color: 'var(--ink)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 >＋</button>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                  {[8, 12, 16, 20, 24, 28, 32].map(n => (
+                  {[8, 12, 16, 20, 24, 28, 32, 36, 40].map(n => (
                     <button
                       key={n}
                       type="button"
                       onClick={() => setPlayerCount(n)}
                       style={{
                         padding: '3px 10px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer',
-                        border: '1.5px solid var(--border-md)',
-                        background: playerCount === n ? 'var(--navy)' : 'var(--paper)',
-                        color: playerCount === n ? '#fff' : 'var(--ink)',
+                        border: playerCount === n ? '1.5px solid var(--cyan-deep)' : '1.5px solid var(--border-md)',
+                        background: playerCount === n ? 'var(--cyan-pale)' : 'var(--surface)',
+                        color: playerCount === n ? 'var(--cyan-deep)' : 'var(--mist)',
                         fontWeight: playerCount === n ? 700 : 400,
                       }}
-                    >{n}人</button>
+                    >{n}</button>
                   ))}
                 </div>
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '5px' }}>
-                プレイヤー1〜{playerCount} として登録されます。名前は大会設定で一括変更できます。
-                {playerCount % 4 !== 0 && (
-                  <span style={{ color: 'var(--slate)', marginLeft: '4px' }}>
+              {playerCount % 4 !== 0 && (
+                <div style={{ fontSize: '12px', color: 'var(--mist)', marginTop: '5px' }}>
+                  <span style={{ color: 'var(--slate)' }}>
                     （{4 - playerCount % 4}名の黒子を追加して{playerCount + (4 - playerCount % 4)}名に調整されます）
                   </span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             <div style={{ marginBottom: '16px' }}>
               <label style={labelStyle}>備考</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: '70px', resize: 'vertical', lineHeight: 1.65 }} />
+              <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, height: 'auto', padding: '10px 12px', minHeight: '70px', resize: 'vertical', lineHeight: 1.65 }} />
             </div>
 
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button onClick={() => setShowForm(false)} style={btnOutline}>キャンセル</button>
-              <button onClick={handleCreate} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}>
-                {saving ? '作成中...' : '大会を作成する →'}
+              <button onClick={handleCreate} disabled={saving} style={{
+                padding: '10px 22px', background: 'transparent',
+                color: 'var(--cyan-deep)', border: '1.5px solid var(--cyan-deep)',
+                borderRadius: '7px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
+                opacity: saving ? 0.6 : 1,
+              }}>
+                {saving ? '作成中...' : '大会を作成する'}
               </button>
             </div>
           </div>
@@ -684,22 +813,23 @@ export default function DashboardClient({ tournaments }: Props) {
 }
 
 const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: '10px', fontWeight: 700,
+  display: 'block', fontSize: '12px', fontWeight: 700,
   letterSpacing: '0.14em', textTransform: 'uppercase',
   color: 'var(--mist)', marginBottom: '5px',
 }
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 12px',
-  background: 'var(--paper)', border: '1.5px solid var(--border-md)',
-  borderRadius: '9px', fontSize: '13px', color: 'var(--ink)', outline: 'none',
-  fontFamily: 'inherit',
+  width: '100%', height: '44px', padding: '0 12px',
+  background: 'var(--surface)', border: '1.5px solid var(--border-md)',
+  borderRadius: '9px', fontSize: '15px', color: 'var(--ink)', outline: 'none',
+  fontFamily: 'inherit', boxSizing: 'border-box',
 }
 const btnPrimary: React.CSSProperties = {
-  padding: '8px 18px', background: 'linear-gradient(135deg, #f4a460, #d88a45)', color: '#fff',
-  border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+  padding: '10px 22px', background: 'linear-gradient(135deg, #00c8d4, #00a0aa)', color: '#fff',
+  border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
+  boxShadow: '0 0 16px rgba(0,240,255,0.2)',
 }
 const btnOutline: React.CSSProperties = {
-  padding: '8px 18px', background: 'transparent',
+  padding: '10px 20px', background: 'var(--surface)',
   border: '1.5px solid var(--border-md)', color: 'var(--slate)',
-  borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+  borderRadius: '8px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
 }

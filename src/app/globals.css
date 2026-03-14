@@ -3,25 +3,108 @@
 @tailwind utilities;
 
 :root {
-  --ink:       #0f1520;
-  --paper:     #fefcf5;
-  --surface:   #ffffff;
-  --navy:      #1a2f2d;
-  --navy-mid:  #213938;
-  --cyan:      #abdad1;
+  --ink:       #e0e6f0;
+  --paper:     #0a0e1a;
+  --surface:   #0f1528;
+  --navy:      #111a2e;
+  --navy-mid:  #162040;
+
+  /* Primary accent: Cyan neon */
+  --cyan:      #00f0ff;
+  --cyan-deep: #00c8d4;
+  --cyan-pale: rgba(0,240,255,0.12);
+  --cyan-dim:  #00a0aa;
+  --sky:       #00f0ff;
+
+  /* Secondary accent: Magenta neon */
+  --gold:      #ff00aa;
+  --gold-dark: #cc0088;
+  --gold-pale: rgba(255,0,170,0.12);
+
+  --red:       #ff4466;
+  --red-pale:  rgba(255,68,102,0.12);
+  --slate:     #8899bb;
+  --mist:      #556688;
+  --border:    rgba(0,240,255,0.07);
+  --border-md: rgba(0,240,255,0.14);
+
+  /* Semantic tokens */
+  --card-bg:        rgba(15,21,40,0.5);
+  --card-border:    rgba(0,240,255,0.10);
+  --header-bg:      rgba(10,14,30,0.85);
+  --header-border:  rgba(0,240,255,0.08);
+  --hover-bg:       rgba(0,240,255,0.08);
+  --grid-line:      rgba(0,240,255,0.03);
+  --scrollbar-thumb: rgba(0,240,255,0.15);
+  --focus-shadow:   rgba(0,240,255,0.15);
+  --skeleton-from:  rgba(0,240,255,0.03);
+  --skeleton-mid:   rgba(0,240,255,0.08);
+  --body-grad1:     rgba(0,240,255,0.06);
+  --body-grad2:     rgba(255,0,170,0.05);
+
+  /* Sidebar / Logo (dark defaults) */
+  --logo-from:    #00f0ff;
+  --logo-to:      #ff00aa;
+  --logo-shadow:  rgba(0,240,255,0.35);
+  --logo-dot:     #0a0e1a;
+  --sidebar-glow: rgba(0,240,255,0.10);
+  --text-on-sidebar: #fff;
+  --text-dim:     rgba(255,255,255,0.50);
+  --text-dimmer:  rgba(255,255,255,0.22);
+  --nav-active-color: #00f0ff;
+  --nav-active-border: rgba(0,240,255,0.25);
+  --nav-hover-bg: rgba(255,255,255,0.09);
+  --nav-hover-text: rgba(255,255,255,0.85);
+  --accent-warm:  #D89775;
+}
+
+body[data-theme="light"] {
+  --ink:       #1a2a28;
+  --paper:     #f0ebe3;
+  --surface:   #f7f4ef;
+  --navy:      #1B2E2D;
+  --navy-mid:  #243b3a;
+  --cyan:      #7BADAB;
   --cyan-deep: #3d7d73;
-  --cyan-pale: #e5f5f1;
-  --cyan-dim:  #8ecbc2;
-  --sky:       #abdad1;
-  --gold:      #f4a460;
-  --gold-dark: #a16830;
-  --gold-pale: #fef3e6;
-  --red:       #ef4444;
-  --red-pale:  #fef2f2;
-  --slate:     #334155;
-  --mist:      #64748b;
-  --border:    rgba(15,21,32,0.09);
-  --border-md: rgba(15,21,32,0.15);
+  --cyan-pale: rgba(123,173,171,0.12);
+  --cyan-dim:  #6a9e9b;
+  --sky:       #7BADAB;
+  --gold:      #AD7BA4;
+  --gold-dark: #8d6488;
+  --gold-pale: rgba(173,123,164,0.10);
+  --red:       #c0392b;
+  --red-pale:  rgba(192,57,43,0.08);
+  --slate:     #2c3e3d;
+  --mist:      #5a7472;
+  --border:    rgba(27,46,45,0.10);
+  --border-md: rgba(27,46,45,0.18);
+  --card-bg:      rgba(247,244,239,0.85);
+  --card-border:  rgba(27,46,45,0.10);
+  --header-bg:    rgba(240,235,227,0.95);
+  --header-border: rgba(27,46,45,0.10);
+  --hover-bg:     rgba(27,46,45,0.05);
+  --grid-line:    transparent;
+  --scrollbar-thumb: rgba(27,46,45,0.15);
+  --focus-shadow: rgba(61,125,115,0.2);
+  --skeleton-from: rgba(27,46,45,0.03);
+  --skeleton-mid:  rgba(27,46,45,0.07);
+  --body-grad1:   transparent;
+  --body-grad2:   transparent;
+
+  /* Sidebar / Logo — icon matches dark mode */
+  --logo-from:    #00f0ff;
+  --logo-to:      #ff00aa;
+  --logo-shadow:  rgba(0,240,255,0.35);
+  --logo-dot:     #0a0e1a;
+  --sidebar-glow: transparent;
+  --text-on-sidebar: #1B2E2D;
+  --text-dim:     #5a7472;
+  --text-dimmer:  rgba(27,46,45,0.35);
+  --nav-active-color: #3d7d73;
+  --nav-active-border: rgba(61,125,115,0.25);
+  --nav-hover-bg: rgba(27,46,45,0.06);
+  --nav-hover-text: #1B2E2D;
+  --accent-warm:  #D89775;
 }
 
 * {
@@ -31,10 +114,29 @@
 }
 
 body {
-  background: var(--paper);
+  background:
+    radial-gradient(ellipse 80% 55% at 5% 0%, var(--body-grad1) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 45% at 95% 100%, var(--body-grad2) 0%, transparent 60%),
+    var(--paper);
   color: var(--ink);
-  font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    var(--font-geist, 'Geist'), var(--font-jp, 'Noto Sans JP'),
+    'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+    'Noto Sans JP', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 input::-webkit-outer-spin-button,
@@ -46,14 +148,44 @@ input[type='number'] {
   -moz-appearance: textfield;
 }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 3px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 100px; }
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--cyan-dim) !important;
+  box-shadow: 0 0 0 3px var(--cyan-pale), 0 0 12px var(--focus-shadow) !important;
+}
+
+@keyframes shimmer-slide {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton-pulse {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-from) 25%,
+    var(--skeleton-mid) 50%,
+    var(--skeleton-from) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer-slide 1.6s ease-in-out infinite;
+  border-radius: 6px;
+}
 
 @layer utilities {
+  .font-display {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
+      var(--font-jp, 'Noto Sans JP'), sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
   .font-mincho {
-    font-family: 'Shippori Mincho', 'Noto Serif JP', serif;
+    font-family: 'Shippori Mincho', 'Noto Serif JP', ui-serif, serif;
   }
   .font-mono-dm {
-    font-family: 'DM Mono', 'Fira Mono', monospace;
+    font-family: 'DM Mono', 'Fira Mono', ui-monospace, monospace;
   }
 }

@@ -29,26 +29,30 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'var(--navy)',
+      background: 'var(--paper)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '16px',
     }}>
       <div style={{
-        background: '#fff',
+        background: 'var(--card-bg)',
+        backdropFilter: 'blur(30px)',
+        WebkitBackdropFilter: 'blur(30px)',
+        border: '1px solid var(--card-border)',
         borderRadius: '16px',
         padding: '40px 36px',
         width: '100%',
         maxWidth: '360px',
-        boxShadow: '0 20px 60px rgba(15,21,32,0.3)',
+        boxShadow: '0 24px 80px rgba(0,0,0,0.15), inset 0 1px 0 var(--border)',
       }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
               width: '34px', height: '34px',
-              background: 'linear-gradient(135deg, #abdad1, #f4a460 180%)',
+              background: 'linear-gradient(135deg, var(--logo-from), var(--logo-to) 180%)',
+              boxShadow: `0 2px 12px var(--logo-shadow)`,
               borderRadius: '8px',
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
               padding: '6px', gap: '1.5px',
@@ -56,12 +60,12 @@ export default function LoginPage() {
               {[1,0,1,0,1,0,1,0,1].map((show, i) => (
                 <div key={i} style={{
                   borderRadius: '50%',
-                  background: show ? '#1a2f2d' : 'transparent',
+                  background: show ? 'var(--logo-dot)' : 'transparent',
                   opacity: show ? 0.82 : 0,
                 }} />
               ))}
             </div>
-            <span style={{ fontFamily: 'monospace', fontSize: '26px', fontWeight: 500, color: 'var(--navy)', letterSpacing: '0.04em' }}>
+            <span style={{ fontFamily: 'monospace', fontSize: '26px', fontWeight: 500, color: 'var(--ink)', letterSpacing: '0.04em' }}>
               Yitia
             </span>
           </div>
@@ -70,11 +74,9 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div style={{ height: '1px', background: 'var(--border)', marginBottom: '20px' }} />
-
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '5px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: 'var(--slate)', marginBottom: '6px' }}>
               メールアドレス
             </label>
             <input
@@ -83,14 +85,14 @@ export default function LoginPage() {
               onChange={e => setEmail(e.target.value)}
               required
               style={{
-                width: '100%', padding: '9px 13px',
-                background: 'var(--paper)', border: '1.5px solid var(--border-md)',
-                borderRadius: '9px', fontSize: '13px', outline: 'none',
+                width: '100%', padding: '11px 14px',
+                background: 'var(--surface)', border: '1px solid var(--border-md)',
+                borderRadius: '12px', fontSize: '14px', color: 'var(--ink)', outline: 'none',
               }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '5px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: 'var(--slate)', marginBottom: '6px' }}>
               パスワード
             </label>
             <input
@@ -99,9 +101,9 @@ export default function LoginPage() {
               onChange={e => setPassword(e.target.value)}
               required
               style={{
-                width: '100%', padding: '9px 13px',
-                background: 'var(--paper)', border: '1.5px solid var(--border-md)',
-                borderRadius: '9px', fontSize: '13px', outline: 'none',
+                width: '100%', padding: '11px 14px',
+                background: 'var(--surface)', border: '1px solid var(--border-md)',
+                borderRadius: '12px', fontSize: '14px', color: 'var(--ink)', outline: 'none',
               }}
             />
           </div>
@@ -117,10 +119,11 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%', padding: '11px',
-              background: loading ? 'var(--mist)' : 'linear-gradient(135deg, #f4a460, #d88a45)',
-              color: '#fff', border: 'none', borderRadius: '9px',
+              background: loading ? 'var(--mist)' : 'linear-gradient(135deg, var(--logo-from), var(--logo-to) 180%)',
+              boxShadow: loading ? 'none' : '0 2px 12px var(--logo-shadow)',
+              color: '#fff', border: 'none', borderRadius: '12px',
               fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
-              marginTop: '4px',
+              marginTop: '8px', letterSpacing: '0.01em',
             }}
           >
             {loading ? 'ログイン中...' : 'ログイン'}

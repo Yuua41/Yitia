@@ -27,7 +27,7 @@ export function calcStandings(
     tables.forEach(table => {
       const results = (table as any).results as Result[]
       const result = results?.find(r => r.player_id === player.id)
-      if (result && result.point !== 0) {
+      if (result && table.is_validated) {
         roundPoints[table.round_number - 1] = result.point
       }
     })
@@ -181,5 +181,6 @@ function findBestSeatAssignment(
 export function formatPoint(v: number): string {
   const abs = Math.abs(v)
   const formatted = abs.toFixed(1)
+  if (formatted === '0.0') return `±${formatted}`
   return `${v < 0 ? '▲' : '+'}${formatted}`
 }

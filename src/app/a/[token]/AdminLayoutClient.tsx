@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import DraggableMenuButton from '@/components/ui/DraggableMenuButton'
 import type { Tournament } from '@/types'
 
 interface Props {
@@ -39,18 +40,7 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
             transform: translateX(0);
           }
           .admin-hamburger {
-            display: flex !important;
-            position: fixed;
-            bottom: 10px; left: 10px;
-            z-index: 999;
-            width: 40px; height: 40px;
-            align-items: center; justify-content: center;
-            background: var(--navy);
-            border: 1px solid rgba(171,218,209,0.4);
-            border-radius: 8px;
-            color: #abdad1;
-            font-size: 22px;
-            cursor: pointer;
+            display: block !important;
           }
           .admin-overlay {
             display: block;
@@ -65,13 +55,9 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
         }
       `}</style>
 
-      <button
-        className="admin-hamburger"
-        onClick={() => setSidebarOpen(true)}
-        style={{ display: 'none' }}
-      >
-        ☰
-      </button>
+      <div className="admin-hamburger" style={{ display: 'none' }}>
+        <DraggableMenuButton onClick={() => setSidebarOpen(true)} storageKey="admin-hamburger-pos" />
+      </div>
 
       {sidebarOpen && (
         <div className="admin-overlay" onClick={() => setSidebarOpen(false)} />
@@ -79,33 +65,36 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
 
       <aside className={`admin-sidebar${sidebarOpen ? ' open' : ''}`} style={{
         width: '210px', flexShrink: 0,
-        background: 'var(--navy)',
+        background: 'rgba(10,14,30,0.92)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderRight: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', flexDirection: 'column',
         position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: '180px',
-          background: 'radial-gradient(ellipse at 30% 0%, rgba(171,218,209,0.22), transparent 70%)',
+          background: 'radial-gradient(ellipse at 30% 0%, rgba(0,240,255,0.10), transparent 70%)',
           pointerEvents: 'none',
         }} />
-        <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid rgba(0,240,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{
               width: '30px', height: '30px',
-              background: 'linear-gradient(135deg, #abdad1, #f4a460 160%)',
+              background: 'linear-gradient(135deg, #00f0ff, #ff00aa 160%)',
               borderRadius: '7px',
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
               padding: '5px', gap: '1.5px',
+              boxShadow: '0 2px 12px rgba(0,240,255,0.35)',
             }}>
               {[1,0,1,0,1,0,1,0,1].map((show, i) => (
                 <div key={i} style={{
                   borderRadius: '50%',
-                  background: show ? '#1a2f2d' : 'transparent',
+                  background: show ? '#0a0e1a' : 'transparent',
                   opacity: show ? 0.82 : 0,
                 }} />
               ))}
             </div>
-            <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 500, color: '#fff', letterSpacing: '0.04em' }}>Yitia</span>
+            <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 500, color: '#fff', letterSpacing: '0.04em', textShadow: '0 0 10px rgba(0,240,255,0.4)' }}>Yitia</span>
           </div>
           <div style={{ fontSize: '9px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.22)', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '4px', marginLeft: '38px' }}>
             Mahjong Taikai Manager
@@ -115,21 +104,35 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
           <div style={{ fontSize: '8px', fontFamily: 'monospace', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', marginBottom: '6px' }}>現在の大会</div>
           <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.7)', lineHeight: 1.35 }}>{tournament.name}</div>
         </div>
-        <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '4px 0' }} />
+        <div style={{ height: '1px', background: 'rgba(0,240,255,0.08)', margin: '4px 0' }} />
         <div style={{ padding: '4px 8px', marginTop: '4px' }}>
           <div style={{ fontSize: '8px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', padding: '8px 10px 4px' }}>管理</div>
           {navItems.map(item => {
             const active = pathname === item.href
             return (
               <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '8px 10px', borderRadius: '8px', marginBottom: '1px',
-                  background: active ? 'rgba(171,218,209,0.22)' : 'transparent',
-                  color: active ? '#abdad1' : 'rgba(255,255,255,0.42)',
-                  border: active ? '1px solid rgba(171,218,209,0.25)' : '1px solid transparent',
-                  fontSize: '12.5px', fontWeight: 500, transition: 'all 0.13s',
-                }}>
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '8px 10px', borderRadius: '8px', marginBottom: '1px',
+                    background: active ? 'rgba(0,240,255,0.12)' : 'transparent',
+                    color: active ? '#00f0ff' : 'rgba(255,255,255,0.50)',
+                    border: active ? '1px solid rgba(0,240,255,0.25)' : '1px solid transparent',
+                    fontSize: '12.5px', fontWeight: active ? 700 : 400, transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.09)'
+                      e.currentTarget.style.color = 'rgba(255,255,255,0.85)'
+                    } else {
+                      e.currentTarget.style.background = 'rgba(0,240,255,0.18)'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = active ? 'rgba(0,240,255,0.12)' : 'transparent'
+                    e.currentTarget.style.color = active ? '#00f0ff' : 'rgba(255,255,255,0.50)'
+                  }}
+                >
                   <span>{item.label}</span>
                 </div>
               </Link>
@@ -137,7 +140,7 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
           })}
         </div>
         <div style={{ flex: 1 }} />
-        <div style={{ padding: '10px 8px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ padding: '10px 8px', borderTop: '1px solid rgba(0,240,255,0.08)' }}>
           <div style={{ padding: '6px 10px', color: 'rgba(255,255,255,0.25)', fontSize: '10px', fontFamily: 'monospace' }}>
             管理者アクセス
           </div>

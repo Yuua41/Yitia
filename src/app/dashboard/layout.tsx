@@ -1,25 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import DraggableMenuButton from '@/components/ui/DraggableMenuButton'
 
 const NAV_ITEMS = [
   { label: '大会一覧', href: '/dashboard' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
   const pathname = usePathname()
-  const supabase = createClient()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
-  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -38,18 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             transform: translateX(0);
           }
           .dash-hamburger {
-            display: flex !important;
-            position: fixed;
-            bottom: 10px; left: 10px;
-            z-index: 999;
-            width: 40px; height: 40px;
-            align-items: center; justify-content: center;
-            background: var(--navy);
-            border: 1px solid rgba(171,218,209,0.4);
-            border-radius: 8px;
-            color: #abdad1;
-            font-size: 22px;
-            cursor: pointer;
+            display: block !important;
           }
           .dash-overlay {
             display: block;
@@ -64,13 +45,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }
       `}</style>
 
-      <button
-        className="dash-hamburger"
-        onClick={() => setSidebarOpen(true)}
-        style={{ display: 'none' }}
-      >
-        ☰
-      </button>
+      <div className="dash-hamburger" style={{ display: 'none' }}>
+        <DraggableMenuButton onClick={() => setSidebarOpen(true)} storageKey="dash-hamburger-pos" />
+      </div>
 
       {sidebarOpen && (
         <div className="dash-overlay" onClick={() => setSidebarOpen(false)} />
@@ -79,90 +56,85 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className={`dash-sidebar${sidebarOpen ? ' open' : ''}`} style={{
         width: '210px', flexShrink: 0,
-        background: 'var(--navy)',
+        background: 'var(--header-bg)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderRight: '1px solid var(--header-border)',
         display: 'flex', flexDirection: 'column',
         position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: '180px',
-          background: 'radial-gradient(ellipse at 30% 0%, rgba(171,218,209,0.22), transparent 70%)',
+          background: 'radial-gradient(ellipse at 30% 0%, var(--sidebar-glow), transparent 70%)',
           pointerEvents: 'none',
         }} />
 
         {/* Logo */}
-        <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid var(--header-border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{
               width: '30px', height: '30px',
-              background: 'linear-gradient(135deg, #abdad1, #f4a460 160%)',
+              background: 'linear-gradient(135deg, var(--logo-from), var(--logo-to) 160%)',
               borderRadius: '7px',
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
               padding: '5px', gap: '1.5px',
-              boxShadow: '0 2px 8px rgba(171,218,209,0.45)',
+              boxShadow: `0 2px 12px var(--logo-shadow)`,
             }}>
               {[1,0,1,0,1,0,1,0,1].map((show, i) => (
                 <div key={i} style={{
                   borderRadius: '50%',
-                  background: show ? '#1a2f2d' : 'transparent',
+                  background: show ? 'var(--logo-dot)' : 'transparent',
                   opacity: show ? 0.82 : 0,
                 }} />
               ))}
             </div>
-            <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 500, color: '#fff', letterSpacing: '0.04em' }}>
+            <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 500, color: 'var(--text-on-sidebar)', letterSpacing: '0.04em' }}>
               Yitia
             </span>
           </div>
-          <div style={{ fontSize: '9px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.22)', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '4px', marginLeft: '38px' }}>
+          <div style={{ fontSize: '9px', fontFamily: 'monospace', color: 'var(--text-dimmer)', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '4px', marginLeft: '38px' }}>
             Mahjong Taikai Manager
           </div>
         </div>
 
         {/* Nav */}
-        <div style={{ padding: '8px 8px 4px', fontSize: '8px', fontFamily: 'monospace', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', paddingTop: '16px', paddingLeft: '18px' }}>
+        <div style={{ padding: '8px 8px 4px', fontSize: '8px', fontFamily: 'monospace', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-dimmer)', paddingTop: '16px', paddingLeft: '18px' }}>
           大会
         </div>
         <nav style={{ padding: '4px 8px', flex: 1 }}>
-          {NAV_ITEMS.map(item => (
-            <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '8px 10px', borderRadius: '8px',
-                marginBottom: '1px', cursor: 'pointer',
-                background: pathname === item.href ? 'rgba(171,218,209,0.22)' : 'transparent',
-                color: pathname === item.href ? '#abdad1' : 'rgba(255,255,255,0.42)',
-                border: pathname === item.href ? '1px solid rgba(171,218,209,0.25)' : '1px solid transparent',
-                fontSize: '12.5px', fontWeight: 500,
-                transition: 'all 0.13s',
-              }}>
-                <span>{item.label}</span>
-              </div>
-            </Link>
-          ))}
+          {NAV_ITEMS.map(item => {
+            const isActive = pathname === item.href
+            return (
+              <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '8px 10px', borderRadius: '8px',
+                    marginBottom: '1px', cursor: 'pointer',
+                    background: isActive ? 'var(--cyan-pale)' : 'transparent',
+                    color: isActive ? 'var(--nav-active-color)' : 'var(--text-dim)',
+                    border: isActive ? '1px solid var(--nav-active-border)' : '1px solid transparent',
+                    fontSize: '12.5px', fontWeight: isActive ? 700 : 400,
+                    transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => {
+                    if (!isActive) {
+                      e.currentTarget.style.background = 'var(--nav-hover-bg)'
+                      e.currentTarget.style.color = 'var(--nav-hover-text)'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = isActive ? 'var(--cyan-pale)' : 'transparent'
+                    e.currentTarget.style.color = isActive ? 'var(--nav-active-color)' : 'var(--text-dim)'
+                  }}
+                >
+                  <span>{item.label}</span>
+                </div>
+              </Link>
+            )
+          })}
         </nav>
 
-        {/* Footer */}
-        <div style={{ padding: '10px 8px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            padding: '8px 10px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px',
-          }}>
-            <div style={{
-              width: '24px', height: '24px', background: 'var(--gold)',
-              borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '10px', color: '#fff', fontWeight: 700, flexShrink: 0,
-            }}>A</div>
-            <button
-              onClick={handleLogout}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: '11px', color: 'rgba(255,255,255,0.45)',
-                textAlign: 'left', flex: 1,
-              }}
-            >
-              ログアウト
-            </button>
-          </div>
-        </div>
+        <div style={{ flex: 1 }} />
       </aside>
 
       {/* Main */}

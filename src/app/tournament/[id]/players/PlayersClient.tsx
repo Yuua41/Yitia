@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { nanoid } from 'nanoid'
 import type { Tournament, Player } from '@/types'
+import HeaderIcons from '@/components/ui/HeaderIcons'
 
 interface Props {
   tournament: Tournament
@@ -20,6 +21,30 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
   const [adding, setAdding] = useState(false)
   const [qrPlayerId, setQrPlayerId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const addInputRef = useRef<HTMLInputElement>(null)
+
+  // 未保存状態でのページ離脱アラート
+  useEffect(() => {
+    if (!editingId) return
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault() }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [editingId])
+
+  async function handleRefresh() {
+    setRefreshing(true)
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .eq('tournament_id', tournament.id)
+      .order('seat_order')
+    if (!error && data) {
+      setPlayers(data)
+      showToast('保存しました')
+    }
+    setRefreshing(false)
+  }
 
   function showToast(msg: string) {
     setToast(msg)
@@ -59,6 +84,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
     setEditingId(null)
     setEditName('')
     setSaving(false)
+    showToast('保存しました')
   }
 
   async function handleDeletePlayer(player: Player) {
@@ -135,38 +161,82 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
       `}</style>
 
       <div className="players-header" style={{
-        height: '52px', background: '#fff', borderBottom: '1px solid var(--border)',
+        height: '52px', background: 'var(--header-bg)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--header-border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+        position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
-        <div>
-          <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{tournament.name} › </span>
-          <span style={{ fontSize: '14px', fontWeight: 700 }}>参加者</span>
-        </div>
-        <span style={{
-          display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
-          fontSize: '10px', fontWeight: 700, fontFamily: 'monospace',
-          background: 'var(--paper)', color: 'var(--slate)', border: '1px solid var(--border)',
-        }}>{players.length}名</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
+        <HeaderIcons />
       </div>
 
       <div className="players-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: '600px' }}>
-          <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800, marginBottom: '3px' }}>参加者</div>
-          <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '18px' }}>
-            名前をクリックして編集できます
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>参加者</div>
+              <span style={{
+                display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
+                fontSize: '10px', fontWeight: 700, fontFamily: 'monospace',
+                background: 'var(--paper)', color: 'var(--slate)', border: '1px solid var(--border)',
+              }}>{players.length}名</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={() => {
+                  addInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  setTimeout(() => addInputRef.current?.focus(), 400)
+                }}
+                style={{
+                  padding: '5px 14px', borderRadius: '7px',
+                  background: 'transparent', color: 'var(--gold)',
+                  border: '1.5px solid var(--gold)', fontSize: '12px', fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <line x1="19" y1="8" x2="19" y2="14"/>
+                  <line x1="22" y1="11" x2="16" y2="11"/>
+                </svg>
+                追加
+              </button>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                style={{
+                  padding: '5px 14px', borderRadius: '7px',
+                  background: 'transparent', color: 'var(--cyan-deep)',
+                  border: '1.5px solid var(--cyan-deep)', fontSize: '12px', fontWeight: 600,
+                  cursor: 'pointer', opacity: refreshing ? 0.6 : 1,
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                  <path d="M21 3v5h-5"/>
+                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                  <path d="M3 21v-5h5"/>
+                </svg>
+                {refreshing ? '保存中...' : '保存'}
+              </button>
+            </div>
           </div>
 
           {/* 参加者一覧 */}
-          <div style={{
-            background: '#fff', border: '1.5px solid var(--border)',
-            borderRadius: '12px', overflow: 'hidden',
-            boxShadow: '0 1px 8px rgba(15,21,32,0.05)',
-          }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {players.map((player, idx) => (
               <div key={player.id} style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '10px 16px',
-                borderBottom: '1px solid var(--border)',
+                padding: '12px 16px',
+                background: 'var(--card-bg)',
+                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                border: '1.5px solid var(--card-border)',
+                borderRadius: '10px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
               }}>
                 <div style={{
                   width: '24px', height: '24px', borderRadius: '50%',
@@ -195,21 +265,25 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
                     }}
                   />
                 ) : (
-                  <div
-                    onClick={() => startEdit(player)}
-                    style={{
-                      flex: 1, padding: '5px 10px',
-                      borderRadius: '7px', fontSize: '13px', fontWeight: 600,
-                      color: 'var(--ink)', cursor: 'pointer',
-                      border: '1.5px solid transparent',
-                      transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--paper)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
+                  <div style={{ flex: 1, padding: '5px 10px', fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
                     {player.name}
                   </div>
                 )}
+
+                <button
+                  onClick={() => startEdit(player)}
+                  title="名前を編集"
+                  style={{
+                    fontSize: '13px',
+                    color: 'var(--mist)', background: 'var(--paper)',
+                    border: '1px solid var(--border)', borderRadius: '5px',
+                    padding: '3px 7px', cursor: 'pointer',
+                    flexShrink: 0, transition: 'color 0.1s, border-color 0.1s',
+                    lineHeight: 1,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--cyan-deep)'; e.currentTarget.style.borderColor = 'rgba(0,240,255,0.3)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
 
                 <button
                   onClick={() => handleDeletePlayer(player)}
@@ -259,15 +333,20 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
             {/* 参加者追加 */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: '10px',
-              padding: '10px 16px',
+              padding: '12px 16px',
+              background: 'var(--card-bg)',
+              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+              border: '1.5px dashed var(--border-md)',
+              borderRadius: '10px',
             }}>
               <div style={{
                 width: '24px', height: '24px', borderRadius: '50%',
-                background: 'var(--cyan-pale)', border: '1px solid rgba(61,125,115,0.2)',
+                background: 'var(--cyan-pale)', border: '1px solid rgba(0,240,255,0.2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '12px', fontWeight: 700, color: 'var(--cyan-deep)', flexShrink: 0,
               }}>+</div>
               <input
+                ref={addInputRef}
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') handleAddPlayer() }}
@@ -308,7 +387,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
               {['連絡先', 'メモ', 'プロ同卓設定'].map(label => (
                 <span key={label} style={{
                   padding: '5px 12px', borderRadius: '6px',
-                  background: '#fff', border: '1px solid var(--border)',
+                  background: 'rgba(0,240,255,0.05)', border: '1px solid var(--border)',
                   fontSize: '11px', color: 'var(--mist)',
                 }}>{label}</span>
               ))}
@@ -344,8 +423,11 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: '#fff', borderRadius: '16px', padding: '28px',
-              textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+              background: 'var(--header-bg)',
+              backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+              border: '1px solid var(--card-border)',
+              borderRadius: '16px', padding: '28px',
+              textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 20px var(--header-border)',
               maxWidth: '300px', width: '90%',
             }}
           >
@@ -368,8 +450,8 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
             <button
               onClick={() => setQrPlayerId(null)}
               style={{
-                padding: '7px 20px', background: 'var(--paper)',
-                border: '1px solid var(--border)', borderRadius: '8px',
+                padding: '7px 20px', background: 'var(--header-border)',
+                border: '1px solid rgba(0,240,255,0.15)', borderRadius: '8px',
                 fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: 'var(--slate)',
               }}
             >閉じる</button>
@@ -388,7 +470,7 @@ function QRCode({ value, size }: { value: string; size: number }) {
       QRCodeLib.toCanvas(canvasRef.current!, value, {
         width: size,
         margin: 1,
-        color: { dark: '#1a2f2d', light: '#ffffff' },
+        color: { dark: '#0a0e1a', light: '#ffffff' },
       })
     })
   }, [value, size])

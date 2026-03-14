@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import DraggableMenuButton from '@/components/ui/DraggableMenuButton'
 import type { Tournament } from '@/types'
 
 interface Props {
@@ -13,8 +13,6 @@ interface Props {
 
 export default function TournamentLayoutClient({ children, tournament }: Props) {
   const pathname = usePathname()
-  const router = useRouter()
-  const supabase = createClient()
   const base = `/tournament/${tournament.id}`
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -22,15 +20,9 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
     { label: '大会設定', href: `${base}/settings` },
     { label: '参加者', href: `${base}/players` },
     { label: '卓組・成績入力', href: `${base}/schedule` },
-    { label: '全体成績', href: `${base}/standings` },
+    { label: '総合成績', href: `${base}/standings` },
     { label: 'QRコード', href: `${base}/qr` },
   ]
-
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
-  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -49,18 +41,7 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
             transform: translateX(0);
           }
           .tournament-hamburger {
-            display: flex !important;
-            position: fixed;
-            bottom: 10px; left: 10px;
-            z-index: 999;
-            width: 40px; height: 40px;
-            align-items: center; justify-content: center;
-            background: var(--navy);
-            border: 1px solid rgba(171,218,209,0.4);
-            border-radius: 8px;
-            color: #abdad1;
-            font-size: 22px;
-            cursor: pointer;
+            display: block !important;
           }
           .tournament-overlay {
             display: block;
@@ -75,13 +56,9 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
         }
       `}</style>
 
-      <button
-        className="tournament-hamburger"
-        onClick={() => setSidebarOpen(true)}
-        style={{ display: 'none' }}
-      >
-        ☰
-      </button>
+      <div className="tournament-hamburger" style={{ display: 'none' }}>
+        <DraggableMenuButton onClick={() => setSidebarOpen(true)} storageKey="tournament-hamburger-pos" />
+      </div>
 
       {sidebarOpen && (
         <div className="tournament-overlay" onClick={() => setSidebarOpen(false)} />
@@ -89,59 +66,70 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
 
       <aside className={`tournament-sidebar${sidebarOpen ? ' open' : ''}`} style={{
         width: '210px', flexShrink: 0,
-        background: 'var(--navy)',
+        background: 'var(--header-bg)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderRight: '1px solid var(--header-border)',
         display: 'flex', flexDirection: 'column',
         position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: '180px',
-          background: 'radial-gradient(ellipse at 30% 0%, rgba(171,218,209,0.22), transparent 70%)',
+          background: 'radial-gradient(ellipse at 30% 0%, var(--sidebar-glow), transparent 70%)',
           pointerEvents: 'none',
         }} />
-        <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid var(--header-border)' }}>
           <Link href="/dashboard" style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{
                 width: '30px', height: '30px',
-                background: 'linear-gradient(135deg, #abdad1, #f4a460 160%)',
+                background: 'linear-gradient(135deg, var(--logo-from), var(--logo-to) 160%)',
                 borderRadius: '7px',
                 display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'repeat(3, 1fr)',
                 padding: '5px', gap: '1.5px',
+                boxShadow: `0 2px 12px var(--logo-shadow)`,
               }}>
                 {[1,0,1,0,1,0,1,0,1].map((show, i) => (
                   <div key={i} style={{
                     borderRadius: '50%',
-                    background: show ? '#1a2f2d' : 'transparent',
+                    background: show ? 'var(--logo-dot)' : 'transparent',
                     opacity: show ? 0.82 : 0,
                   }} />
                 ))}
               </div>
-              <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 500, color: '#fff', letterSpacing: '0.04em' }}>Yitia</span>
+              <span style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 500, color: 'var(--text-on-sidebar)', letterSpacing: '0.04em' }}>Yitia</span>
             </div>
           </Link>
-          <div style={{ fontSize: '9px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.22)', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '4px', marginLeft: '38px' }}>
+          <div style={{ fontSize: '9px', fontFamily: 'monospace', color: 'var(--text-dimmer)', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '4px', marginLeft: '38px' }}>
             Mahjong Taikai Manager
           </div>
         </div>
-        <div style={{ padding: '12px 18px 8px' }}>
-          <div style={{ fontSize: '8px', fontFamily: 'monospace', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', marginBottom: '6px' }}>現在の大会</div>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.7)', lineHeight: 1.35 }}>{tournament.name}</div>
-        </div>
-        <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', margin: '4px 0' }} />
+        <div style={{ height: '1px', background: 'var(--header-border)', margin: '4px 0' }} />
         <div style={{ padding: '4px 8px', marginTop: '4px' }}>
-          <div style={{ fontSize: '8px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', padding: '8px 10px 4px' }}>管理</div>
+          <div style={{ fontSize: '8px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-dimmer)', padding: '8px 10px 4px' }}>管理</div>
           {navItems.map(item => {
             const active = pathname === item.href
             return (
               <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '8px 10px', borderRadius: '8px', marginBottom: '1px',
-                  background: active ? 'rgba(171,218,209,0.22)' : 'transparent',
-                  color: active ? '#abdad1' : 'rgba(255,255,255,0.42)',
-                  border: active ? '1px solid rgba(171,218,209,0.25)' : '1px solid transparent',
-                  fontSize: '12.5px', fontWeight: 500, transition: 'all 0.13s',
-                }}>
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '8px 10px', borderRadius: '8px', marginBottom: '1px',
+                    background: active ? 'var(--cyan-pale)' : 'transparent',
+                    color: active ? 'var(--nav-active-color)' : 'var(--text-dim)',
+                    border: active ? '1px solid var(--nav-active-border)' : '1px solid transparent',
+                    fontSize: '12.5px', fontWeight: active ? 700 : 400, transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => {
+                    if (!active) {
+                      e.currentTarget.style.background = 'var(--nav-hover-bg)'
+                      e.currentTarget.style.color = 'var(--nav-hover-text)'
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = active ? 'var(--cyan-pale)' : 'transparent'
+                    e.currentTarget.style.color = active ? 'var(--nav-active-color)' : 'var(--text-dim)'
+                  }}
+                >
                   <span>{item.label}</span>
                 </div>
               </Link>
@@ -149,16 +137,12 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
           })}
         </div>
         <div style={{ flex: 1 }} />
-        <div style={{ padding: '10px 8px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ padding: '10px 8px', borderTop: '1px solid var(--header-border)' }}>
           <Link href="/dashboard" style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
-            <div style={{ padding: '6px 10px', color: 'rgba(255,255,255,0.35)', fontSize: '11.5px' }}>
+            <div style={{ padding: '6px 10px', color: 'var(--text-dimmer)', fontSize: '11.5px' }}>
               ← 大会一覧に戻る
             </div>
           </Link>
-          <button onClick={handleLogout} style={{
-            width: '100%', padding: '6px 10px', background: 'none', border: 'none',
-            cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontSize: '11.5px', textAlign: 'left',
-          }}>ログアウト</button>
         </div>
       </aside>
       <div className="tournament-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
