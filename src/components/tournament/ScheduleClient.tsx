@@ -15,14 +15,14 @@ interface Props {
 
 const SEAT_LABELS = ['東', '南', '西', '北']
 const SEAT_COLORS = [
-  { bg: 'rgba(250,204,21,0.18)', color: '#fbbf24' },
+  { bg: 'rgba(216,151,117,0.18)', color: '#D89775' },
   { bg: 'rgba(96,165,250,0.18)', color: '#60a5fa' },
-  { bg: 'rgba(0,255,170,0.18)', color: '#00ffaa' },
+  { bg: 'rgba(92,110,109,0.18)', color: '#5C6E6D' },
   { bg: 'rgba(192,132,252,0.18)', color: '#c084fc' },
 ]
-const NUM_COLOR = { bg: 'rgba(0,240,255,0.12)', color: 'var(--slate)' }
+const NUM_COLOR = { bg: 'var(--cyan-pale)', color: 'var(--slate)' }
 
-export default function ScheduleClient({ tournament, players, tables, isOwner: _isOwner }: Props) {
+export default function ScheduleClient({ tournament, players, tables, isOwner }: Props) {
   const supabase = createClient()
   const [localTables, setLocalTables] = useState(tables)
   const [activeRound, setActiveRound] = useState(1)
@@ -315,14 +315,14 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
         }
       `}</style>
       <div className="schedule-header" style={{
-        height: '52px', background: 'rgba(10,14,30,0.85)',
+        height: '52px', background: 'var(--header-bg)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(0,240,255,0.08)',
+        borderBottom: '1px solid var(--header-border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
-        <HeaderIcons />
+        {isOwner && <HeaderIcons />}
       </div>
       <div className="schedule-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -363,9 +363,9 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
             return (
               <button key={r} onClick={() => setActiveRound(r)} style={{
                 padding: '6px 15px', borderRadius: '16px',
-                border: `1.5px solid ${activeRound === r ? 'var(--navy)' : 'var(--border-md)'}`,
+                border: `1.5px solid ${activeRound === r ? 'var(--cyan-deep)' : 'var(--border-md)'}`,
                 fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'monospace',
-                background: activeRound === r ? 'var(--navy)' : 'transparent',
+                background: activeRound === r ? 'var(--cyan-deep)' : 'transparent',
                 color: activeRound === r ? '#fff' : allDone ? 'var(--cyan-deep)' : 'var(--mist)',
               }}>R{r}{allDone ? ' ✓' : ''}</button>
             )
@@ -379,24 +379,24 @@ export default function ScheduleClient({ tournament, players, tables, isOwner: _
             const hasExtra = extraSticks[table.id] ?? false
 
             const statusLabel = isValidated ? '✓ 確定済み' : isSubmitted ? '確定待ち' : '入力中'
-            const statusBg = isValidated ? '#00a0aa' : isSubmitted ? '#b45309' : 'var(--navy-mid)'
+            const statusBg = isValidated ? 'var(--cyan-dim)' : isSubmitted ? '#b45309' : 'var(--navy-mid)'
 
             return (
               <div key={`${table.id}-${activeRound}`} style={{
-                background: 'rgba(15,21,40,0.5)',
+                background: 'var(--card-bg)',
                 animation: 'scCardSlide 0.35s ease-out both',
                 animationDelay: `${idx * 60}ms`,
                 backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-                border: `1.5px solid ${isValidated ? 'rgba(0,240,255,0.4)' : isSubmitted ? 'rgba(180,83,9,0.45)' : 'rgba(0,240,255,0.10)'}`,
+                border: `1.5px solid ${isValidated ? 'var(--nav-active-border)' : isSubmitted ? 'rgba(180,83,9,0.45)' : 'var(--card-border)'}`,
                 borderRadius: '12px', overflow: 'hidden',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
               }}>
                 <div style={{
                   padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  background: statusBg, color: '#fff',
+                  background: statusBg, color: 'var(--logo-dot)',
                 }}>
                   <span style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 800 }}>卓 {table.table_number}</span>
-                  <span style={{ fontSize: '10px', fontFamily: 'monospace', background: 'rgba(0,240,255,0.12)', padding: '2px 8px', borderRadius: '3px' }}>
+                  <span style={{ fontSize: '10px', fontFamily: 'monospace', background: 'var(--cyan-pale)', padding: '2px 8px', borderRadius: '3px' }}>
                     {statusLabel}
                   </span>
                 </div>

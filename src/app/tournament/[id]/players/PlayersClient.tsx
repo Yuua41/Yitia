@@ -161,9 +161,9 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
       `}</style>
 
       <div className="players-header" style={{
-        height: '52px', background: 'rgba(10,14,30,0.85)',
+        height: '52px', background: 'var(--header-bg)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(0,240,255,0.08)',
+        borderBottom: '1px solid var(--header-border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
@@ -190,8 +190,8 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
                 }}
                 style={{
                   padding: '5px 14px', borderRadius: '7px',
-                  background: 'transparent', color: '#AD30F2',
-                  border: '1.5px solid #AD30F2', fontSize: '12px', fontWeight: 600,
+                  background: 'transparent', color: 'var(--gold)',
+                  border: '1.5px solid var(--gold)', fontSize: '12px', fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: '5px',
                 }}
@@ -232,9 +232,9 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
               <div key={player.id} style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '12px 16px',
-                background: 'rgba(15,21,40,0.5)',
+                background: 'var(--card-bg)',
                 backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-                border: '1.5px solid rgba(0,240,255,0.10)',
+                border: '1.5px solid var(--card-border)',
                 borderRadius: '10px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
               }}>
@@ -334,9 +334,9 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
             <div style={{
               display: 'flex', alignItems: 'center', gap: '10px',
               padding: '12px 16px',
-              background: 'rgba(15,21,40,0.5)',
+              background: 'var(--card-bg)',
               backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-              border: '1.5px dashed rgba(0,240,255,0.15)',
+              border: '1.5px dashed var(--border-md)',
               borderRadius: '10px',
             }}>
               <div style={{
@@ -423,11 +423,11 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: 'rgba(10,14,30,0.96)',
+              background: 'var(--header-bg)',
               backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-              border: '1px solid rgba(0,240,255,0.12)',
+              border: '1px solid var(--card-border)',
               borderRadius: '16px', padding: '28px',
-              textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(0,240,255,0.08)',
+              textAlign: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 20px var(--header-border)',
               maxWidth: '300px', width: '90%',
             }}
           >
@@ -450,7 +450,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
             <button
               onClick={() => setQrPlayerId(null)}
               style={{
-                padding: '7px 20px', background: 'rgba(0,240,255,0.08)',
+                padding: '7px 20px', background: 'var(--header-border)',
                 border: '1px solid rgba(0,240,255,0.15)', borderRadius: '8px',
                 fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: 'var(--slate)',
               }}

@@ -50,6 +50,16 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   const noSeat = tournament.config.seatMode === 'none'
   const allowPlayerEntry = tournament.config.allowPlayerEntry !== false
 
+  // Force dark mode on player page
+  useEffect(() => {
+    const prev = document.body.getAttribute('data-theme')
+    document.body.setAttribute('data-theme', 'dark')
+    return () => {
+      if (prev) document.body.setAttribute('data-theme', prev)
+      else document.body.removeAttribute('data-theme')
+    }
+  }, [])
+
   // Refetch data from Supabase (client-side, no SSR roundtrip)
   const refetchData = useCallback(async () => {
     const [{ data: t }, { data: p }] = await Promise.all([

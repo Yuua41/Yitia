@@ -241,9 +241,9 @@ export default function SettingsClient({ tournament, players, templates }: Props
       `}</style>
       {/* ヘッダー */}
       <div className="settings-header" style={{
-        height: '52px', background: 'rgba(10,14,30,0.85)',
+        height: '52px', background: 'var(--header-bg)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(0,240,255,0.08)',
+        borderBottom: '1px solid var(--header-border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
@@ -280,9 +280,9 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
           {/* 大会情報カード */}
           <div style={{
-            background: 'rgba(15,21,40,0.5)',
+            background: 'var(--card-bg)',
             backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-            border: '1.5px solid rgba(0,240,255,0.10)',
+            border: '1.5px solid var(--card-border)',
             borderRadius: '12px', padding: '18px', marginBottom: '14px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
           }}>
@@ -330,9 +330,9 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
           {/* 参加者カード */}
           <div style={{
-            background: 'rgba(15,21,40,0.5)',
+            background: 'var(--card-bg)',
             backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-            border: '1.5px solid rgba(0,240,255,0.10)',
+            border: '1.5px solid var(--card-border)',
             borderRadius: '12px', padding: '18px', marginBottom: '14px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
           }}>
@@ -381,7 +381,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
                 <button key={m} onClick={() => setSettingsMode(m)} style={{
                   flex: 1, padding: '7px 4px', fontSize: '12px', fontWeight: 600,
                   border: 'none', borderRadius: '7px', cursor: 'pointer',
-                  background: settingsMode === m ? 'rgba(0,240,255,0.12)' : 'transparent',
+                  background: settingsMode === m ? 'var(--cyan-pale)' : 'transparent',
                   color: settingsMode === m ? 'var(--ink)' : 'var(--mist)',
                   boxShadow: settingsMode === m ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
                   transition: 'all 0.13s',
@@ -394,9 +394,10 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
           {/* ルール設定カード */}
           <div style={{
-            background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+            background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+            border: '1.5px solid var(--card-border)',
             borderRadius: '12px', padding: '18px', marginBottom: '14px',
-            color: '#fff',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           }}>
             <div style={cfgLabelStyle}>持ち点 / 返し</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '12px' }}>
@@ -445,9 +446,9 @@ export default function SettingsClient({ tournament, players, templates }: Props
                       { label: '3位', val: `−${uma23}` },
                       { label: '4位', val: `−${uma14}` },
                     ].map(({ label, val }) => (
-                      <div key={label} style={{ flex: 1, textAlign: 'center', background: 'var(--navy)', borderRadius: '6px', padding: '5px 4px' }}>
-                        <div style={{ fontSize: '8px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>{label}</div>
-                        <div style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 600, color: label === '3位' || label === '4位' ? '#fca5a5' : 'rgba(255,255,255,0.6)' }}>{val}</div>
+                      <div key={label} style={{ flex: 1, textAlign: 'center', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '5px 4px' }}>
+                        <div style={{ fontSize: '8px', fontFamily: 'monospace', color: 'var(--mist)', marginBottom: '2px' }}>{label}</div>
+                        <div style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 600, color: label === '3位' || label === '4位' ? 'var(--red)' : 'var(--ink)' }}>{val}</div>
                       </div>
                     ))}
                   </div>
@@ -456,7 +457,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
                 <div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '6px', marginBottom: '4px' }}>
                     {['1位','2位','3位','4位'].map(l => (
-                      <div key={l} style={{ fontSize: '8px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)', textAlign: 'center' }}>{l}</div>
+                      <div key={l} style={{ fontSize: '8px', fontFamily: 'monospace', color: 'var(--mist)', textAlign: 'center' }}>{l}</div>
                     ))}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '6px' }}>
@@ -467,7 +468,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
                           uma[i] = +e.target.value
                           setConfig(c => ({ ...c, uma }))
                         }}
-                        style={{ ...cfgInputStyle, textAlign: 'center', color: i >= 2 ? '#fca5a5' : '#fff' }} />
+                        style={{ ...cfgInputStyle, textAlign: 'center', color: i >= 2 ? 'var(--red)' : 'var(--ink)' }} />
                     ))}
                   </div>
                 </div>
@@ -475,9 +476,9 @@ export default function SettingsClient({ tournament, players, templates }: Props
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '6px' }}>
                 {['1位','2位','3位','4位'].map((l, i) => (
-                  <div key={l} style={{ textAlign: 'center', background: 'var(--navy)', borderRadius: '6px', padding: '5px 4px' }}>
-                    <div style={{ fontSize: '8px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>{l}</div>
-                    <div style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 600, color: i >= 2 ? '#fca5a5' : 'rgba(255,255,255,0.7)' }}>
+                  <div key={l} style={{ textAlign: 'center', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '5px 4px' }}>
+                    <div style={{ fontSize: '8px', fontFamily: 'monospace', color: 'var(--mist)', marginBottom: '2px' }}>{l}</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 600, color: i >= 2 ? 'var(--red)' : 'var(--ink)' }}>
                       {config.uma[i] >= 0 ? '+' : ''}{config.uma[i]}
                     </div>
                   </div>
@@ -532,9 +533,9 @@ export default function SettingsClient({ tournament, players, templates }: Props
           {/* 終了済み通知 */}
           {tournament.status === 'finished' && (
             <div style={{
-              background: 'rgba(0,255,170,0.1)', border: '1.5px solid rgba(0,255,170,0.2)',
+              background: 'var(--cyan-pale)', border: '1.5px solid var(--nav-active-border)',
               borderRadius: '12px', padding: '14px 18px',
-              fontSize: '12px', color: '#00ffaa', lineHeight: 1.6,
+              fontSize: '12px', color: 'var(--cyan-deep)', lineHeight: 1.6,
             }}>
               この大会は終了しています。
             </div>
@@ -543,9 +544,9 @@ export default function SettingsClient({ tournament, players, templates }: Props
           {/* 進行中: プレイヤー入力制御 */}
           {tournament.status === 'ongoing' && (
             <div style={{
-              background: 'rgba(15,21,40,0.5)',
+              background: 'var(--card-bg)',
               backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-              border: '1.5px solid rgba(0,240,255,0.10)',
+              border: '1.5px solid var(--card-border)',
               borderRadius: '12px', padding: '18px', marginBottom: '14px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
             }}>
@@ -594,8 +595,8 @@ export default function SettingsClient({ tournament, players, templates }: Props
       {/* 下部固定ステータスバー */}
       {isDraft && (
         <div className="settings-header" style={{
-          borderTop: '1px solid rgba(0,240,255,0.08)',
-          background: 'rgba(10,14,30,0.92)',
+          borderTop: '1px solid var(--header-border)',
+          background: 'var(--header-bg)',
           backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
           flexShrink: 0,
         }}>
@@ -616,8 +617,8 @@ export default function SettingsClient({ tournament, players, templates }: Props
               {saving ? '保存中...' : '保存'}
             </button>
             <button onClick={handleStart} disabled={starting} style={{
-              flex: 1, padding: '10px', background: 'transparent', color: '#AD30F2',
-              border: '1.5px solid #AD30F2', borderRadius: '8px',
+              flex: 1, padding: '10px', background: 'transparent', color: 'var(--gold)',
+              border: '1.5px solid var(--gold)', borderRadius: '8px',
               fontSize: '13px', fontWeight: 700, cursor: 'pointer',
               opacity: starting ? 0.6 : 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
@@ -633,15 +634,15 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
       {tournament.status === 'ongoing' && (
         <div className="settings-header" style={{
-          borderTop: '1px solid rgba(0,240,255,0.08)',
-          background: 'rgba(10,14,30,0.92)',
+          borderTop: '1px solid var(--header-border)',
+          background: 'var(--header-bg)',
           backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
           flexShrink: 0,
         }}>
           <div style={{ maxWidth: '600px', padding: '14px 0', display: 'flex', gap: '10px' }}>
             <button onClick={handleFinish} disabled={finishing} style={{
-              flex: 1, padding: '10px', background: 'transparent', color: '#AD30F2',
-              border: '1.5px solid #AD30F2', borderRadius: '8px',
+              flex: 1, padding: '10px', background: 'transparent', color: 'var(--gold)',
+              border: '1.5px solid var(--gold)', borderRadius: '8px',
               fontSize: '13px', fontWeight: 700, cursor: 'pointer',
               opacity: finishing ? 0.6 : 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
@@ -660,13 +661,13 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
 function ToggleGroup({ options, value, onChange }: { options: { value: string; label: string }[]; value: string; onChange: (v: string) => void }) {
   return (
-    <div style={{ display: 'flex', background: 'var(--navy)', borderRadius: '7px', padding: '2px', gap: '2px' }}>
+    <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '7px', padding: '2px', gap: '2px' }}>
       {options.map(o => (
         <button key={o.value} onClick={() => onChange(o.value)} style={{
           flex: 1, padding: '6px 4px', fontSize: '11px', fontWeight: 600,
           border: 'none', borderRadius: '5px', cursor: 'pointer',
           background: value === o.value ? 'var(--cyan-deep)' : 'transparent',
-          color: value === o.value ? '#fff' : 'rgba(255,255,255,0.45)',
+          color: value === o.value ? '#fff' : 'var(--mist)',
           transition: 'all 0.13s',
         }}>{o.label}</button>
       ))}
@@ -692,27 +693,28 @@ const displayStyle: React.CSSProperties = {
 }
 const cfgLabelStyle: React.CSSProperties = {
   fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em',
-  textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)',
+  textTransform: 'uppercase', color: 'var(--mist)',
   marginBottom: '10px', marginTop: '14px',
 }
 const cfgItemLabelStyle: React.CSSProperties = {
   fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.15em',
-  textTransform: 'uppercase', color: 'rgba(255,255,255,0.32)', marginBottom: '4px',
+  textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '4px',
 }
 const cfgInputStyle: React.CSSProperties = {
   width: '100%', padding: '7px 10px',
-  background: 'rgba(0,240,255,0.05)', border: '1px solid rgba(0,240,255,0.12)',
-  borderRadius: '7px', fontSize: '13px', fontWeight: 600, color: '#fff',
+  background: 'var(--surface)', border: '1px solid var(--border-md)',
+  borderRadius: '7px', fontSize: '13px', fontWeight: 600, color: 'var(--ink)',
   fontFamily: 'monospace', outline: 'none',
 }
 const cfgSuffixStyle: React.CSSProperties = {
-  padding: '7px 8px', background: 'var(--navy)',
-  border: '1px solid rgba(0,240,255,0.12)', borderLeft: 'none',
+  padding: '7px 8px', background: 'var(--surface)',
+  border: '1px solid var(--border-md)', borderLeft: 'none',
   borderRadius: '0 7px 7px 0', fontSize: '12px',
-  color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace',
+  color: 'var(--mist)', fontFamily: 'monospace',
 }
 const cfgDisplayStyle: React.CSSProperties = {
-  padding: '7px 10px', background: 'var(--navy)',
+  padding: '7px 10px', background: 'var(--surface)',
+  border: '1px solid var(--border)',
   borderRadius: '7px', fontSize: '13px', fontWeight: 600,
-  color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace',
+  color: 'var(--slate)', fontFamily: 'monospace',
 }

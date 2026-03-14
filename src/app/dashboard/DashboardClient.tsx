@@ -469,9 +469,9 @@ export default function DashboardClient({ tournaments }: Props) {
   }
 
   const statusLabel = (t: Tournament) => {
-    if (t.status === 'ongoing') return { text: '進行中', color: '#00f0ff', bg: 'rgba(0,240,255,0.15)' }
-    if (t.status === 'finished') return { text: '完了', color: '#00ffaa', bg: 'rgba(0,255,170,0.12)' }
-    return { text: '下書き', color: 'var(--mist)', bg: 'rgba(0,240,255,0.06)' }
+    if (t.status === 'ongoing') return { text: '進行中', color: 'var(--cyan)', bg: 'var(--cyan-pale)' }
+    if (t.status === 'finished') return { text: '完了', color: 'var(--gold)', bg: 'var(--gold-pale)' }
+    return { text: '下書き', color: 'var(--mist)', bg: 'var(--hover-bg)' }
   }
 
   return (
@@ -485,10 +485,10 @@ export default function DashboardClient({ tournaments }: Props) {
       `}</style>
       <div className="dash-header" style={{
         height: '56px',
-        background: 'rgba(10,14,30,0.85)',
+        background: 'var(--header-bg)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--border)',
+        borderBottom: '1px solid var(--header-border)',
         padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
@@ -516,8 +516,8 @@ export default function DashboardClient({ tournaments }: Props) {
             const s = statusLabel(t)
             return (
               <div key={t.id} style={{
-                background: 'rgba(15,21,40,0.6)',
-                border: '1px solid rgba(0,240,255,0.10)',
+                background: 'var(--card-bg)',
+                border: '1px solid var(--card-border)',
                 backdropFilter: 'blur(16px)',
                 WebkitBackdropFilter: 'blur(16px)',
                 borderRadius: '16px', overflow: 'hidden',
@@ -527,22 +527,22 @@ export default function DashboardClient({ tournaments }: Props) {
                 opacity: navigatingId && navigatingId !== t.id ? 0.4 : 1,
                 position: 'relative',
               }}
-                onMouseEnter={e => { if (!navigatingId) { e.currentTarget.style.boxShadow = '0 8px 36px rgba(0,0,0,0.5), 0 0 20px rgba(0,240,255,0.08)'; e.currentTarget.style.background = 'rgba(15,21,40,0.75)' } }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)'; e.currentTarget.style.background = 'rgba(15,21,40,0.6)' }}
+                onMouseEnter={e => { if (!navigatingId) { e.currentTarget.style.boxShadow = '0 8px 36px rgba(0,0,0,0.15), 0 0 20px var(--hover-bg)'; e.currentTarget.style.background = 'var(--card-bg)' } }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)'; e.currentTarget.style.background = 'var(--card-bg)' }}
               >
                 {/* ステータスに応じた上部カラーバー */}
                 <div style={{
                   height: '4px',
                   background: t.status === 'ongoing'
-                    ? 'linear-gradient(90deg, #00f0ff, #00a0aa)'
-                    : t.status === 'finished' ? '#ff00aa' : 'rgba(255,255,255,0.10)',
+                    ? 'linear-gradient(90deg, var(--cyan), var(--cyan-dim))'
+                    : t.status === 'finished' ? 'var(--gold)' : 'var(--border-md)',
                 }} />
 
                 {/* ローディングシマー */}
                 {navigatingId === t.id && (
                   <div style={{
                     position: 'absolute', inset: 0, zIndex: 10,
-                    background: 'rgba(10,14,30,0.85)',
+                    background: 'var(--header-bg)',
                     backdropFilter: 'blur(3px)',
                   }}>
                     <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
@@ -624,24 +624,24 @@ export default function DashboardClient({ tournaments }: Props) {
           <div
             onClick={() => setShowForm(true)}
             style={{
-              background: 'rgba(15,21,40,0.4)', border: '1px solid rgba(0,240,255,0.10)',
+              background: 'var(--card-bg)', border: '1px solid var(--card-border)',
               borderRadius: '14px', cursor: 'pointer',
               display: 'flex', alignItems: 'center',
               padding: '18px 20px', gap: '14px',
               transition: 'all 0.18s',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(15,21,40,0.65)'
-              e.currentTarget.style.borderColor = 'rgba(0,240,255,0.3)'
+              e.currentTarget.style.background = 'var(--card-bg)'
+              e.currentTarget.style.borderColor = 'var(--border-md)'
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(15,21,40,0.4)'
-              e.currentTarget.style.borderColor = 'rgba(0,240,255,0.10)'
+              e.currentTarget.style.background = 'var(--card-bg)'
+              e.currentTarget.style.borderColor = 'var(--card-border)'
             }}
           >
             <div style={{
               width: '40px', height: '40px', borderRadius: '50%',
-              border: '1.5px solid rgba(0,240,255,0.3)',
+              border: '1.5px solid var(--border-md)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '18px', color: 'var(--cyan-deep)', fontWeight: 300, flexShrink: 0,
             }}>+</div>
@@ -661,10 +661,10 @@ export default function DashboardClient({ tournaments }: Props) {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
         }}>
           <div style={{
-            background: 'rgba(10,14,30,0.95)',
+            background: 'var(--header-bg)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid rgba(0,240,255,0.12)',
+            border: '1px solid var(--card-border)',
             borderRadius: '16px', padding: '28px',
             width: '100%', maxWidth: '380px',
             boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
@@ -673,7 +673,7 @@ export default function DashboardClient({ tournaments }: Props) {
             <div style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: '8px' }}>大会を削除しますか？</div>
             <div style={{
               fontSize: '13px', color: 'var(--ink)', marginBottom: '6px',
-              background: 'rgba(0,240,255,0.04)', padding: '10px 13px', borderRadius: '8px',
+              background: 'var(--surface)', padding: '10px 13px', borderRadius: '8px',
               fontWeight: 600,
             }}>「{deleteTarget.name}」</div>
             <div style={{ fontSize: '12px', color: 'var(--red)', marginBottom: '22px' }}>
@@ -702,10 +702,10 @@ export default function DashboardClient({ tournaments }: Props) {
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
         }}>
           <div style={{
-            background: 'rgba(10,14,30,0.95)',
+            background: 'var(--header-bg)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid rgba(0,240,255,0.12)',
+            border: '1px solid var(--card-border)',
             borderRadius: '16px', padding: 'clamp(20px, 4vw, 28px)',
             width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto',
             boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
@@ -734,7 +734,7 @@ export default function DashboardClient({ tournaments }: Props) {
                 <button
                   type="button"
                   onClick={() => setPlayerCount(c => Math.max(4, c - 1))}
-                  style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid rgba(0,240,255,0.12)', background: 'rgba(0,240,255,0.04)', color: 'var(--ink)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                  style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid var(--border-md)', background: 'var(--surface)', color: 'var(--ink)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 >−</button>
                 <input
                   type="number"
@@ -746,7 +746,7 @@ export default function DashboardClient({ tournaments }: Props) {
                 <button
                   type="button"
                   onClick={() => setPlayerCount(c => c + 1)}
-                  style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid rgba(0,240,255,0.12)', background: 'rgba(0,240,255,0.04)', color: 'var(--ink)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                  style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid var(--border-md)', background: 'var(--surface)', color: 'var(--ink)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 >＋</button>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                   {[8, 12, 16, 20, 24, 28, 32, 36, 40].map(n => (
@@ -756,9 +756,9 @@ export default function DashboardClient({ tournaments }: Props) {
                       onClick={() => setPlayerCount(n)}
                       style={{
                         padding: '3px 10px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer',
-                        border: playerCount === n ? '1.5px solid rgba(0,240,255,0.4)' : '1.5px solid rgba(0,240,255,0.12)',
-                        background: playerCount === n ? 'rgba(0,240,255,0.15)' : 'rgba(255,255,255,0.05)',
-                        color: playerCount === n ? '#00f0ff' : 'var(--mist)',
+                        border: playerCount === n ? '1.5px solid var(--cyan-deep)' : '1.5px solid var(--border-md)',
+                        background: playerCount === n ? 'var(--cyan-pale)' : 'var(--surface)',
+                        color: playerCount === n ? 'var(--cyan-deep)' : 'var(--mist)',
                         fontWeight: playerCount === n ? 700 : 400,
                       }}
                     >{n}</button>
@@ -819,7 +819,7 @@ const labelStyle: React.CSSProperties = {
 }
 const inputStyle: React.CSSProperties = {
   width: '100%', height: '44px', padding: '0 12px',
-  background: 'rgba(0,240,255,0.04)', border: '1.5px solid rgba(0,240,255,0.12)',
+  background: 'var(--surface)', border: '1.5px solid var(--border-md)',
   borderRadius: '9px', fontSize: '15px', color: 'var(--ink)', outline: 'none',
   fontFamily: 'inherit', boxSizing: 'border-box',
 }
@@ -829,7 +829,7 @@ const btnPrimary: React.CSSProperties = {
   boxShadow: '0 0 16px rgba(0,240,255,0.2)',
 }
 const btnOutline: React.CSSProperties = {
-  padding: '10px 20px', background: 'rgba(0,240,255,0.04)',
-  border: '1.5px solid rgba(0,240,255,0.18)', color: 'var(--slate)',
+  padding: '10px 20px', background: 'var(--surface)',
+  border: '1.5px solid var(--border-md)', color: 'var(--slate)',
   borderRadius: '8px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
 }

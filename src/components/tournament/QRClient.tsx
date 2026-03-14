@@ -8,9 +8,10 @@ interface Props {
   tournament: Tournament
   players: Player[]
   adminToken?: string
+  isOwner?: boolean
 }
 
-export default function QRClient({ tournament, players, adminToken }: Props) {
+export default function QRClient({ tournament, players, adminToken, isOwner = true }: Props) {
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
   return (
@@ -42,21 +43,21 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
       `}</style>
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <div className="no-print qr-header" style={{
-          height: '52px', background: 'rgba(10,14,30,0.85)',
+          height: '52px', background: 'var(--header-bg)',
           backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(0,240,255,0.08)',
+          borderBottom: '1px solid var(--header-border)',
           padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
           position: 'relative', zIndex: 100, overflow: 'visible',
         }}>
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
-          <HeaderIcons />
+          {isOwner && <HeaderIcons />}
         </div>
         <div className="qr-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>QRコード</div>
             <button className="no-print" onClick={() => window.print()} style={{
-              padding: '6px 14px', background: 'transparent', color: '#AD30F2',
-              border: '1.5px solid #AD30F2', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+              padding: '6px 14px', background: 'transparent', color: 'var(--gold)',
+              border: '1.5px solid var(--gold)', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
             }}>PDF出力</button>
           </div>
           <div id="qr-print-area">
@@ -64,7 +65,7 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
               const adminUrl = `${origin}/a/${adminToken}`
               return (
                 <div style={{
-                  background: 'rgba(15,21,40,0.6)', border: '2px solid var(--cyan-deep)',
+                  background: 'var(--card-bg)', border: '2px solid var(--cyan-deep)',
                   borderRadius: '12px', padding: '20px', textAlign: 'center',
                   marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' as const, justifyContent: 'center',
                   boxShadow: '0 2px 16px rgba(0,240,255,0.15)',
@@ -74,8 +75,8 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--cyan-deep)', marginBottom: '4px' }}>管理者用</div>
-                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#fff', marginBottom: '6px' }}>卓組・成績入力 QR</div>
-                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ink)', marginBottom: '6px' }}>卓組・成績入力 QR</div>
+                    <div style={{ fontSize: '11px', color: 'var(--mist)', marginBottom: '8px' }}>
                       ログインなしで卓組・成績入力、全体成績、QRコードページにアクセスできます
                     </div>
                     <div
@@ -97,9 +98,9 @@ export default function QRClient({ tournament, players, adminToken }: Props) {
                 const url = `${origin}/p/${player.token}`
                 return (
                   <div key={player.id} style={{
-                    background: 'rgba(15,21,40,0.5)',
+                    background: 'var(--card-bg)',
                     backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(0,240,255,0.10)',
+                    border: '1px solid var(--card-border)',
                     borderRadius: '12px', padding: '16px', textAlign: 'center',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
                   }}>

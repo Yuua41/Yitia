@@ -15,8 +15,8 @@ const iconBtn: React.CSSProperties = {
 }
 
 function hoverIn(e: React.MouseEvent<HTMLButtonElement>) {
-  e.currentTarget.style.color = '#00f0ff'
-  e.currentTarget.style.background = 'rgba(0,240,255,0.1)'
+  e.currentTarget.style.color = 'var(--cyan)'
+  e.currentTarget.style.background = 'var(--hover-bg)'
 }
 function hoverOut(e: React.MouseEvent<HTMLButtonElement>) {
   e.currentTarget.style.color = 'var(--mist)'
@@ -25,9 +25,9 @@ function hoverOut(e: React.MouseEvent<HTMLButtonElement>) {
 
 const dropdownStyle: React.CSSProperties = {
   position: 'absolute', top: '100%', right: 0, marginTop: '6px',
-  background: 'var(--navy)', border: '1px solid rgba(0,240,255,0.15)',
+  background: 'var(--surface)', border: '1px solid var(--border-md)',
   borderRadius: '10px', padding: '6px 0', minWidth: '180px',
-  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
   zIndex: 9999,
 }
 
@@ -43,6 +43,22 @@ export default function HeaderIcons() {
   const supabase = createClient()
   const [openMenu, setOpenMenu] = useState<'notification' | 'settings' | 'user' | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const [isDark, setIsDark] = useState(true)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theme')
+    const dark = saved !== 'light'
+    setIsDark(dark)
+    document.body.setAttribute('data-theme', dark ? 'dark' : 'light')
+  }, [])
+
+  function toggleTheme() {
+    const next = !isDark
+    setIsDark(next)
+    document.body.setAttribute('data-theme', next ? 'dark' : 'light')
+    localStorage.setItem('theme', next ? 'dark' : 'light')
+    setOpenMenu(null)
+  }
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -105,19 +121,26 @@ export default function HeaderIcons() {
           <div style={dropdownStyle}>
             <button
               style={menuItemStyle}
-              onClick={() => setOpenMenu(null)}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,240,255,0.08)' }}
+              onClick={toggleTheme}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-              </svg>
-              <span>ダークモード</span>
+              {isDark ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="4"/>
+                  <path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                </svg>
+              )}
+              <span>{isDark ? 'ライトモード' : 'ダークモード'}</span>
             </button>
             <button
               style={menuItemStyle}
               onClick={() => setOpenMenu(null)}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,240,255,0.08)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -153,7 +176,7 @@ export default function HeaderIcons() {
               href="/dashboard"
               style={menuItemStyle}
               onClick={() => setOpenMenu(null)}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,240,255,0.08)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -164,7 +187,7 @@ export default function HeaderIcons() {
               </svg>
               <span>大会一覧</span>
             </Link>
-            <div style={{ height: '1px', background: 'rgba(0,240,255,0.08)', margin: '4px 0' }} />
+            <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
             <button
               style={menuItemStyle}
               onClick={handleLogout}

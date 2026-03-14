@@ -27,6 +27,84 @@
   --mist:      #556688;
   --border:    rgba(0,240,255,0.07);
   --border-md: rgba(0,240,255,0.14);
+
+  /* Semantic tokens */
+  --card-bg:        rgba(15,21,40,0.5);
+  --card-border:    rgba(0,240,255,0.10);
+  --header-bg:      rgba(10,14,30,0.85);
+  --header-border:  rgba(0,240,255,0.08);
+  --hover-bg:       rgba(0,240,255,0.08);
+  --grid-line:      rgba(0,240,255,0.03);
+  --scrollbar-thumb: rgba(0,240,255,0.15);
+  --focus-shadow:   rgba(0,240,255,0.15);
+  --skeleton-from:  rgba(0,240,255,0.03);
+  --skeleton-mid:   rgba(0,240,255,0.08);
+  --body-grad1:     rgba(0,240,255,0.06);
+  --body-grad2:     rgba(255,0,170,0.05);
+
+  /* Sidebar / Logo (dark defaults) */
+  --logo-from:    #00f0ff;
+  --logo-to:      #ff00aa;
+  --logo-shadow:  rgba(0,240,255,0.35);
+  --logo-dot:     #0a0e1a;
+  --sidebar-glow: rgba(0,240,255,0.10);
+  --text-on-sidebar: #fff;
+  --text-dim:     rgba(255,255,255,0.50);
+  --text-dimmer:  rgba(255,255,255,0.22);
+  --nav-active-color: #00f0ff;
+  --nav-active-border: rgba(0,240,255,0.25);
+  --nav-hover-bg: rgba(255,255,255,0.09);
+  --nav-hover-text: rgba(255,255,255,0.85);
+  --accent-warm:  #D89775;
+}
+
+body[data-theme="light"] {
+  --ink:       #1a2a28;
+  --paper:     #f0ebe3;
+  --surface:   #f7f4ef;
+  --navy:      #1B2E2D;
+  --navy-mid:  #243b3a;
+  --cyan:      #7BADAB;
+  --cyan-deep: #3d7d73;
+  --cyan-pale: rgba(123,173,171,0.12);
+  --cyan-dim:  #6a9e9b;
+  --sky:       #7BADAB;
+  --gold:      #AD7BA4;
+  --gold-dark: #8d6488;
+  --gold-pale: rgba(173,123,164,0.10);
+  --red:       #c0392b;
+  --red-pale:  rgba(192,57,43,0.08);
+  --slate:     #2c3e3d;
+  --mist:      #5a7472;
+  --border:    rgba(27,46,45,0.10);
+  --border-md: rgba(27,46,45,0.18);
+  --card-bg:      rgba(247,244,239,0.85);
+  --card-border:  rgba(27,46,45,0.10);
+  --header-bg:    rgba(240,235,227,0.95);
+  --header-border: rgba(27,46,45,0.10);
+  --hover-bg:     rgba(27,46,45,0.05);
+  --grid-line:    transparent;
+  --scrollbar-thumb: rgba(27,46,45,0.15);
+  --focus-shadow: rgba(61,125,115,0.2);
+  --skeleton-from: rgba(27,46,45,0.03);
+  --skeleton-mid:  rgba(27,46,45,0.07);
+  --body-grad1:   transparent;
+  --body-grad2:   transparent;
+
+  /* Sidebar / Logo — icon matches dark mode */
+  --logo-from:    #00f0ff;
+  --logo-to:      #ff00aa;
+  --logo-shadow:  rgba(0,240,255,0.35);
+  --logo-dot:     #0a0e1a;
+  --sidebar-glow: transparent;
+  --text-on-sidebar: #1B2E2D;
+  --text-dim:     #5a7472;
+  --text-dimmer:  rgba(27,46,45,0.35);
+  --nav-active-color: #3d7d73;
+  --nav-active-border: rgba(61,125,115,0.25);
+  --nav-hover-bg: rgba(27,46,45,0.06);
+  --nav-hover-text: #1B2E2D;
+  --accent-warm:  #D89775;
 }
 
 * {
@@ -37,8 +115,8 @@
 
 body {
   background:
-    radial-gradient(ellipse 80% 55% at 5% 0%, rgba(0,240,255,0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 45% at 95% 100%, rgba(255,0,170,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 55% at 5% 0%, var(--body-grad1) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 45% at 95% 100%, var(--body-grad2) 0%, transparent 60%),
     var(--paper);
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
@@ -54,8 +132,8 @@ body::before {
   position: fixed;
   inset: 0;
   background-image:
-    linear-gradient(rgba(0,240,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,240,255,0.03) 1px, transparent 1px);
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 60px 60px;
   pointer-events: none;
   z-index: 0;
@@ -72,12 +150,12 @@ input[type='number'] {
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,240,255,0.15); border-radius: 100px; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 100px; }
 
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--cyan-dim) !important;
-  box-shadow: 0 0 0 3px var(--cyan-pale), 0 0 12px rgba(0,240,255,0.15) !important;
+  box-shadow: 0 0 0 3px var(--cyan-pale), 0 0 12px var(--focus-shadow) !important;
 }
 
 @keyframes shimmer-slide {
@@ -88,9 +166,9 @@ input:focus, textarea:focus, select:focus {
 .skeleton-pulse {
   background: linear-gradient(
     90deg,
-    rgba(0,240,255,0.03) 25%,
-    rgba(0,240,255,0.08) 50%,
-    rgba(0,240,255,0.03) 75%
+    var(--skeleton-from) 25%,
+    var(--skeleton-mid) 50%,
+    var(--skeleton-from) 75%
   );
   background-size: 600px 100%;
   animation: shimmer-slide 1.6s ease-in-out infinite;

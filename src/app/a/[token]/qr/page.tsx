@@ -1,4 +1,4 @@
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import QRClient from '@/components/tournament/QRClient'
 
@@ -8,7 +8,7 @@ export default async function AdminQRPage({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
-  const supabase = await createServiceClient()
+  const supabase = await createClient()
 
   const { data: tournament } = await supabase
     .from('tournaments')
@@ -24,5 +24,5 @@ export default async function AdminQRPage({
     .eq('tournament_id', tournament.id)
     .order('seat_order')
 
-  return <QRClient tournament={tournament} players={players ?? []} adminToken={token} />
+  return <QRClient tournament={tournament} players={players ?? []} adminToken={token} isOwner={false} />
 }

@@ -23,7 +23,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className={`${geist.variable} ${notoSansJP.variable}`}>{children}</body>
+      <body className={`${geist.variable} ${notoSansJP.variable}`} suppressHydrationWarning>
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme');if(t==='light')document.body.setAttribute('data-theme','light')})()` }} />
+        {children}
+      </body>
     </html>
   )
 }

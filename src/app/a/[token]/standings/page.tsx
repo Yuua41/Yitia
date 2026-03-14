@@ -1,4 +1,4 @@
-import { createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import StandingsClient from '@/components/tournament/StandingsClient'
 
@@ -8,7 +8,7 @@ export default async function AdminStandingsPage({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
-  const supabase = await createServiceClient()
+  const supabase = await createClient()
 
   const { data: tournament } = await supabase
     .from('tournaments')

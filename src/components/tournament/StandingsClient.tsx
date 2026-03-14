@@ -142,7 +142,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
       color: '#2a1500',
       boxShadow: '0 0 8px rgba(205,128,50,0.3)',
     }
-    return { background: 'var(--paper)', color: 'var(--slate)', border: '1px solid rgba(0,240,255,0.08)' }
+    return { background: 'var(--paper)', color: 'var(--slate)', border: '1px solid var(--hover-bg)' }
   }
 
   const thStyle = (key?: SortKey): React.CSSProperties => ({
@@ -220,14 +220,14 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
         }
       `}</style>
       <div className="standings-header" style={{
-        height: '52px', background: 'rgba(10,14,30,0.85)',
+        height: '52px', background: 'var(--header-bg)',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(0,240,255,0.08)',
+        borderBottom: '1px solid var(--header-border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
-        <HeaderIcons />
+        {isOwner && <HeaderIcons />}
       </div>
       <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -242,8 +242,8 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
           }}>総合成績</div>
           <div className="standings-header-btns" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button onClick={exportCSV} style={{
-              padding: '6px 14px', background: 'transparent', color: '#AD30F2',
-              border: '1.5px solid #AD30F2', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+              padding: '6px 14px', background: 'transparent', color: 'var(--gold)',
+              border: '1.5px solid var(--gold)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
               cursor: 'pointer',
             }}>CSV出力</button>
             {isOwner && (
@@ -262,8 +262,8 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
         </div>
         <div className="standings-content-btns" style={{ gap: '8px', marginBottom: '16px' }}>
           <button onClick={exportCSV} style={{
-            padding: '8px 16px', background: 'transparent', color: '#AD30F2',
-            border: '1.5px solid #AD30F2', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+            padding: '8px 16px', background: 'transparent', color: 'var(--gold)',
+            border: '1.5px solid var(--gold)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
             cursor: 'pointer', flex: 1,
           }}>CSV出力</button>
           {isOwner && (
@@ -279,7 +279,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
 
         {/* Desktop: Table View */}
         <div className="standings-table-view">
-          <div style={{ background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)', overflowX: 'auto' }}>
+          <div style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
               <thead>
                 <tr>
@@ -357,7 +357,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                                 border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(0,240,255,0.3)' : 'var(--border)'}`,
                                 borderRadius: '6px', fontSize: '11.5px', fontFamily: 'monospace',
                                 textAlign: 'center', outline: 'none',
-                                background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'rgba(0,240,255,0.08)' : 'var(--paper)',
+                                background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'var(--hover-bg)' : 'var(--paper)',
                                 color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--cyan-deep)' : 'var(--ink)',
                               }}
                             />
@@ -397,9 +397,9 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
             const barWidth = Math.abs(total) / maxAbs * 100
             return (
               <div key={player.id} style={{
-                background: 'rgba(15,21,40,0.5)',
+                background: 'var(--card-bg)',
                 backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px',
+                border: '1px solid var(--card-border)', borderRadius: '12px',
                 padding: '12px 14px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
                 position: 'relative', overflow: 'hidden',
                 animation: `stCardPop 0.3s ease ${idx * 50}ms both`,
@@ -471,7 +471,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                           border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(0,240,255,0.3)' : 'var(--border)'}`,
                           borderRadius: '6px', fontSize: '12px', fontFamily: 'monospace',
                           textAlign: 'center', outline: 'none',
-                          background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'rgba(0,240,255,0.08)' : 'var(--paper)',
+                          background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'var(--hover-bg)' : 'var(--paper)',
                           color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--cyan-deep)' : 'var(--ink)',
                         }}
                       />
@@ -604,9 +604,9 @@ function PointChart({ ranked, numRounds, adjustments }: { ranked: ChartEntry[]; 
   return (
     <div ref={containerRef} style={{
       marginTop: '24px',
-      background: 'rgba(15,21,40,0.5)',
+      background: 'var(--card-bg)',
       backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-      border: '1px solid rgba(0,240,255,0.10)',
+      border: '1px solid var(--card-border)',
       borderRadius: '12px',
       padding: '16px 8px 12px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
