@@ -16,39 +16,36 @@ interface Props {
 type SortKey = 'rank' | 'name' | 'total'
 type SortDir = 'asc' | 'desc'
 
-function CountUpScore({ value, delay = 0, fontSize = '14px', className }: { value: number; delay?: number; fontSize?: string; className?: string }) {
-  const [display, setDisplay] = useState(0)
-  const animatedRef = useRef(false)
-  const elRef = useRef<HTMLSpanElement>(null)
+/** 表示済みラウンドまでの累計を滑らかにアニメーション */
+function RevealScore({ roundPoints, adjustment, revealedCol, fontSize = '14px' }: {
+  roundPoints: (number | null)[]; adjustment: number; revealedCol: number; fontSize?: string
+}) {
+  const target = roundPoints.slice(0, revealedCol).reduce<number>((s, p) => s + (p ?? 0), 0) + adjustment
+  const rounded = Math.round(target * 10) / 10
+  const [display, setDisplay] = useState(rounded)
+  const prevRef = useRef(rounded)
 
   useEffect(() => {
-    const el = elRef.current
-    if (!el) return
-    const io = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !animatedRef.current) {
-        animatedRef.current = true
-        const start = performance.now() + delay
-        const duration = 800
-        function tick(now: number) {
-          const elapsed = now - start
-          if (elapsed < 0) { requestAnimationFrame(tick); return }
-          const t = Math.min(elapsed / duration, 1)
-          const eased = 1 - Math.pow(1 - t, 3)
-          setDisplay(Math.round(eased * value * 10) / 10)
-          if (t < 1) requestAnimationFrame(tick)
-          else setDisplay(value)
-        }
-        requestAnimationFrame(tick)
-      }
-    }, { threshold: 0.1 })
-    io.observe(el)
-    return () => io.disconnect()
-  }, [value, delay])
+    const from = prevRef.current
+    const to = rounded
+    if (from === to) return
+    const duration = 300
+    const start = performance.now()
+    function tick(now: number) {
+      const t = Math.min((now - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setDisplay(Math.round((from + (to - from) * eased) * 10) / 10)
+      if (t < 1) requestAnimationFrame(tick)
+      else { setDisplay(to); prevRef.current = to }
+    }
+    requestAnimationFrame(tick)
+  }, [rounded])
 
   return (
-    <strong ref={elRef} className={className} style={{
+    <strong style={{
       fontFamily: 'monospace', fontSize, position: 'relative',
-      color: value >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+      color: display >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
+      transition: 'color 0.3s',
     }}>{formatPoint(display)}</strong>
   )
 }
@@ -332,19 +329,38 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                       ))}
                       <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)' }}>
                         {isOwner ? (
-                          <input
-                            type="number"
-                            value={adj}
-                            onChange={e => setAdjustments(a => ({ ...a, [player.id]: +e.target.value }))}
-                            style={{
-                              width: '68px', padding: '4px 6px',
-                              border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`,
-                              borderRadius: '6px', fontSize: '11.5px', fontFamily: 'monospace',
-                              textAlign: 'center', outline: 'none',
-                              background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'var(--gold-pale)' : 'var(--paper)',
-                              color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--gold-dark)' : 'var(--ink)',
-                            }}
-                          />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <button
+                              onClick={() => {
+                                const cur = adjustments[player.id] ?? 0
+                                setAdjustments(a => ({ ...a, [player.id]: -cur }))
+                              }}
+                              style={{
+                                width: '28px', height: '28px', borderRadius: '6px', flexShrink: 0,
+                                border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : 'var(--border)'}`,
+                                background: adj < 0 ? 'var(--red-pale)' : 'var(--paper)',
+                                color: adj < 0 ? 'var(--red)' : 'var(--mist)',
+                                fontSize: '10px', fontWeight: 700, cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              }}
+                            >▲</button>
+                            <input
+                              type="number"
+                              value={Math.abs(adj)}
+                              onChange={e => {
+                                const v = Math.abs(+e.target.value)
+                                setAdjustments(a => ({ ...a, [player.id]: adj < 0 ? -v : v }))
+                              }}
+                              style={{
+                                width: '58px', padding: '4px 6px',
+                                border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(0,240,255,0.3)' : 'var(--border)'}`,
+                                borderRadius: '6px', fontSize: '11.5px', fontFamily: 'monospace',
+                                textAlign: 'center', outline: 'none',
+                                background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'rgba(0,240,255,0.08)' : 'var(--paper)',
+                                color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--cyan-deep)' : 'var(--ink)',
+                              }}
+                            />
+                          </div>
                         ) : (
                           <span style={{
                             fontFamily: 'monospace', fontSize: '11.5px',
@@ -362,7 +378,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                           transformOrigin: 'right',
                           animation: `stBarGrow 0.6s ease ${idx * 40 + 200}ms both`,
                         }} />
-                        <CountUpScore value={total} delay={idx * 40 + 150} fontSize="14px" />
+                        <RevealScore roundPoints={roundPoints} adjustment={adj} revealedCol={revealedCol} fontSize="14px" />
                       </td>
                     </tr>
                   )
@@ -408,7 +424,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                   <div style={{ flex: 1, fontSize: '13.5px', fontWeight: 700 }}>
                     {player.seat_order + 1}. {player.name}
                   </div>
-                  <CountUpScore value={total} delay={idx * 50 + 150} fontSize="16px" />
+                  <RevealScore roundPoints={roundPoints} adjustment={adjustments[player.id] ?? 0} revealedCol={revealedCol} fontSize="16px" />
                 </div>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px', position: 'relative' }}>
                   {roundPoints.map((pt, i) => (
@@ -427,19 +443,38 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--mist)', position: 'relative' }}>
                   <span>調整:</span>
                   {isOwner ? (
-                    <input
-                      type="number"
-                      value={adj}
-                      onChange={e => setAdjustments(a => ({ ...a, [player.id]: +e.target.value }))}
-                      style={{
-                        width: '72px', padding: '5px 8px',
-                        border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`,
-                        borderRadius: '6px', fontSize: '12px', fontFamily: 'monospace',
-                        textAlign: 'center', outline: 'none',
-                        background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'var(--gold-pale)' : 'var(--paper)',
-                        color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--gold-dark)' : 'var(--ink)',
-                      }}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <button
+                        onClick={() => {
+                          const cur = adjustments[player.id] ?? 0
+                          setAdjustments(a => ({ ...a, [player.id]: -cur }))
+                        }}
+                        style={{
+                          width: '30px', height: '30px', borderRadius: '6px', flexShrink: 0,
+                          border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : 'var(--border)'}`,
+                          background: adj < 0 ? 'var(--red-pale)' : 'var(--paper)',
+                          color: adj < 0 ? 'var(--red)' : 'var(--mist)',
+                          fontSize: '10px', fontWeight: 700, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >▲</button>
+                      <input
+                        type="number"
+                        value={Math.abs(adj)}
+                        onChange={e => {
+                          const v = Math.abs(+e.target.value)
+                          setAdjustments(a => ({ ...a, [player.id]: adj < 0 ? -v : v }))
+                        }}
+                        style={{
+                          width: '72px', padding: '5px 8px',
+                          border: `1.5px solid ${adj < 0 ? 'rgba(239,68,68,0.3)' : adj > 0 ? 'rgba(0,240,255,0.3)' : 'var(--border)'}`,
+                          borderRadius: '6px', fontSize: '12px', fontFamily: 'monospace',
+                          textAlign: 'center', outline: 'none',
+                          background: adj < 0 ? 'var(--red-pale)' : adj > 0 ? 'rgba(0,240,255,0.08)' : 'var(--paper)',
+                          color: adj < 0 ? 'var(--red)' : adj > 0 ? 'var(--cyan-deep)' : 'var(--ink)',
+                        }}
+                      />
+                    </div>
                   ) : (
                     <span style={{
                       fontFamily: 'monospace', fontSize: '12px',

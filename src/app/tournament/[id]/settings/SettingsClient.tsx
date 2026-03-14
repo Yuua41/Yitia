@@ -441,7 +441,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
                       { label: '3位', val: `−${uma23}` },
                       { label: '4位', val: `−${uma14}` },
                     ].map(({ label, val }) => (
-                      <div key={label} style={{ flex: 1, textAlign: 'center', background: 'rgba(15,21,40,0.5)', borderRadius: '6px', padding: '5px 4px' }}>
+                      <div key={label} style={{ flex: 1, textAlign: 'center', background: 'var(--navy)', borderRadius: '6px', padding: '5px 4px' }}>
                         <div style={{ fontSize: '8px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>{label}</div>
                         <div style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 600, color: label === '3位' || label === '4位' ? '#fca5a5' : 'rgba(255,255,255,0.6)' }}>{val}</div>
                       </div>
@@ -471,7 +471,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '6px' }}>
                 {['1位','2位','3位','4位'].map((l, i) => (
-                  <div key={l} style={{ textAlign: 'center', background: 'rgba(15,21,40,0.5)', borderRadius: '6px', padding: '5px 4px' }}>
+                  <div key={l} style={{ textAlign: 'center', background: 'var(--navy)', borderRadius: '6px', padding: '5px 4px' }}>
                     <div style={{ fontSize: '8px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>{l}</div>
                     <div style={{ fontFamily: 'monospace', fontSize: '13px', fontWeight: 600, color: i >= 2 ? '#fca5a5' : 'rgba(255,255,255,0.7)' }}>
                       {config.uma[i] >= 0 ? '+' : ''}{config.uma[i]}
@@ -528,8 +528,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
           {/* ステータスセクション */}
           {isDraft && (
             <div style={{
-              background: 'rgba(15,21,40,0.5)',
-              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+              background: 'var(--navy)',
               border: '1.5px solid rgba(0,240,255,0.10)',
               borderRadius: '12px', padding: '18px', marginBottom: '14px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -558,8 +557,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
           {/* 進行中: 終了ボタン */}
           {tournament.status === 'ongoing' && (
             <div style={{
-              background: 'rgba(15,21,40,0.5)',
-              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+              background: 'var(--navy)',
               border: '1.5px solid rgba(0,240,255,0.10)',
               borderRadius: '12px', padding: '18px', marginBottom: '14px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -635,7 +633,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
 function ToggleGroup({ options, value, onChange }: { options: { value: string; label: string }[]; value: string; onChange: (v: string) => void }) {
   return (
-    <div style={{ display: 'flex', background: 'rgba(15,21,40,0.5)', borderRadius: '7px', padding: '2px', gap: '2px' }}>
+    <div style={{ display: 'flex', background: 'var(--navy)', borderRadius: '7px', padding: '2px', gap: '2px' }}>
       {options.map(o => (
         <button key={o.value} onClick={() => onChange(o.value)} style={{
           flex: 1, padding: '6px 4px', fontSize: '11px', fontWeight: 600,
@@ -681,13 +679,13 @@ const cfgInputStyle: React.CSSProperties = {
   fontFamily: 'monospace', outline: 'none',
 }
 const cfgSuffixStyle: React.CSSProperties = {
-  padding: '7px 8px', background: 'rgba(15,21,40,0.5)',
+  padding: '7px 8px', background: 'var(--navy)',
   border: '1px solid rgba(0,240,255,0.12)', borderLeft: 'none',
   borderRadius: '0 7px 7px 0', fontSize: '12px',
   color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace',
 }
 const cfgDisplayStyle: React.CSSProperties = {
-  padding: '7px 10px', background: 'rgba(15,21,40,0.5)',
+  padding: '7px 10px', background: 'var(--navy)',
   borderRadius: '7px', fontSize: '13px', fontWeight: 600,
   color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace',
 }
