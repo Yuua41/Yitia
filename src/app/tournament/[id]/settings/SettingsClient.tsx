@@ -245,6 +245,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(0,240,255,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+        position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
         <HeaderIcons />

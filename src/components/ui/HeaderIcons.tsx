@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
@@ -28,7 +28,7 @@ const dropdownStyle: React.CSSProperties = {
   background: 'var(--navy)', border: '1px solid rgba(0,240,255,0.15)',
   borderRadius: '10px', padding: '6px 0', minWidth: '180px',
   boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-  zIndex: 100,
+  zIndex: 9999,
 }
 
 const menuItemStyle: React.CSSProperties = {
@@ -40,7 +40,6 @@ const menuItemStyle: React.CSSProperties = {
 
 export default function HeaderIcons() {
   const router = useRouter()
-  const pathname = usePathname()
   const supabase = createClient()
   const [openMenu, setOpenMenu] = useState<'notification' | 'settings' | 'user' | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -62,10 +61,6 @@ export default function HeaderIcons() {
     router.push('/login')
     router.refresh()
   }
-
-  // Extract tournament base path for settings menu links
-  const tournamentMatch = pathname.match(/^\/tournament\/[^/]+/)
-  const tournamentBase = tournamentMatch ? tournamentMatch[0] : null
 
   return (
     <div ref={menuRef} style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
@@ -108,36 +103,29 @@ export default function HeaderIcons() {
         </button>
         {openMenu === 'settings' && (
           <div style={dropdownStyle}>
-            {tournamentBase && (
-              <Link
-                href={`${tournamentBase}/settings`}
-                style={menuItemStyle}
-                onClick={() => setOpenMenu(null)}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,240,255,0.08)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-                <span>大会設定</span>
-              </Link>
-            )}
-            <Link
-              href="/dashboard"
+            <button
               style={menuItemStyle}
               onClick={() => setOpenMenu(null)}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,240,255,0.08)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="7" height="7" rx="1"/>
-                <rect x="14" y="3" width="7" height="7" rx="1"/>
-                <rect x="3" y="14" width="7" height="7" rx="1"/>
-                <rect x="14" y="14" width="7" height="7" rx="1"/>
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
               </svg>
-              <span>大会一覧</span>
-            </Link>
+              <span>ダークモード</span>
+            </button>
+            <button
+              style={menuItemStyle}
+              onClick={() => setOpenMenu(null)}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,240,255,0.08)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <span>プロフィール</span>
+            </button>
           </div>
         )}
       </div>
@@ -161,6 +149,22 @@ export default function HeaderIcons() {
         </button>
         {openMenu === 'user' && (
           <div style={dropdownStyle}>
+            <Link
+              href="/dashboard"
+              style={menuItemStyle}
+              onClick={() => setOpenMenu(null)}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,240,255,0.08)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/>
+              </svg>
+              <span>大会一覧</span>
+            </Link>
+            <div style={{ height: '1px', background: 'rgba(0,240,255,0.08)', margin: '4px 0' }} />
             <button
               style={menuItemStyle}
               onClick={handleLogout}

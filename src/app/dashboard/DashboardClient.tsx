@@ -490,6 +490,7 @@ export default function DashboardClient({ tournaments }: Props) {
         WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--border)',
         padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+        position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
         <span style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em' }}>大会一覧</span>
         <HeaderIcons />
