@@ -4,6 +4,8 @@ import { useEffect, useRef } from 'react'
 import type { Tournament, Player } from '@/types'
 import HeaderIcons from '@/components/ui/HeaderIcons'
 import ThemeToggle from '@/components/ui/ThemeToggle'
+import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
+import { qrSteps } from '@/components/tutorial/steps'
 
 interface Props {
   tournament: Tournament
@@ -16,6 +18,7 @@ export default function QRClient({ tournament, players, adminToken, isOwner = tr
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
   return (
+    <TutorialProvider>
     <>
       <style>{`
         @media (max-width: 768px) {
@@ -55,7 +58,10 @@ export default function QRClient({ tournament, players, adminToken, isOwner = tr
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
             <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '100px', fontSize: '9px', fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0, background: tournament.status === 'ongoing' ? 'var(--cyan-pale)' : tournament.status === 'finished' ? 'var(--gold-pale)' : 'var(--hover-bg)', color: tournament.status === 'ongoing' ? 'var(--cyan)' : tournament.status === 'finished' ? 'var(--gold)' : 'var(--mist)' }}>{tournament.status === 'ongoing' ? '進行中' : tournament.status === 'finished' ? '完了' : '下書き'}</span>
           </div>
-          {isOwner ? <HeaderIcons /> : <ThemeToggle />}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <HelpButton steps={qrSteps} pageKey="qr" />
+            {isOwner ? <HeaderIcons /> : <ThemeToggle />}
+          </div>
         </div>
         <div className="qr-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -65,7 +71,7 @@ export default function QRClient({ tournament, players, adminToken, isOwner = tr
               border: '1.5px solid var(--gold)', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
             }}>PDF出力</button>
           </div>
-          <div id="qr-print-area">
+          <div data-tutorial="qr-section" id="qr-print-area">
             <div className="print-header" style={{ display: 'none', textAlign: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: '2px solid #333' }}>
               <div style={{ fontSize: '20px', fontWeight: 700 }}>{tournament.name}</div>
               {tournament.held_on && <div style={{ fontSize: '13px', marginTop: '4px' }}>{tournament.held_on}</div>}
@@ -131,6 +137,7 @@ export default function QRClient({ tournament, players, adminToken, isOwner = tr
         </div>
       </div>
     </>
+    </TutorialProvider>
   )
 }
 

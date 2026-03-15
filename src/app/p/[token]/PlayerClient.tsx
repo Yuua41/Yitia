@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { calcTableResults, calcStandings, formatPoint } from '@/lib/mahjong/calculator'
 import ThemeToggle from '@/components/ui/ThemeToggle'
+import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
+import { playerSteps } from '@/components/tutorial/steps'
 import type { Tournament, Player, Table, Result } from '@/types'
 
 interface Props {
@@ -323,6 +325,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   }
 
   return (
+    <TutorialProvider>
     <div style={{ minHeight: '100vh', background: 'transparent' }}>
       <div style={{
         height: '52px', background: 'var(--header-bg)',
@@ -335,7 +338,10 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '100px', fontSize: '9px', fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0, background: tournament.status === 'ongoing' ? 'var(--cyan-pale)' : tournament.status === 'finished' ? 'var(--gold-pale)' : 'var(--hover-bg)', color: tournament.status === 'ongoing' ? 'var(--cyan)' : tournament.status === 'finished' ? 'var(--gold)' : 'var(--mist)' }}>{tournament.status === 'ongoing' ? '進行中' : tournament.status === 'finished' ? '完了' : '下書き'}</span>
         </div>
-        <ThemeToggle />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <HelpButton steps={playerSteps} pageKey="player" />
+          <ThemeToggle />
+        </div>
       </div>
       <div style={{ padding: '16px' }}>
       <style>{`
@@ -439,7 +445,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           )}
         </div>
 
-        <div style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+        <div data-tutorial="player-score-input" style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
           <div onClick={() => toggleSection('score')} style={{ padding: '11px 15px', fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '15px', fontWeight: 700, borderBottom: openSections.score ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>{allowPlayerEntry ? 'スコア入力・卓確認' : '卓確認'}</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.score ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -730,7 +736,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         </div>
 
         {/* 全体成績 (accordion, default closed) */}
-        <div style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+        <div data-tutorial="player-standings" style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
           <div onClick={() => toggleSection('standings')} style={{ padding: '11px 15px', fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '15px', fontWeight: 700, borderBottom: openSections.standings ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>全体成績</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.standings ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -829,7 +835,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         </div>
 
         {/* ポイント推移 */}
-        <div style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+        <div data-tutorial="player-chart" style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
           <div onClick={() => toggleSection('chart')} style={{ padding: '11px 15px', fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '15px', fontWeight: 700, borderBottom: openSections.chart ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>ポイント推移</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.chart ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -849,6 +855,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
       </div>
     </div>
     </div>
+    </TutorialProvider>
   )
 }
 
