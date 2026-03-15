@@ -130,16 +130,57 @@ export function generateSchedule(
   const seatCounts: Record<string, number[]> = {}
   playerIds.forEach((id) => (seatCounts[id] = [0, 0, 0, 0]))
 
-  const rounds = []
-  for (let r = 1; r <= numRounds; r++) {
-    const shuffled = [...playerIds].sort(() => Math.random() - 0.5)
-    const numTables = Math.floor(shuffled.length / 4)
-    const tables = []
+  // 対戦回数を追跡: matchCounts[a][b] = aとbが同卓になった回数
+  const matchCounts: Record<string, Record<string, number>> = {}
+  playerIds.forEach((id) => {
+    matchCounts[id] = {}
+    playerIds.forEach((id2) => { if (id !== id2) matchCounts[id][id2] = 0 })
+  })
 
-    for (let t = 0; t < numTables; t++) {
-      const group = shuffled.slice(t * 4, (t + 1) * 4)
+  const numTables = Math.floor(playerIds.length / 4)
+  const rounds = []
+
+  for (let r = 1; r <= numRounds; r++) {
+    // 複数のランダムシャッフルを試行し、対戦重複コストが最小のものを選択
+    const attempts = Math.min(200, 20 + playerIds.length * 5)
+    let bestGrouping: string[][] = []
+    let bestCost = Infinity
+
+    for (let a = 0; a < attempts; a++) {
+      const shuffled = [...playerIds].sort(() => Math.random() - 0.5)
+      const groups: string[][] = []
+      for (let t = 0; t < numTables; t++) {
+        groups.push(shuffled.slice(t * 4, (t + 1) * 4))
+      }
+      // 対戦重複コスト: 同卓ペアの過去対戦回数の二乗和
+      let cost = 0
+      for (const g of groups) {
+        for (let i = 0; i < g.length; i++) {
+          for (let j = i + 1; j < g.length; j++) {
+            const c = matchCounts[g[i]][g[j]]
+            cost += c * c
+          }
+        }
+      }
+      if (cost < bestCost) {
+        bestCost = cost
+        bestGrouping = groups
+      }
+      if (cost === 0) break // 完全に重複なし → これ以上探す必要なし
+    }
+
+    // 選ばれたグルーピングで席順最適化 & 対戦回数を更新
+    const tables = []
+    for (const group of bestGrouping) {
       const best = findBestSeatAssignment(group, seatCounts)
       best.forEach((id, idx) => seatCounts[id][idx]++)
+      // 対戦回数を更新
+      for (let i = 0; i < group.length; i++) {
+        for (let j = i + 1; j < group.length; j++) {
+          matchCounts[group[i]][group[j]]++
+          matchCounts[group[j]][group[i]]++
+        }
+      }
       tables.push({ playerIds: group, seatOrder: best })
     }
     rounds.push({ roundNumber: r, tables })
