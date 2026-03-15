@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { calcTableResults, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table, Result } from '@/types'
 import HeaderIcons from '@/components/ui/HeaderIcons'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 
 interface Props {
   tournament: Tournament
@@ -322,7 +323,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
-        {isOwner && <HeaderIcons />}
+        {isOwner ? <HeaderIcons /> : <ThemeToggle />}
       </div>
       <div className="schedule-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>

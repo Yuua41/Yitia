@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { calcTableResults, calcStandings, formatPoint } from '@/lib/mahjong/calculator'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 import type { Tournament, Player, Table, Result } from '@/types'
 
 interface Props {
@@ -35,7 +36,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   const [swapping, setSwapping] = useState(false)
   const [extraSticks, setExtraSticks] = useState<Record<string, boolean>>({})
   const [validating, setValidating] = useState<string | null>(null)
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ score: false, adjustment: false, standings: false })
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ score: false, adjustment: false, standings: false, chart: false })
   const [displayAbsTotal, setDisplayAbsTotal] = useState(0)
   const [showRank, setShowRank] = useState(false)
   const [flashTableIds, setFlashTableIds] = useState<Set<string>>(new Set())
@@ -50,15 +51,6 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   const noSeat = tournament.config.seatMode === 'none'
   const allowPlayerEntry = tournament.config.allowPlayerEntry !== false
 
-  // Force dark mode on player page
-  useEffect(() => {
-    const prev = document.body.getAttribute('data-theme')
-    document.body.setAttribute('data-theme', 'dark')
-    return () => {
-      if (prev) document.body.setAttribute('data-theme', prev)
-      else document.body.removeAttribute('data-theme')
-    }
-  }, [])
 
   // Refetch data from Supabase (client-side, no SSR roundtrip)
   const refetchData = useCallback(async () => {
@@ -329,7 +321,18 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', padding: '16px' }}>
+    <div style={{ minHeight: '100vh', background: 'transparent' }}>
+      <div style={{
+        height: '52px', background: 'var(--header-bg)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--header-border)',
+        padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+        position: 'sticky', top: 0, zIndex: 100,
+      }}>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
+        <ThemeToggle />
+      </div>
+      <div style={{ padding: '16px' }}>
       <style>{`
         @keyframes breathe {
           0%, 100% { transform: scale(1); opacity: 0.65; }
@@ -380,7 +383,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
       `}</style>
       <div style={{ maxWidth: '450px', margin: '0 auto' }}>
         <div style={{
-          background: 'var(--navy)', borderRadius: '14px', padding: '20px',
+          background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '14px', padding: '20px',
           marginBottom: '12px', position: 'relative', overflow: 'hidden',
         }}>
           <div style={{
@@ -389,11 +392,11 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
             pointerEvents: 'none',
             animation: 'breathe 3s ease-in-out infinite',
           }} />
-          <div style={{ fontSize: '11px', fontFamily: 'monospace', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: '8px' }}>
+          <div style={{ fontSize: '11px', fontFamily: 'monospace', letterSpacing: '0.22em', color: 'var(--mist)', textTransform: 'uppercase', marginBottom: '8px' }}>
             Yitia — Player View
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-            <div style={{ fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '24px', fontWeight: 800, color: '#fff', letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+            <div style={{ fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '24px', fontWeight: 800, color: 'var(--ink)', letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
               {localPlayer.name}
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -406,7 +409,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                 opacity: showRank ? 1 : 0,
                 transform: showRank ? 'translateY(0)' : 'translateY(6px)',
                 transition: 'opacity 0.6s ease, transform 0.6s ease',
-                background: 'linear-gradient(90deg, #00f0ff 20%, #ff00aa 50%, #00f0ff 80%)',
+                backgroundImage: 'linear-gradient(90deg, var(--rank-shimmer-from, #00f0ff) 20%, var(--rank-shimmer-via, #ff00aa) 50%, var(--rank-shimmer-to, #00f0ff) 80%)',
                 backgroundSize: '200% auto',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
@@ -419,7 +422,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           </div>
         </div>
 
-        <div style={{ background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+        <div style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
           <div onClick={() => toggleSection('score')} style={{ padding: '11px 15px', fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '15px', fontWeight: 700, borderBottom: openSections.score ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>{allowPlayerEntry ? 'スコア入力・卓確認' : '卓確認'}</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.score ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -450,10 +453,10 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     fontSize: '10.5px', padding: '2px 7px', borderRadius: '9px', fontFamily: 'monospace',
                     background: isValidated
                       ? 'linear-gradient(90deg, var(--cyan-pale) 25%, rgba(0,240,255,0.38) 50%, var(--cyan-pale) 75%)'
-                      : isSubmitted ? 'rgba(0,255,170,0.12)' : 'var(--gold-pale)',
+                      : isSubmitted ? 'var(--cyan-pale)' : 'var(--gold-pale)',
                     backgroundSize: isValidated ? '200% auto' : 'auto',
                     animation: isValidated ? 'shimmer 2.5s linear infinite' : 'none',
-                    color: isValidated ? 'var(--cyan-deep)' : isSubmitted ? '#00ffaa' : 'var(--gold-dark)',
+                    color: isValidated ? 'var(--cyan-deep)' : isSubmitted ? 'var(--cyan-deep)' : 'var(--gold-dark)',
                   }}>{isValidated ? '確定済み' : isSubmitted ? '送信済み' : '入力中'}</span>
                 </div>
                 {isValidated ? (
@@ -504,12 +507,12 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     </div>
                     <div style={{ borderTop: '1px solid var(--paper)', paddingTop: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <div style={{ fontSize: '10.5px', fontFamily: 'monospace', color: '#00ffaa' }}>卓{myTable.table_number} 送信済み（暫定）</div>
+                        <div style={{ fontSize: '10.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)' }}>卓{myTable.table_number} 送信済み（暫定）</div>
                         {allowPlayerEntry && (
                           <button onClick={() => handleRevertSubmit(myTable)} style={{
                             padding: '3px 10px', fontSize: '10.5px', fontWeight: 600,
-                            background: 'rgba(0,240,255,0.06)', color: 'var(--mist)',
-                            border: '1px solid rgba(0,240,255,0.12)', borderRadius: '6px',
+                            background: 'var(--hover-bg)', color: 'var(--mist)',
+                            border: '1px solid var(--card-border)', borderRadius: '6px',
                             cursor: 'pointer',
                           }}>修正する</button>
                         )}
@@ -591,7 +594,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                               width: '80px', padding: '6px 8px',
                               border: '1.5px solid var(--border-md)', borderRadius: '6px',
                               fontSize: '13px', fontWeight: 600, textAlign: 'right',
-                              fontFamily: 'monospace', background: 'var(--paper)', color: '#fff', outline: 'none',
+                              fontFamily: 'monospace', background: 'var(--surface)', color: 'var(--ink)', outline: 'none',
                             }}
                           />
                           <span style={{ fontSize: '10.5px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>00</span>
@@ -601,9 +604,12 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
                       <button onClick={() => submitScores(myTable)} disabled={submitting === myTable.id} style={{
                         flex: 1, padding: '8px',
-                        background: submitting === myTable.id ? 'var(--mist)' : 'linear-gradient(135deg, #00c8d4, #00a0aa)',
-                        color: '#fff', border: 'none', borderRadius: '7px',
+                        background: submitting === myTable.id ? 'var(--mist)' : 'transparent',
+                        color: submitting === myTable.id ? '#fff' : 'var(--cyan-deep)',
+                        border: `1.5px solid ${submitting === myTable.id ? 'transparent' : 'var(--cyan-deep)'}`,
+                        borderRadius: '7px',
                         fontSize: '13.5px', fontWeight: 600, cursor: 'pointer',
+                        opacity: submitting === myTable.id ? 0.6 : 1,
                       }}>{submitting === myTable.id ? '送信中...' : 'スコアを送信'}</button>
                     </div>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '11.5px', color: 'var(--mist)', cursor: 'pointer' }}>
@@ -642,7 +648,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         </div>
 
         {/* 得点調整 (accordion, default closed) */}
-        <div style={{ background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+        <div style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
           <div onClick={() => toggleSection('adjustment')} style={{ padding: '11px 15px', fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '15px', fontWeight: 700, borderBottom: openSections.adjustment ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>得点調整</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.adjustment ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -670,7 +676,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                     flex: 1, padding: '6px 8px',
                     border: '1.5px solid var(--border-md)', borderRadius: '6px',
                     fontSize: '14px', fontWeight: 600, textAlign: 'right',
-                    fontFamily: 'monospace', background: 'var(--paper)', color: '#fff', outline: 'none',
+                    fontFamily: 'monospace', background: 'var(--surface)', color: 'var(--ink)', outline: 'none',
                   }}
                 />
                 <span style={{ fontSize: '12px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>pt</span>
@@ -687,8 +693,10 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   disabled={savingAdjustment}
                   style={{
                     padding: '6px 14px', flexShrink: 0,
-                    background: savingAdjustment ? 'var(--mist)' : 'linear-gradient(135deg, #00c8d4, #00a0aa)',
-                    color: '#fff', border: 'none', borderRadius: '7px',
+                    background: savingAdjustment ? 'var(--mist)' : 'transparent',
+                    color: savingAdjustment ? '#fff' : 'var(--cyan-deep)',
+                    border: `1.5px solid ${savingAdjustment ? 'transparent' : 'var(--cyan-deep)'}`,
+                    borderRadius: '7px',
                     fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                   }}
                 >{savingAdjustment ? '保存中...' : '保存'}</button>
@@ -705,7 +713,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         </div>
 
         {/* 全体成績 (accordion, default closed) */}
-        <div style={{ background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+        <div style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
           <div onClick={() => toggleSection('standings')} style={{ padding: '11px 15px', fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '15px', fontWeight: 700, borderBottom: openSections.standings ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>全体成績</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.standings ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -777,7 +785,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                       {s.roundPoints.map((pt, ri) => (
                         <span key={ri} style={{
                           fontSize: '10px', fontFamily: 'monospace', padding: '2px 3px',
-                          borderRadius: '4px', background: 'rgba(0,240,255,0.06)',
+                          borderRadius: '4px', background: 'var(--hover-bg)',
                           color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
                           textAlign: 'center', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden',
                           ...(anim ? { animation: `popIn 0.25s ease ${i * 50 + 350 + ri * 80}ms both` } : {}),
@@ -803,10 +811,243 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           })}
         </div>
 
+        {/* ポイント推移 */}
+        <div style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+          <div onClick={() => toggleSection('chart')} style={{ padding: '11px 15px', fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '15px', fontWeight: 700, borderBottom: openSections.chart ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
+            <span>ポイント推移</span>
+            <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.chart ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+          </div>
+          {openSections.chart && (
+            <PlayerPointChart
+              standings={standings}
+              numRounds={tournament.num_rounds}
+              myPlayerId={player.id}
+            />
+          )}
+        </div>
+
         <div style={{ textAlign: 'center', fontSize: '11px', color: 'var(--mist)', padding: '8px 0 24px', fontFamily: 'monospace' }}>
           Yitia — {tournament.name}
         </div>
       </div>
+    </div>
+    </div>
+  )
+}
+
+const CHART_COLORS = [
+  '#D4AF37', '#62c8e8', '#e86280', '#8BE88B', '#c49be8',
+  '#e8a84c', '#4ce8c4', '#e8e84c', '#e87c4c', '#8888e8',
+  '#e84ca0', '#4ca0e8', '#b8e84c', '#e84c4c', '#4ce8e8',
+  '#c888d8', '#d8c870', '#70d8a0', '#d87088', '#88b0d8',
+]
+
+function PlayerPointChart({ standings, numRounds, myPlayerId }: {
+  standings: { player: Player; roundPoints: (number | null)[]; total: number; rank: number }[]
+  numRounds: number
+  myPlayerId: string
+}) {
+  const svgRef = useRef<SVGSVGElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [progress, setProgress] = useState(0)
+  const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null)
+  const [containerWidth, setContainerWidth] = useState(350)
+  const [isVisible, setIsVisible] = useState(false)
+  const hasAnimated = useRef(false)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => setContainerWidth(entry.contentRect.width))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting && !hasAnimated.current) setIsVisible(true) },
+      { threshold: 0.2 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!isVisible) return
+    hasAnimated.current = true
+    setProgress(0)
+    const duration = numRounds * 500
+    let raf: number
+    let start: number | null = null
+    function animate(ts: number) {
+      if (start === null) start = ts
+      const elapsed = ts - start
+      const t = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setProgress(eased * numRounds)
+      if (t < 1) raf = requestAnimationFrame(animate)
+    }
+    raf = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(raf)
+  }, [isVisible, numRounds])
+
+  const cumulativeData = standings.map(entry => {
+    const adj = entry.player.bonus ?? 0
+    const cumulative: number[] = [adj]
+    let sum = adj
+    for (let r = 0; r < numRounds; r++) {
+      sum += entry.roundPoints[r] ?? 0
+      cumulative.push(Math.round(sum * 10) / 10)
+    }
+    return { player: entry.player, cumulative, rank: entry.rank }
+  })
+
+  const marginLeft = 46, marginRight = 12, marginTop = 12, marginBottom = 28
+  const chartWidth = containerWidth - marginLeft - marginRight
+  const height = 240
+  const chartHeight = height - marginTop - marginBottom
+
+  const allValues = cumulativeData.flatMap(d => d.cumulative)
+  const minVal = Math.min(0, ...allValues)
+  const maxVal = Math.max(0, ...allValues)
+  const range = maxVal - minVal || 1
+  const padding = range * 0.1
+
+  const scaleX = (round: number) => marginLeft + (round / numRounds) * chartWidth
+  const scaleY = (val: number) => marginTop + chartHeight - ((val - minVal + padding) / (range + padding * 2)) * chartHeight
+
+  return (
+    <div ref={containerRef} style={{ padding: '8px 6px 10px' }}>
+      <svg ref={svgRef} width={containerWidth} height={height} style={{ display: 'block', overflow: 'visible' }}>
+        {/* Grid lines */}
+        {(() => {
+          const rawStep = (maxVal - minVal + padding * 2) / 4
+          const mag = Math.pow(10, Math.floor(Math.log10(Math.max(rawStep, 1))))
+          const niceSteps = [1, 2, 2.5, 5, 10]
+          const niceStep = niceSteps.find(s => s * mag >= rawStep)! * mag
+          const gridVals = new Set<number>()
+          gridVals.add(0)
+          for (let v = niceStep; v <= maxVal + padding; v += niceStep) gridVals.add(Math.round(v))
+          for (let v = -niceStep; v >= minVal - padding; v -= niceStep) gridVals.add(Math.round(v))
+          return Array.from(gridVals).sort((a, b) => a - b).map(val => {
+            const y = scaleY(val)
+            const isZero = val === 0
+            return (
+              <g key={`grid-${val}`}>
+                <line x1={marginLeft} y1={y} x2={marginLeft + chartWidth} y2={y}
+                  stroke={isZero ? 'var(--border-md)' : 'var(--border)'}
+                  strokeWidth={1}
+                  strokeDasharray={isZero ? '4 3' : 'none'} />
+                <text x={marginLeft - 5} y={y + 3.5}
+                  fill={isZero ? 'var(--ink)' : 'var(--mist)'}
+                  fontSize="8" fontFamily="monospace" textAnchor="end"
+                  fontWeight={isZero ? 700 : 400}>
+                  {Number.isInteger(val) ? val : val.toFixed(1)}
+                </text>
+              </g>
+            )
+          })
+        })()}
+
+        {/* Round labels */}
+        {Array.from({ length: numRounds + 1 }, (_, i) => (
+          <text key={`rl-${i}`} x={scaleX(i)} y={height - 4}
+            fill={i <= progress ? 'var(--mist)' : 'var(--border)'}
+            fontSize="8" fontFamily="monospace" textAnchor="middle"
+            style={{ transition: 'fill 0.3s' }}>
+            {i === 0 ? '開始' : `R${i}`}
+          </text>
+        ))}
+
+        {/* Lines — others first, then "me" on top */}
+        {cumulativeData
+          .sort((a, b) => (a.player.id === myPlayerId ? 1 : 0) - (b.player.id === myPlayerId ? 1 : 0))
+          .map((data, idx) => {
+          const isMe = data.player.id === myPlayerId
+          const color = isMe ? 'var(--cyan)' : CHART_COLORS[standings.findIndex(s => s.player.id === data.player.id) % CHART_COLORS.length]
+          const isHovered = hoveredPlayer === data.player.id
+          const isAnyHovered = hoveredPlayer !== null
+          const opacity = isMe
+            ? 1
+            : isAnyHovered ? (isHovered ? 0.8 : 0.1) : 0.25
+          const strokeW = isMe ? 3 : (isHovered ? 2.5 : 1.2)
+
+          const completedRounds = Math.floor(progress)
+          const frac = progress - completedRounds
+          const points: string[] = []
+          for (let r = 0; r <= Math.min(completedRounds, numRounds); r++) {
+            points.push(`${scaleX(r)},${scaleY(data.cumulative[r])}`)
+          }
+          if (frac > 0 && completedRounds < numRounds) {
+            const prevVal = data.cumulative[completedRounds]
+            const nextVal = data.cumulative[completedRounds + 1]
+            const interpVal = prevVal + (nextVal - prevVal) * frac
+            points.push(`${scaleX(completedRounds + frac)},${scaleY(interpVal)}`)
+          }
+          const d = points.length > 0 ? `M${points.join('L')}` : ''
+
+          const endRound = Math.min(progress, numRounds)
+          const endComplete = Math.floor(endRound)
+          const endFrac = endRound - endComplete
+          let endX: number, endY: number
+          if (endFrac > 0 && endComplete < numRounds) {
+            const prevVal = data.cumulative[endComplete]
+            const nextVal = data.cumulative[endComplete + 1]
+            endX = scaleX(endRound)
+            endY = scaleY(prevVal + (nextVal - prevVal) * endFrac)
+          } else {
+            endX = scaleX(endComplete)
+            endY = scaleY(data.cumulative[endComplete])
+          }
+
+          return (
+            <g key={data.player.id}
+              onMouseEnter={() => setHoveredPlayer(data.player.id)}
+              onMouseLeave={() => setHoveredPlayer(null)}
+              style={{ cursor: 'pointer' }}>
+              <path d={d} fill="none" stroke="transparent" strokeWidth={12} />
+              <path d={d} fill="none" stroke={color} strokeWidth={strokeW}
+                strokeLinecap="round" strokeLinejoin="round" opacity={opacity}
+                style={{ transition: 'opacity 0.2s, stroke-width 0.2s' }}
+                filter={isMe ? 'drop-shadow(0 0 4px var(--cyan))' : 'none'}
+              />
+              {progress > 0 && (
+                <circle cx={endX} cy={endY}
+                  r={isMe ? 5 : (isHovered ? 4 : 2)}
+                  fill={color} opacity={opacity}
+                  style={{ transition: 'r 0.2s, opacity 0.2s' }}
+                  filter={isMe ? 'drop-shadow(0 0 6px var(--cyan))' : 'none'}
+                />
+              )}
+              {/* Tooltip on hover or always for me at end */}
+              {((isHovered && !isMe) || (isMe && progress >= numRounds)) && progress > 0 && (() => {
+                const lastR = Math.min(Math.floor(progress), numRounds)
+                const labelRight = endX > marginLeft + chartWidth * 0.65
+                return (
+                  <g>
+                    <rect
+                      x={labelRight ? endX - 78 : endX + 8}
+                      y={endY - 20}
+                      width={70} height={28} rx={5}
+                      fill="rgba(0,0,0,0.8)" stroke={color} strokeWidth={1}
+                    />
+                    <text x={labelRight ? endX - 43 : endX + 43} y={endY - 8}
+                      fill="#fff" fontSize="9" fontFamily="monospace" fontWeight="700" textAnchor="middle">
+                      {data.player.name}
+                    </text>
+                    <text x={labelRight ? endX - 43 : endX + 43} y={endY + 3}
+                      fill={color} fontSize="10" fontFamily="monospace" fontWeight="700" textAnchor="middle">
+                      {formatPoint(data.cumulative[lastR])}
+                    </text>
+                  </g>
+                )
+              })()}
+            </g>
+          )
+        })}
+      </svg>
     </div>
   )
 }

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import type { Tournament, Player } from '@/types'
 import HeaderIcons from '@/components/ui/HeaderIcons'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 
 interface Props {
   tournament: Tournament
@@ -38,6 +39,7 @@ export default function QRClient({ tournament, players, adminToken, isOwner = tr
           }
           #qr-print-area canvas { visibility: visible !important; }
           .no-print { display: none !important; }
+          .print-header { display: block !important; }
           .qr-grid { grid-template-columns: repeat(4, 1fr) !important; }
         }
       `}</style>
@@ -50,7 +52,7 @@ export default function QRClient({ tournament, players, adminToken, isOwner = tr
           position: 'relative', zIndex: 100, overflow: 'visible',
         }}>
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
-          {isOwner && <HeaderIcons />}
+          {isOwner ? <HeaderIcons /> : <ThemeToggle />}
         </div>
         <div className="qr-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -61,6 +63,10 @@ export default function QRClient({ tournament, players, adminToken, isOwner = tr
             }}>PDF出力</button>
           </div>
           <div id="qr-print-area">
+            <div className="print-header" style={{ display: 'none', textAlign: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: '2px solid #333' }}>
+              <div style={{ fontSize: '20px', fontWeight: 700 }}>{tournament.name}</div>
+              {tournament.held_on && <div style={{ fontSize: '13px', marginTop: '4px' }}>{tournament.held_on}</div>}
+            </div>
             {adminToken && (() => {
               const adminUrl = `${origin}/a/${adminToken}`
               return (

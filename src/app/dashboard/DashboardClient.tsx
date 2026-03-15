@@ -437,8 +437,8 @@ export default function DashboardClient({ tournaments }: Props) {
           { r: 1, t: 2, pi: [4,5,6,7], sc: [36000,28000,21000,15000], validated: true },
           { r: 2, t: 1, pi: [0,5,2,7], sc: [40000,25000,20000,15000], validated: true },
           { r: 2, t: 2, pi: [1,4,3,6], sc: [30000,30000,25000,15000], validated: true },
-          { r: 3, t: 1, pi: [0,6,1,7], sc: [25000,25000,25000,25000], validated: false },
-          { r: 3, t: 2, pi: [2,4,3,5], sc: [25000,25000,25000,25000], validated: false },
+          { r: 3, t: 1, pi: [0,6,1,7], sc: [35000,18000,28000,19000], validated: true },
+          { r: 3, t: 2, pi: [2,4,3,5], sc: [22000,38000,14000,26000], validated: true },
         ]
 
         for (const rd of rounds2) {

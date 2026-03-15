@@ -47,16 +47,24 @@
   --logo-to:      #ff00aa;
   --logo-shadow:  rgba(0,240,255,0.35);
   --logo-dot:     #0a0e1a;
-  --sidebar-bg:   rgba(10,14,30,0.85);
+  --sidebar-bg:   #0a0e1e;
+  --sidebar-border: rgba(0,240,255,0.08);
   --sidebar-glow: rgba(0,240,255,0.10);
+  --sidebar-text-shadow: 0 0 10px rgba(0,240,255,0.4);
   --text-on-sidebar: #fff;
   --text-dim:     rgba(255,255,255,0.50);
   --text-dimmer:  rgba(255,255,255,0.22);
+  --nav-active-bg: rgba(0,240,255,0.12);
   --nav-active-color: #00f0ff;
   --nav-active-border: rgba(0,240,255,0.25);
   --nav-hover-bg: rgba(255,255,255,0.09);
   --nav-hover-text: rgba(255,255,255,0.85);
   --accent-warm:  #D89775;
+
+  /* Rank shimmer (dark) */
+  --rank-shimmer-from: #00f0ff;
+  --rank-shimmer-via:  #ff00aa;
+  --rank-shimmer-to:   #00f0ff;
 }
 
 body[data-theme="light"] {
@@ -100,14 +108,27 @@ body[data-theme="light"] {
   --sidebar-bg:   #1B3B38;
   --sidebar-border: rgba(255,255,255,0.08);
   --sidebar-glow: rgba(100,200,180,0.15);
+  --sidebar-text-shadow: none;
   --text-on-sidebar: #fff;
   --text-dim:     rgba(255,255,255,0.65);
   --text-dimmer:  rgba(255,255,255,0.35);
+  --nav-active-bg: rgba(255,255,255,0.12);
   --nav-active-color: #a0f0e0;
   --nav-active-border: rgba(160,240,224,0.3);
   --nav-hover-bg: rgba(255,255,255,0.1);
   --nav-hover-text: rgba(255,255,255,0.9);
   --accent-warm:  #D89775;
+
+  /* Hamburger menu button (light) */
+  --hamburger-bg: #1B3B38;
+  --hamburger-border: rgba(255,255,255,0.15);
+  --hamburger-color: #fff;
+  --hamburger-shadow: 0 2px 12px rgba(0,0,0,0.3);
+
+  /* Rank shimmer (light) */
+  --rank-shimmer-from: #3d7d73;
+  --rank-shimmer-via:  #D4AF37;
+  --rank-shimmer-to:   #3d7d73;
 }
 
 * {
