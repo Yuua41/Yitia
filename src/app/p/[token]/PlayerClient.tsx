@@ -145,8 +145,10 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
     tournament.num_rounds
   )
 
-  const myTotal = standings.find(s => s.player.id === player.id)?.total ?? 0
-  const myRank = standings.find(s => s.player.id === player.id)?.rank ?? standings.length
+  const myStanding = standings.find(s => s.player.id === player.id)
+  const myTotal = myStanding?.total ?? 0
+  const myRank = myStanding?.rank ?? standings.length
+  const myRoundPoints = myStanding?.roundPoints ?? []
   const standingsMaxAbs = Math.max(...standings.map(s => Math.abs(s.total)), 1)
 
   // ① カウントアップ: マウント時に 0 → myTotal を 800ms でカウント、終了後に順位を表示
@@ -329,7 +331,10 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         position: 'sticky', top: 0, zIndex: 100,
       }}>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', minWidth: 0 }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '100px', fontSize: '9px', fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0, background: tournament.status === 'ongoing' ? 'var(--cyan-pale)' : tournament.status === 'finished' ? 'var(--gold-pale)' : 'var(--hover-bg)', color: tournament.status === 'ongoing' ? 'var(--cyan)' : tournament.status === 'finished' ? 'var(--gold)' : 'var(--mist)' }}>{tournament.status === 'ongoing' ? '進行中' : tournament.status === 'finished' ? '完了' : '下書き'}</span>
+        </div>
         <ThemeToggle />
       </div>
       <div style={{ padding: '16px' }}>
@@ -420,6 +425,18 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
               </div>
             </div>
           </div>
+          {myRoundPoints.some(p => p !== null) && (
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)' }}>
+              {myRoundPoints.map((pt, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontFamily: 'monospace' }}>
+                  <span style={{ color: 'var(--mist)', fontSize: '10px' }}>R{i + 1}</span>
+                  <span style={{ color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)', fontWeight: 600 }}>
+                    {pt === null ? '—' : pt >= 0 ? `+${pt.toFixed(1)}` : `▲${Math.abs(pt).toFixed(1)}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>

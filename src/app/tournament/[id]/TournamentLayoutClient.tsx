@@ -18,7 +18,7 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
 
   const navItems = [
     { label: '大会設定', href: `${base}/settings` },
-    { label: '参加者', href: `${base}/players` },
+    { label: '参加者管理', href: `${base}/players` },
     { label: '卓組・成績入力', href: `${base}/schedule` },
     { label: '総合成績', href: `${base}/standings` },
     { label: 'QRコード', href: `${base}/qr` },
