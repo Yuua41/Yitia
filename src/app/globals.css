@@ -47,6 +47,7 @@
   --logo-to:      #ff00aa;
   --logo-shadow:  rgba(0,240,255,0.35);
   --logo-dot:     #0a0e1a;
+  --sidebar-bg:   rgba(10,14,30,0.85);
   --sidebar-glow: rgba(0,240,255,0.10);
   --text-on-sidebar: #fff;
   --text-dim:     rgba(255,255,255,0.50);
@@ -96,14 +97,16 @@ body[data-theme="light"] {
   --logo-to:      #ff00aa;
   --logo-shadow:  rgba(0,240,255,0.35);
   --logo-dot:     #0a0e1a;
-  --sidebar-glow: transparent;
-  --text-on-sidebar: #1B2E2D;
-  --text-dim:     #5a7472;
-  --text-dimmer:  rgba(27,46,45,0.35);
-  --nav-active-color: #3d7d73;
-  --nav-active-border: rgba(61,125,115,0.25);
-  --nav-hover-bg: rgba(27,46,45,0.06);
-  --nav-hover-text: #1B2E2D;
+  --sidebar-bg:   #1B3B38;
+  --sidebar-border: rgba(255,255,255,0.08);
+  --sidebar-glow: rgba(100,200,180,0.15);
+  --text-on-sidebar: #fff;
+  --text-dim:     rgba(255,255,255,0.65);
+  --text-dimmer:  rgba(255,255,255,0.35);
+  --nav-active-color: #a0f0e0;
+  --nav-active-border: rgba(160,240,224,0.3);
+  --nav-hover-bg: rgba(255,255,255,0.1);
+  --nav-hover-text: rgba(255,255,255,0.9);
   --accent-warm:  #D89775;
 }
 
@@ -119,10 +122,9 @@ body {
     radial-gradient(ellipse 60% 45% at 95% 100%, var(--body-grad2) 0%, transparent 60%),
     var(--paper);
   color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
-    var(--font-geist, 'Geist'), var(--font-jp, 'Noto Sans JP'),
+  font-family: var(--font-en, 'IBM Plex Sans'), var(--font-jp, 'M PLUS 1p'),
     'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
-    'Noto Sans JP', 'Segoe UI', sans-serif;
+    'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -177,13 +179,12 @@ input:focus, textarea:focus, select:focus {
 
 @layer utilities {
   .font-display {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
-      var(--font-jp, 'Noto Sans JP'), sans-serif;
+    font-family: var(--font-en, 'IBM Plex Sans'), var(--font-jp, 'M PLUS 1p'), sans-serif;
     font-weight: 700;
     letter-spacing: -0.02em;
   }
   .font-mincho {
-    font-family: 'Shippori Mincho', 'Noto Serif JP', ui-serif, serif;
+    font-family: var(--font-jp, 'M PLUS 1p'), sans-serif;
   }
   .font-mono-dm {
     font-family: 'DM Mono', 'Fira Mono', ui-monospace, monospace;

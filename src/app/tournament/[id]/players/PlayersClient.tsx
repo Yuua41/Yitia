@@ -175,7 +175,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
         <div style={{ maxWidth: '600px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>参加者</div>
+              <div style={{ fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '20px', fontWeight: 800 }}>参加者</div>
               <span style={{
                 display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
                 fontSize: '10px', fontWeight: 700, fontFamily: 'monospace',

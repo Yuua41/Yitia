@@ -393,7 +393,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
             Yitia — Player View
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-            <div style={{ fontFamily: 'serif', fontSize: '24px', fontWeight: 800, color: '#fff', letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+            <div style={{ fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '24px', fontWeight: 800, color: '#fff', letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
               {localPlayer.name}
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -401,7 +401,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                 {myTotal >= 0 ? '+' : '▲'}{displayAbsTotal.toFixed(1)}
               </div>
               <div style={{
-                fontFamily: 'serif', fontSize: '18px', fontWeight: 800,
+                fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '18px', fontWeight: 800,
                 marginTop: '4px', letterSpacing: '0.05em',
                 opacity: showRank ? 1 : 0,
                 transform: showRank ? 'translateY(0)' : 'translateY(6px)',
@@ -420,7 +420,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         </div>
 
         <div style={{ background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-          <div onClick={() => toggleSection('score')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '15px', fontWeight: 700, borderBottom: openSections.score ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
+          <div onClick={() => toggleSection('score')} style={{ padding: '11px 15px', fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '15px', fontWeight: 700, borderBottom: openSections.score ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>{allowPlayerEntry ? 'スコア入力・卓確認' : '卓確認'}</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.score ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
           </div>
@@ -643,7 +643,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
         {/* 得点調整 (accordion, default closed) */}
         <div style={{ background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-          <div onClick={() => toggleSection('adjustment')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '15px', fontWeight: 700, borderBottom: openSections.adjustment ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
+          <div onClick={() => toggleSection('adjustment')} style={{ padding: '11px 15px', fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '15px', fontWeight: 700, borderBottom: openSections.adjustment ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>得点調整</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.adjustment ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
           </div>
@@ -706,7 +706,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
         {/* 全体成績 (accordion, default closed) */}
         <div style={{ background: 'rgba(15,21,40,0.5)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(0,240,255,0.10)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-          <div onClick={() => toggleSection('standings')} style={{ padding: '11px 15px', fontFamily: 'serif', fontSize: '15px', fontWeight: 700, borderBottom: openSections.standings ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
+          <div onClick={() => toggleSection('standings')} style={{ padding: '11px 15px', fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '15px', fontWeight: 700, borderBottom: openSections.standings ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>全体成績</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.standings ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
           </div>

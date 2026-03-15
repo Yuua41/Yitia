@@ -1,15 +1,16 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
-import { Noto_Sans_JP } from 'next/font/google'
+import { IBM_Plex_Sans } from 'next/font/google'
+import { M_PLUS_1p } from 'next/font/google'
 import './globals.css'
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
-const notoSansJP = Noto_Sans_JP({
+const ibmPlex = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-en' })
+const mplus = M_PLUS_1p({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '700'],
+  weight: ['400', '500', '700'],
   variable: '--font-jp',
   display: 'swap',
 })
+
 
 export const metadata: Metadata = {
   title: 'Yitia — 麻雀大会管理',
@@ -23,7 +24,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className={`${geist.variable} ${notoSansJP.variable}`} suppressHydrationWarning>
+      <body className={`${ibmPlex.variable} ${mplus.variable}`} suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme');if(t==='light')document.body.setAttribute('data-theme','light')})()` }} />
         {children}
       </body>

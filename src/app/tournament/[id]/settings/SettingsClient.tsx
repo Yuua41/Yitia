@@ -255,7 +255,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
       <div className="settings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: '600px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>大会設定</div>
+            <div style={{ fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '20px', fontWeight: 800 }}>大会設定</div>
             {isDraft && (
               <button onClick={() => handleSave('dashboard')} disabled={saving} style={{
                 padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',

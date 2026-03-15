@@ -232,7 +232,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
       <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div style={{
-            fontFamily: 'serif', fontSize: '20px', fontWeight: 800,
+            fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '20px', fontWeight: 800,
             background: 'linear-gradient(90deg, var(--ink) 20%, var(--cyan) 40%, var(--gold) 60%, var(--ink) 80%)',
             backgroundSize: '200% auto',
             WebkitBackgroundClip: 'text',
@@ -569,7 +569,7 @@ function PointChart({ ranked, numRounds, adjustments }: { ranked: ChartEntry[]; 
   }, [isVisible, numRounds])
 
   // Compute cumulative points per player
-  const topN = ranked.slice(0, 20) // limit to top 20
+  const topN = ranked
   const cumulativeData = topN.map(entry => {
     const adj = adjustments[entry.player.id] ?? (entry.player.bonus ?? 0)
     const cumulative: number[] = [adj] // start from adjustment

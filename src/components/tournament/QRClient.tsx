@@ -54,7 +54,7 @@ export default function QRClient({ tournament, players, adminToken, isOwner = tr
         </div>
         <div className="qr-content" style={{ flex: 1, overflowY: 'auto', padding: '24px 26px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>QRコード</div>
+            <div style={{ fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '20px', fontWeight: 800 }}>QRコード</div>
             <button className="no-print" onClick={() => window.print()} style={{
               padding: '6px 14px', background: 'transparent', color: 'var(--gold)',
               border: '1.5px solid var(--gold)', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',

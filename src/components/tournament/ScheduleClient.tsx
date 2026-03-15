@@ -326,7 +326,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
       </div>
       <div className="schedule-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>卓組・成績入力</div>
+          <div style={{ fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '20px', fontWeight: 800 }}>卓組・成績入力</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{
               display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
@@ -395,7 +395,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
                   padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   background: statusBg, color: '#fff',
                 }}>
-                  <span style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 800 }}>卓 {table.table_number}</span>
+                  <span style={{ fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '16px', fontWeight: 800 }}>卓 {table.table_number}</span>
                   <span style={{ fontSize: '10px', fontFamily: 'monospace', background: 'var(--cyan-pale)', padding: '2px 8px', borderRadius: '3px' }}>
                     {statusLabel}
                   </span>
