@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { calcTableResults, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table, Result } from '@/types'
@@ -25,8 +26,10 @@ const NUM_COLOR = { bg: 'var(--cyan-pale)', color: 'var(--slate)' }
 
 export default function ScheduleClient({ tournament, players, tables, isOwner }: Props) {
   const supabase = createClient()
+  const searchParams = useSearchParams()
   const [localTables, setLocalTables] = useState(tables)
-  const [activeRound, setActiveRound] = useState(1)
+  const initialRound = Math.min(Math.max(Number(searchParams.get('round')) || 1, 1), tournament.num_rounds)
+  const [activeRound, setActiveRound] = useState(initialRound)
   const [extraSticks, setExtraSticks] = useState<Record<string, boolean>>({})
   const [saving, setSaving] = useState<string | null>(null)
   const [swapping, setSwapping] = useState(false)
@@ -489,8 +492,17 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
                             }}>▲</button>
                             <input
                               type="number"
+                              data-score-input
                               value={sc.value}
                               onChange={e => setScore(result.id, e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  const inputs = Array.from(document.querySelectorAll<HTMLInputElement>('input[data-score-input]'))
+                                  const idx = inputs.indexOf(e.currentTarget)
+                                  if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus()
+                                }
+                              }}
                               placeholder={(tournament.config.startingPoints / 100).toString()}
                               style={{
                                 width: '80px', padding: '6px 7px',

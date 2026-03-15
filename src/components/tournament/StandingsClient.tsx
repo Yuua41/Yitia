@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { calcStandings, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table } from '@/types'
@@ -13,6 +14,7 @@ interface Props {
   tables: Table[]
   isOwner: boolean
   showExport?: boolean
+  schedulePath?: string
 }
 
 type SortKey = 'rank' | 'name' | 'total'
@@ -52,7 +54,8 @@ function RevealScore({ roundPoints, adjustment, revealedCol, fontSize = '14px' }
   )
 }
 
-export default function StandingsClient({ tournament, players, tables, isOwner, showExport = true }: Props) {
+export default function StandingsClient({ tournament, players, tables, isOwner, showExport = true, schedulePath }: Props) {
+  const router = useRouter()
   const supabase = createClient()
   const [localPlayers, setLocalPlayers] = useState(players)
   const [sortKey, setSortKey] = useState<SortKey>('rank')
@@ -295,7 +298,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
                   <th style={thStyle('rank')} onClick={() => handleSort('rank')}>順位 <span>{sortIcon('rank')}</span></th>
                   <th style={thStyle('name')} onClick={() => handleSort('name')}>名前（参加順） <span>{sortIcon('name')}</span></th>
                   {Array.from({ length: tournament.num_rounds }, (_, i) => (
-                    <th key={i} style={thStyle()}>R{i + 1}</th>
+                    <th key={i} style={{ ...thStyle(), ...(schedulePath ? { cursor: 'pointer' } : {}) }} onClick={() => schedulePath && router.push(`${schedulePath}?round=${i + 1}`)}>R{i + 1}</th>
                   ))}
                   <th style={thStyle()}>ポイント調整</th>
                   <th style={{ ...thStyle('total'), textAlign: 'right' }} onClick={() => handleSort('total')}>合計 <span>{sortIcon('total')}</span></th>
@@ -438,11 +441,12 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
                 </div>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px', position: 'relative' }}>
                   {roundPoints.map((pt, i) => (
-                    <span key={i} style={{
+                    <span key={i} onClick={() => schedulePath && router.push(`${schedulePath}?round=${i + 1}`)} style={{
                       fontSize: '10px', fontFamily: 'monospace', padding: '2px 6px',
                       borderRadius: '4px', background: 'rgba(0,240,255,0.06)',
                       color: pt === null ? 'var(--mist)' : pt >= 0 ? 'var(--cyan-deep)' : 'var(--red)',
                       fontWeight: 600,
+                      cursor: schedulePath ? 'pointer' : 'default',
                       opacity: i < revealedCol ? 1 : 0,
                       animation: i < revealedCol ? `stChipPop 0.2s ease ${idx * 50 + 300 + i * 60}ms both` : 'none',
                     }}>

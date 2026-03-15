@@ -39,6 +39,7 @@ export default async function StandingsPage({
       players={players ?? []}
       tables={tables ?? []}
       isOwner={true}
+      schedulePath={`/tournament/${id}/schedule`}
     />
   )
 }
