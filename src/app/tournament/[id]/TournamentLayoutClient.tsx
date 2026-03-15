@@ -66,9 +66,9 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
 
       <aside className={`tournament-sidebar${sidebarOpen ? ' open' : ''}`} style={{
         width: '210px', flexShrink: 0,
-        background: 'var(--header-bg)',
+        background: 'var(--sidebar-bg, var(--header-bg))',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderRight: '1px solid var(--header-border)',
+        borderRight: '1px solid var(--sidebar-border, var(--header-border))',
         display: 'flex', flexDirection: 'column',
         position: 'relative', overflow: 'hidden',
       }}>
@@ -77,7 +77,7 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
           background: 'radial-gradient(ellipse at 30% 0%, var(--sidebar-glow), transparent 70%)',
           pointerEvents: 'none',
         }} />
-        <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid var(--header-border)' }}>
+        <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid var(--sidebar-border, var(--header-border))' }}>
           <Link href="/dashboard" style={{ textDecoration: 'none' }} onClick={() => setSidebarOpen(false)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{

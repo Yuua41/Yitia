@@ -36,7 +36,7 @@ export default async function AdminStandingsPage({
       tournament={tournament}
       players={players ?? []}
       tables={tables ?? []}
-      isOwner={false}
+      isOwner={true}
     />
   )
 }

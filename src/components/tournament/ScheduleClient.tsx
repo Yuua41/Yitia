@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { calcTableResults, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table, Result } from '@/types'
 import HeaderIcons from '@/components/ui/HeaderIcons'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 
 interface Props {
   tournament: Tournament
@@ -322,11 +323,11 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
-        {isOwner && <HeaderIcons />}
+        {isOwner ? <HeaderIcons /> : <ThemeToggle />}
       </div>
       <div className="schedule-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <div style={{ fontFamily: 'serif', fontSize: '20px', fontWeight: 800 }}>卓組・成績入力</div>
+          <div style={{ fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '20px', fontWeight: 800 }}>卓組・成績入力</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{
               display: 'inline-flex', padding: '2px 8px', borderRadius: '5px',
@@ -393,9 +394,9 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
               }}>
                 <div style={{
                   padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  background: statusBg, color: 'var(--logo-dot)',
+                  background: statusBg, color: '#fff',
                 }}>
-                  <span style={{ fontFamily: 'serif', fontSize: '16px', fontWeight: 800 }}>卓 {table.table_number}</span>
+                  <span style={{ fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '16px', fontWeight: 800 }}>卓 {table.table_number}</span>
                   <span style={{ fontSize: '10px', fontFamily: 'monospace', background: 'var(--cyan-pale)', padding: '2px 8px', borderRadius: '3px' }}>
                     {statusLabel}
                   </span>
@@ -492,7 +493,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
                                 width: '80px', padding: '6px 7px',
                                 background: 'var(--paper)', border: '1.5px solid var(--border-md)',
                                 borderRadius: '7px', fontSize: '14px', fontWeight: 600,
-                                textAlign: 'right', fontFamily: 'monospace', color: '#fff', outline: 'none',
+                                textAlign: 'right', fontFamily: 'monospace', color: 'var(--ink)', outline: 'none',
                               }}
                             />
                             <span style={{ fontSize: '10.5px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>00</span>

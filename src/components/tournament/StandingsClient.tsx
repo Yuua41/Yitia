@@ -5,12 +5,14 @@ import { createClient } from '@/lib/supabase/client'
 import { calcStandings, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table } from '@/types'
 import HeaderIcons from '@/components/ui/HeaderIcons'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 
 interface Props {
   tournament: Tournament
   players: Player[]
   tables: Table[]
   isOwner: boolean
+  showExport?: boolean
 }
 
 type SortKey = 'rank' | 'name' | 'total'
@@ -50,7 +52,7 @@ function RevealScore({ roundPoints, adjustment, revealedCol, fontSize = '14px' }
   )
 }
 
-export default function StandingsClient({ tournament, players, tables, isOwner }: Props) {
+export default function StandingsClient({ tournament, players, tables, isOwner, showExport = true }: Props) {
   const supabase = createClient()
   const [localPlayers, setLocalPlayers] = useState(players)
   const [sortKey, setSortKey] = useState<SortKey>('rank')
@@ -227,13 +229,13 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
-        {isOwner && <HeaderIcons />}
+        {isOwner ? <HeaderIcons /> : <ThemeToggle />}
       </div>
       <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div style={{
-            fontFamily: 'serif', fontSize: '20px', fontWeight: 800,
-            background: 'linear-gradient(90deg, var(--ink) 20%, var(--cyan) 40%, var(--gold) 60%, var(--ink) 80%)',
+            fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '20px', fontWeight: 800,
+            backgroundImage: 'linear-gradient(90deg, var(--ink) 20%, var(--cyan) 40%, var(--gold) 60%, var(--ink) 80%)',
             backgroundSize: '200% auto',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
@@ -241,11 +243,13 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
             animation: 'stTitleFade 0.5s ease both, stTitleShimmer 4s linear 1s infinite',
           }}>総合成績</div>
           <div className="standings-header-btns" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <button onClick={exportCSV} style={{
-              padding: '6px 14px', background: 'transparent', color: 'var(--gold)',
-              border: '1.5px solid var(--gold)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
-              cursor: 'pointer',
-            }}>CSV出力</button>
+            {showExport && (
+              <button onClick={exportCSV} style={{
+                padding: '6px 14px', background: 'transparent', color: 'var(--gold)',
+                border: '1.5px solid var(--gold)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+                cursor: 'pointer',
+              }}>CSV出力</button>
+            )}
             {isOwner && (
               <button onClick={saveAdjustments} disabled={savingAdj} style={{
                 padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
@@ -261,11 +265,13 @@ export default function StandingsClient({ tournament, players, tables, isOwner }
           {tournament.name} — {tables.length} / {tournament.num_rounds * Math.floor(players.length / 4)} 試合確定済み
         </div>
         <div className="standings-content-btns" style={{ gap: '8px', marginBottom: '16px' }}>
-          <button onClick={exportCSV} style={{
-            padding: '8px 16px', background: 'transparent', color: 'var(--gold)',
-            border: '1.5px solid var(--gold)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
-            cursor: 'pointer', flex: 1,
-          }}>CSV出力</button>
+          {showExport && (
+            <button onClick={exportCSV} style={{
+              padding: '8px 16px', background: 'transparent', color: 'var(--gold)',
+              border: '1.5px solid var(--gold)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
+              cursor: 'pointer', flex: 1,
+            }}>CSV出力</button>
+          )}
           {isOwner && (
             <button onClick={saveAdjustments} disabled={savingAdj} style={{
               padding: '8px 16px', background: 'transparent', color: 'var(--cyan-deep)',
@@ -569,7 +575,7 @@ function PointChart({ ranked, numRounds, adjustments }: { ranked: ChartEntry[]; 
   }, [isVisible, numRounds])
 
   // Compute cumulative points per player
-  const topN = ranked.slice(0, 20) // limit to top 20
+  const topN = ranked
   const cumulativeData = topN.map(entry => {
     const adj = adjustments[entry.player.id] ?? (entry.player.bonus ?? 0)
     const cumulative: number[] = [adj] // start from adjustment

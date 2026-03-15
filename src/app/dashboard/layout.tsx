@@ -56,9 +56,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className={`dash-sidebar${sidebarOpen ? ' open' : ''}`} style={{
         width: '210px', flexShrink: 0,
-        background: 'var(--header-bg)',
+        background: 'var(--sidebar-bg, var(--header-bg))',
         backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderRight: '1px solid var(--header-border)',
+        borderRight: '1px solid var(--sidebar-border, var(--header-border))',
         display: 'flex', flexDirection: 'column',
         position: 'relative', overflow: 'hidden',
       }}>
@@ -69,7 +69,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }} />
 
         {/* Logo */}
-        <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid var(--header-border)' }}>
+        <div style={{ padding: '22px 18px 16px', borderBottom: '1px solid var(--sidebar-border, var(--header-border))' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{
               width: '30px', height: '30px',

@@ -239,12 +239,18 @@ export default function DashboardClient({ tournaments }: Props) {
 
     if (tables && tables.length > 0) {
       const tableIds = tables.map(t => t.id)
-      await supabase.from('results').delete().in('table_id', tableIds)
+      const { error: e1 } = await supabase.from('results').delete().in('table_id', tableIds)
+      if (e1) { console.error('results delete error:', e1); showToast('削除失敗(results): ' + e1.message); setDeleting(false); return }
     }
 
-    await supabase.from('tables').delete().eq('tournament_id', deleteTarget.id)
-    await supabase.from('players').delete().eq('tournament_id', deleteTarget.id)
-    await supabase.from('tournaments').delete().eq('id', deleteTarget.id)
+    const { error: e2 } = await supabase.from('tables').delete().eq('tournament_id', deleteTarget.id)
+    if (e2) { console.error('tables delete error:', e2); showToast('削除失敗(tables): ' + e2.message); setDeleting(false); return }
+
+    const { error: e3 } = await supabase.from('players').delete().eq('tournament_id', deleteTarget.id)
+    if (e3) { console.error('players delete error:', e3); showToast('削除失敗(players): ' + e3.message); setDeleting(false); return }
+
+    const { error: e4 } = await supabase.from('tournaments').delete().eq('id', deleteTarget.id)
+    if (e4) { console.error('tournaments delete error:', e4); showToast('削除失敗(tournaments): ' + e4.message); setDeleting(false); return }
 
     setDeleting(false)
     setDeleteTarget(null)
@@ -273,7 +279,7 @@ export default function DashboardClient({ tournaments }: Props) {
         owner_id: user.id,
         name: '第42回 春季麻雀大会',
         held_on: '2026-03-01',
-        notes: 'サンプル。25000点持ち30000点返し、ウマ20-10。同点は分け。',
+        notes: 'サンプル。25000点持ち30000点返し、ウマ30-10。同点は分け。',
         num_rounds: 8,
         config: sampleConfig,
         admin_token: nanoid(12),
@@ -431,8 +437,8 @@ export default function DashboardClient({ tournaments }: Props) {
           { r: 1, t: 2, pi: [4,5,6,7], sc: [36000,28000,21000,15000], validated: true },
           { r: 2, t: 1, pi: [0,5,2,7], sc: [40000,25000,20000,15000], validated: true },
           { r: 2, t: 2, pi: [1,4,3,6], sc: [30000,30000,25000,15000], validated: true },
-          { r: 3, t: 1, pi: [0,6,1,7], sc: [25000,25000,25000,25000], validated: false },
-          { r: 3, t: 2, pi: [2,4,3,5], sc: [25000,25000,25000,25000], validated: false },
+          { r: 3, t: 1, pi: [0,6,1,7], sc: [35000,18000,28000,19000], validated: true },
+          { r: 3, t: 2, pi: [2,4,3,5], sc: [22000,38000,14000,26000], validated: true },
         ]
 
         for (const rd of rounds2) {

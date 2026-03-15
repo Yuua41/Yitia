@@ -18,6 +18,7 @@ export default async function TournamentLayout({
     .from('tournaments')
     .select('*')
     .eq('id', id)
+    .eq('owner_id', user.id)
     .single()
 
   if (!tournament) redirect('/dashboard')
