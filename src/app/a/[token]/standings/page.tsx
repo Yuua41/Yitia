@@ -37,6 +37,7 @@ export default async function AdminStandingsPage({
       players={players ?? []}
       tables={tables ?? []}
       isOwner={true}
+      schedulePath={`/a/${token}/schedule`}
     />
   )
 }
