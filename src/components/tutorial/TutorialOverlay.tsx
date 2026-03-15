@@ -206,14 +206,6 @@ function Overlay({ steps, idx, next, prev, skip }: {
 export function HelpButton({ steps, pageKey }: { steps: TutorialStep[]; pageKey: string }) {
   const { start, isActive } = useTutorial()
 
-  // auto-start on first visit
-  useEffect(() => {
-    if (!hasSeen(pageKey) && steps.length > 0) {
-      const t = setTimeout(() => start(steps, pageKey), 600)
-      return () => clearTimeout(t)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   return (
     <button
       title="使い方ガイド"
