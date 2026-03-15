@@ -7,6 +7,8 @@ import { calcStandings, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table } from '@/types'
 import HeaderIcons from '@/components/ui/HeaderIcons'
 import ThemeToggle from '@/components/ui/ThemeToggle'
+import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
+import { standingsSteps } from '@/components/tutorial/steps'
 
 interface Props {
   tournament: Tournament
@@ -159,6 +161,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
   })
 
   return (
+    <TutorialProvider>
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <style>{`
         .standings-table-view { display: block; }
@@ -235,7 +238,10 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '100px', fontSize: '9px', fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0, background: tournament.status === 'ongoing' ? 'var(--cyan-pale)' : tournament.status === 'finished' ? 'var(--gold-pale)' : 'var(--hover-bg)', color: tournament.status === 'ongoing' ? 'var(--cyan)' : tournament.status === 'finished' ? 'var(--gold)' : 'var(--mist)' }}>{tournament.status === 'ongoing' ? '進行中' : tournament.status === 'finished' ? '完了' : '下書き'}</span>
         </div>
-        {isOwner ? <HeaderIcons /> : <ThemeToggle />}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <HelpButton steps={standingsSteps} pageKey="standings" />
+          {isOwner ? <HeaderIcons /> : <ThemeToggle />}
+        </div>
       </div>
       <div className="standings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -290,7 +296,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
         </div>
 
         {/* Desktop: Table View */}
-        <div className="standings-table-view">
+        <div data-tutorial="standings-table" className="standings-table-view">
           <div style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)', overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
               <thead>
@@ -507,6 +513,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
         )}
       </div>
     </div>
+    </TutorialProvider>
   )
 }
 

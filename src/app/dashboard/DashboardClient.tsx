@@ -7,6 +7,8 @@ import { calcTableResults } from '@/lib/mahjong/calculator'
 import type { Tournament, RuleConfig, Result } from '@/types'
 import { nanoid } from 'nanoid'
 import HeaderIcons from '@/components/ui/HeaderIcons'
+import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
+import { dashboardSteps } from '@/components/tutorial/steps'
 
 interface Props {
   tournaments: Tournament[]
@@ -481,6 +483,7 @@ export default function DashboardClient({ tournaments }: Props) {
   }
 
   return (
+    <TutorialProvider>
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <style>{`
         @media (max-width: 768px) {
@@ -499,7 +502,10 @@ export default function DashboardClient({ tournaments }: Props) {
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
         <span style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em' }}>大会一覧</span>
-        <HeaderIcons />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <HelpButton steps={dashboardSteps} pageKey="dashboard" />
+          <HeaderIcons />
+        </div>
       </div>
 
       <div className="dash-content" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
@@ -517,7 +523,7 @@ export default function DashboardClient({ tournaments }: Props) {
           >{seeding ? '作成中...' : 'サンプルデータを作成'}</button>
         </div>
 
-        <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
+        <div data-tutorial="tournament-cards" className="dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
           {tournaments.map(t => {
             const s = statusLabel(t)
             return (
@@ -628,6 +634,7 @@ export default function DashboardClient({ tournaments }: Props) {
           })}
 
           <div
+            data-tutorial="new-tournament"
             onClick={() => setShowForm(true)}
             style={{
               background: 'var(--card-bg)', border: '1px solid var(--card-border)',
@@ -815,6 +822,7 @@ export default function DashboardClient({ tournaments }: Props) {
         </div>
       )}
     </div>
+    </TutorialProvider>
   )
 }
 

@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import type { Tournament, Player, RuleTemplate, RuleConfig } from '@/types'
 import { nanoid } from 'nanoid'
 import HeaderIcons from '@/components/ui/HeaderIcons'
+import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
+import { settingsSteps } from '@/components/tutorial/steps'
 
 interface Props {
   tournament: Tournament
@@ -230,6 +232,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
   }
 
   return (
+    <TutorialProvider>
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <style>{`
         .settings-header { padding: 0 26px; }
@@ -248,7 +251,10 @@ export default function SettingsClient({ tournament, players, templates }: Props
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
-        <HeaderIcons />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <HelpButton steps={settingsSteps} pageKey="settings" />
+          <HeaderIcons />
+        </div>
       </div>
 
       {/* コンテンツ */}
@@ -279,7 +285,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
           )}
 
           {/* 大会情報カード */}
-          <div style={{
+          <div data-tutorial="basic-info" style={{
             background: 'var(--card-bg)',
             backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
             border: '1.5px solid var(--card-border)',
@@ -329,7 +335,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
           </div>
 
           {/* 参加者カード */}
-          <div style={{
+          <div data-tutorial="players-input" style={{
             background: 'var(--card-bg)',
             backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
             border: '1.5px solid var(--card-border)',
@@ -616,7 +622,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
               </svg>
               {saving ? '保存中...' : '保存'}
             </button>
-            <button onClick={handleStart} disabled={starting} style={{
+            <button data-tutorial="start-button" onClick={handleStart} disabled={starting} style={{
               flex: 1, padding: '10px', background: 'transparent', color: 'var(--gold)',
               border: '1.5px solid var(--gold)', borderRadius: '8px',
               fontSize: '13px', fontWeight: 700, cursor: 'pointer',
@@ -656,6 +662,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
         </div>
       )}
     </div>
+    </TutorialProvider>
   )
 }
 

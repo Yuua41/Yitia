@@ -7,6 +7,8 @@ import { calcTableResults, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table, Result } from '@/types'
 import HeaderIcons from '@/components/ui/HeaderIcons'
 import ThemeToggle from '@/components/ui/ThemeToggle'
+import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
+import { scheduleSteps } from '@/components/tutorial/steps'
 
 interface Props {
   tournament: Tournament
@@ -296,6 +298,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
   const validatedCount = localTables.filter(t => t.is_validated).length
 
   return (
+    <TutorialProvider>
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <style>{`
         .schedule-header { padding: 0 26px; }
@@ -329,7 +332,10 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '100px', fontSize: '9px', fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0, background: tournament.status === 'ongoing' ? 'var(--cyan-pale)' : tournament.status === 'finished' ? 'var(--gold-pale)' : 'var(--hover-bg)', color: tournament.status === 'ongoing' ? 'var(--cyan)' : tournament.status === 'finished' ? 'var(--gold)' : 'var(--mist)' }}>{tournament.status === 'ongoing' ? '進行中' : tournament.status === 'finished' ? '完了' : '下書き'}</span>
         </div>
-        {isOwner ? <HeaderIcons /> : <ThemeToggle />}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <HelpButton steps={scheduleSteps} pageKey="schedule" />
+          {isOwner ? <HeaderIcons /> : <ThemeToggle />}
+        </div>
       </div>
       <div className="schedule-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -364,7 +370,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
         <div style={{ fontSize: '13px', color: 'var(--mist)', marginBottom: '18px' }}>
           {tournament.name} — R{activeRound} / {tournament.num_rounds}
         </div>
-        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '20px' }}>
+        <div data-tutorial="round-tabs" style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '20px' }}>
           {rounds.map(r => {
             const allDone = localTables.filter(t => t.round_number === r).every(t => t.is_validated)
             return (
@@ -389,7 +395,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
             const statusBg = isValidated ? 'var(--cyan-dim)' : isSubmitted ? '#b45309' : 'var(--navy-mid)'
 
             return (
-              <div key={`${table.id}-${activeRound}`} style={{
+              <div key={`${table.id}-${activeRound}`} {...(idx === 0 ? { 'data-tutorial': 'table-card' } : {})} style={{
                 background: 'var(--card-bg)',
                 animation: 'scCardSlide 0.35s ease-out both',
                 animationDelay: `${idx * 60}ms`,
@@ -547,7 +553,7 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
                         />
                         卓外点棒あり（合計チェックをスキップ）
                       </label>
-                      <button onClick={() => handleValidate(table)} disabled={saving === table.id} style={{
+                      <button {...(idx === 0 ? { 'data-tutorial': 'validate-button' } : {})} onClick={() => handleValidate(table)} disabled={saving === table.id} style={{
                         width: '100%', padding: '8px',
                         background: 'transparent', color: 'var(--cyan-deep)',
                         border: '1.5px solid var(--cyan-deep)', borderRadius: '7px',
@@ -569,5 +575,6 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
         </div>
       </div>
     </div>
+    </TutorialProvider>
   )
 }
