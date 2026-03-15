@@ -360,7 +360,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {players.map(p => (
-                  <span key={p.id} onClick={() => router.push(`/tournament/${tournament.id}/players`)} style={{
+                  <span key={p.id} onClick={() => router.push(`/tournament/${tournament.id}/players#player-${p.id}`)} style={{
                     padding: '4px 10px', background: 'var(--paper)',
                     border: '1px solid var(--border)', borderRadius: '6px',
                     fontSize: '12px', color: 'var(--cyan-deep)', cursor: 'pointer',

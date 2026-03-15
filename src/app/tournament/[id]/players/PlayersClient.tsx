@@ -24,6 +24,21 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
   const [refreshing, setRefreshing] = useState(false)
   const addInputRef = useRef<HTMLInputElement>(null)
 
+  // ハッシュで指定されたプレーヤーにスクロール
+  useEffect(() => {
+    const hash = window.location.hash
+    if (!hash) return
+    const el = document.getElementById(hash.slice(1))
+    if (el) {
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.style.outline = '2px solid var(--cyan-deep)'
+        el.style.outlineOffset = '2px'
+        setTimeout(() => { el.style.outline = ''; el.style.outlineOffset = '' }, 2000)
+      }, 300)
+    }
+  }, [])
+
   // 未保存状態でのページ離脱アラート
   useEffect(() => {
     if (!editingId) return
@@ -229,7 +244,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
           {/* 参加者一覧 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {players.map((player, idx) => (
-              <div key={player.id} style={{
+              <div key={player.id} id={`player-${player.id}`} style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '12px 16px',
                 background: 'var(--card-bg)',

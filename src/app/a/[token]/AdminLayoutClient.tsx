@@ -102,7 +102,7 @@ export default function AdminLayoutClient({ children, tournament, token }: Props
         </div>
         <div style={{ padding: '12px 18px 8px' }}>
           <div style={{ fontSize: '8px', fontFamily: 'monospace', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-dimmer)', marginBottom: '6px' }}>現在の大会</div>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-dim)', lineHeight: 1.35 }}>{tournament.name}</div>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-dim)', lineHeight: 1.35, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>{tournament.name}<span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '100px', fontSize: '9px', fontWeight: 600, letterSpacing: '0.04em', background: tournament.status === 'ongoing' ? 'var(--cyan-pale)' : tournament.status === 'finished' ? 'var(--gold-pale)' : 'var(--hover-bg)', color: tournament.status === 'ongoing' ? 'var(--cyan)' : tournament.status === 'finished' ? 'var(--gold)' : 'var(--mist)' }}>{tournament.status === 'ongoing' ? '進行中' : tournament.status === 'finished' ? '完了' : '下書き'}</span></div>
         </div>
         <div style={{ height: '1px', background: 'var(--header-border)', margin: '4px 0' }} />
         <div style={{ padding: '4px 8px', marginTop: '4px' }}>
