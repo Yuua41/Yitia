@@ -748,7 +748,8 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
             return (
               <div key={s.player.id} style={{
                 padding: '8px 15px', borderBottom: '1px solid var(--paper)',
-                background: isMe ? 'var(--cyan-pale)' : 'transparent',
+                background: 'transparent',
+                borderLeft: isMe ? '3px solid var(--cyan)' : '3px solid transparent',
                 position: 'relative', overflow: 'hidden',
                 ...(anim ? {
                   animation: isMe
@@ -784,8 +785,14 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                       color: 'var(--mist)', width: '22px', textAlign: 'center', flexShrink: 0,
                     }}>{i + 1}</div>
                   )}
-                  <div style={{ flex: 1, fontSize: '13.5px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
-                    {s.player.name}{isMe ? '（自分）' : ''}
+                  <div style={{ flex: 1, fontSize: '13.5px', fontWeight: 600, color: isMe ? 'var(--cyan)' : 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {s.player.name}
+                    {isMe && (
+                      <span style={{
+                        fontSize: '11px', color: 'var(--cyan)',
+                        flexShrink: 0,
+                      }}>（自分）</span>
+                    )}
                   </div>
                   <div style={{
                     fontFamily: 'monospace', fontSize: '13.5px', fontWeight: 600,
