@@ -1,9 +1,16 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+
+interface PendingNotification {
+  tournamentId: string
+  tournamentName: string
+  roundNumber: number
+  tableNumber: number
+}
 
 const iconBtn: React.CSSProperties = {
   width: '32px', height: '32px',
@@ -43,8 +50,46 @@ export default function HeaderIcons() {
   const supabase = createClient()
   const [openMenu, setOpenMenu] = useState<'notification' | 'settings' | 'user' | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
   const [isDark, setIsDark] = useState(true)
   const [userEmail, setUserEmail] = useState('')
+  const [notifications, setNotifications] = useState<PendingNotification[]>([])
+
+  const fetchNotifications = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data: tournaments } = await supabase
+      .from('tournaments')
+      .select('id, name')
+      .eq('owner_id', user.id)
+      .eq('status', 'ongoing')
+
+    if (!tournaments || tournaments.length === 0) {
+      setNotifications([])
+      return
+    }
+
+    const { data: tables } = await supabase
+      .from('tables')
+      .select('tournament_id, round_number, table_number')
+      .in('tournament_id', tournaments.map(t => t.id))
+      .eq('is_submitted', true)
+      .eq('is_validated', false)
+
+    if (!tables || tables.length === 0) {
+      setNotifications([])
+      return
+    }
+
+    const tMap = new Map(tournaments.map(t => [t.id, t.name]))
+    setNotifications(tables.map(t => ({
+      tournamentId: t.tournament_id,
+      tournamentName: tMap.get(t.tournament_id) ?? '',
+      roundNumber: t.round_number,
+      tableNumber: t.table_number,
+    })))
+  }, [supabase])
 
   useEffect(() => {
     const saved = localStorage.getItem('theme')
@@ -54,7 +99,22 @@ export default function HeaderIcons() {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user?.email) setUserEmail(data.user.email)
     })
+    fetchNotifications()
   }, [])
+
+  // ページ遷移時・フォーカス時に再取得
+  useEffect(() => { fetchNotifications() }, [pathname, fetchNotifications])
+  useEffect(() => {
+    const onFocus = () => fetchNotifications()
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [fetchNotifications])
+
+  // 30秒ごとにポーリング
+  useEffect(() => {
+    const id = setInterval(fetchNotifications, 30000)
+    return () => clearInterval(id)
+  }, [fetchNotifications])
 
   function toggleTheme() {
     const next = !isDark
@@ -97,12 +157,42 @@ export default function HeaderIcons() {
             <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
             <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
           </svg>
+          {notifications.length > 0 && (
+            <span style={{
+              position: 'absolute', top: '2px', right: '2px',
+              width: '16px', height: '16px', borderRadius: '50%',
+              background: '#ef4444', color: '#fff',
+              fontSize: '9px', fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              lineHeight: 1, border: '2px solid var(--header-bg)',
+            }}>{notifications.length > 9 ? '9+' : notifications.length}</span>
+          )}
         </button>
         {openMenu === 'notification' && (
-          <div style={dropdownStyle}>
-            <div style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--mist)', textAlign: 'center' }}>
-              通知はありません
-            </div>
+          <div style={{ ...dropdownStyle, minWidth: '260px', maxHeight: '320px', overflowY: 'auto' }}>
+            {notifications.length === 0 ? (
+              <div style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--mist)', textAlign: 'center' }}>
+                通知はありません
+              </div>
+            ) : (
+              notifications.map((n, i) => (
+                <button
+                  key={`${n.tournamentId}-${n.roundNumber}-${n.tableNumber}`}
+                  style={{ ...menuItemStyle, flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}
+                  onClick={() => {
+                    setOpenMenu(null)
+                    router.push(`/tournament/${n.tournamentId}/schedule`)
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>
+                    R{n.roundNumber} 卓{n.tableNumber} — 確定待ち
+                  </span>
+                  <span style={{ fontSize: '10px', color: 'var(--mist)' }}>{n.tournamentName}</span>
+                </button>
+              ))
+            )}
           </div>
         )}
       </div>

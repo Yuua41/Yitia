@@ -13,7 +13,7 @@ export const settingsSteps: TutorialStep[] = [
   { target: '[data-tutorial="basic-info"]', content: '大会名や開催日など，基本情報を設定します。', placement: 'bottom' },
   { target: '[data-tutorial="players-input"]', content: '参加者を改行区切りで入力します。あとから追加・削除も可能です。', placement: 'top' },
   { target: '[data-tutorial="rule-settings"]', content: '持ち点・返し・ウマ・同点処理などのルールを設定できます。', placement: 'top' },
-  { target: '[data-tutorial="settings-mode-toggle"]', content: '「詳細設定」に切り替えると，丸め方式など細かいルールも設定できます。', placement: 'top' },
+  { target: '[data-tutorial="settings-mode-toggle"]', content: '「詳細設定」に切り替えると，細かいルールが設定できます。', placement: 'top' },
   { target: '[data-tutorial="start-button"]', content: '設定が完了したら，ここから大会を開始します。開始すると卓組が自動生成されます。', placement: 'top' },
 ]
 
@@ -34,12 +34,12 @@ export const qrSteps: TutorialStep[] = [
 
 export const playersSteps: TutorialStep[] = [
   { target: '[data-tutorial="players-list"]', content: '参加者の一覧です。名前の編集，削除，QRコード表示，個人ページへのリンクができます。', placement: 'top' },
-  { target: '[data-tutorial="players-add"]', content: 'ここから新しい参加者を追加できます。名前を入力してEnterで追加されます。', placement: 'top' },
+  { target: '[data-tutorial="players-add"]', content: 'ここから新しい参加者を追加できます。', placement: 'top' },
 ]
 
 export const playerSteps: TutorialStep[] = [
   { target: '[data-tutorial="player-score-input"]', content: 'ここから自分の卓の点数を入力して送信できます。', placement: 'bottom' },
-  { target: '[data-tutorial="player-adjustment"]', content: '「得点調整」でチョンボ等のポイント調整ができます。管理者が設定した値が反映されます。', placement: 'bottom' },
+  { target: '[data-tutorial="player-adjustment"]', content: '「得点調整」でチョンボ等のポイント調整ができます。', placement: 'bottom' },
   { target: '[data-tutorial="player-standings"]', content: '全体の順位と各ラウンドの成績を確認できます。', placement: 'top' },
   { target: '[data-tutorial="player-chart"]', content: 'ポイント推移のグラフで，大会を通じた成績の変化を確認できます。', placement: 'top' },
 ]

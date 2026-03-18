@@ -607,7 +607,11 @@ export default function DashboardClient({ tournaments }: Props) {
                   </div>
 
                   {/* タイトル（コントラスト強調） */}
-                  <div onClick={() => { setNavigatingId(t.id); router.push(`/tournament/${t.id}/schedule`) }}>
+                  <div onClick={() => {
+                    setNavigatingId(t.id)
+                    const dest = t.status === 'draft' ? 'settings' : t.status === 'finished' ? 'standings' : 'schedule'
+                    router.push(`/tournament/${t.id}/${dest}`)
+                  }}>
                     <div style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.3, marginBottom: '8px', color: 'var(--ink)' }}>
                       {t.name}
                     </div>
