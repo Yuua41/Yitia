@@ -7,7 +7,7 @@ import type { Tournament, Player, RuleTemplate, RuleConfig } from '@/types'
 import { nanoid } from 'nanoid'
 import HeaderIcons from '@/components/ui/HeaderIcons'
 import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
-import { settingsSteps } from '@/components/tutorial/steps'
+import { settingsSteps, settingsOngoingSteps } from '@/components/tutorial/steps'
 
 interface Props {
   tournament: Tournament
@@ -252,7 +252,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
       }}>
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <HelpButton steps={settingsSteps} pageKey="settings" />
+          <HelpButton steps={tournament.status === 'ongoing' ? settingsOngoingSteps : settingsSteps} pageKey="settings" />
           <HeaderIcons />
         </div>
       </div>
@@ -382,7 +382,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
           {/* 基本/詳細トグル */}
           {isDraft && (
-            <div style={{ display: 'flex', background: 'var(--paper)', borderRadius: '9px', padding: '3px', gap: '2px', marginBottom: '14px', border: '1.5px solid var(--border)' }}>
+            <div data-tutorial="settings-mode-toggle" style={{ display: 'flex', background: 'var(--paper)', borderRadius: '9px', padding: '3px', gap: '2px', marginBottom: '14px', border: '1.5px solid var(--border)' }}>
               {(['basic', 'advanced'] as const).map(m => (
                 <button key={m} onClick={() => setSettingsMode(m)} style={{
                   flex: 1, padding: '7px 4px', fontSize: '12px', fontWeight: 600,
@@ -399,7 +399,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
           )}
 
           {/* ルール設定カード */}
-          <div style={{
+          <div data-tutorial="rule-settings" style={{
             background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
             border: '1.5px solid var(--card-border)',
             borderRadius: '12px', padding: '18px', marginBottom: '14px',
@@ -549,7 +549,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
           {/* 進行中: プレイヤー入力制御 */}
           {tournament.status === 'ongoing' && (
-            <div style={{
+            <div data-tutorial="player-entry-toggle" style={{
               background: 'var(--card-bg)',
               backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
               border: '1.5px solid var(--card-border)',
