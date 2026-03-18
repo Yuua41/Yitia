@@ -397,7 +397,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '14px', padding: '20px',
           marginBottom: '12px', position: 'relative', overflow: 'hidden',
         }}>
-          <div style={{
+          <div className="score-glow" style={{
             position: 'absolute', top: '-40px', right: '-40px', width: '180px', height: '180px',
             background: `radial-gradient(circle, ${myTotal >= 0 ? 'rgba(0,240,255,0.35)' : 'rgba(239,68,68,0.28)'}, transparent 65%)`,
             pointerEvents: 'none',
@@ -671,7 +671,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
         </div>
 
         {/* 得点調整 (accordion, default closed) */}
-        <div style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+        <div data-tutorial="player-adjustment" style={{ background: 'var(--card-bg)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid var(--card-border)', borderRadius: '12px', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
           <div onClick={() => toggleSection('adjustment')} style={{ padding: '11px 15px', fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '15px', fontWeight: 700, borderBottom: openSections.adjustment ? '1px solid var(--border)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', userSelect: 'none' }}>
             <span>得点調整</span>
             <span style={{ fontSize: '11px', color: 'var(--mist)', transition: 'transform 0.2s', transform: openSections.adjustment ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>

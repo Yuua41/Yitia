@@ -19,14 +19,21 @@ export const scheduleSteps: TutorialStep[] = [
 
 export const standingsSteps: TutorialStep[] = [
   { target: '[data-tutorial="standings-table"]', content: '全参加者の順位と合計ポイントを確認できます。ラウンドごとの成績も表示されます。', placement: 'top' },
+  { target: '[data-tutorial="standings-adjustment"]', content: '「ポイント調整」でチョンボ等の調整ができます。セルをクリックして値を入力してください。', placement: 'bottom' },
 ]
 
 export const qrSteps: TutorialStep[] = [
   { target: '[data-tutorial="qr-section"]', content: 'このQRコードを参加者に共有すると、スマホから直接点数を入力できるようになります。', placement: 'top' },
 ]
 
+export const playersSteps: TutorialStep[] = [
+  { target: '[data-tutorial="players-list"]', content: '参加者の一覧です。名前の編集、削除、QRコード表示、個人ページへのリンクができます。', placement: 'top' },
+  { target: '[data-tutorial="players-add"]', content: 'ここから新しい参加者を追加できます。名前を入力してEnterで追加されます。', placement: 'top' },
+]
+
 export const playerSteps: TutorialStep[] = [
   { target: '[data-tutorial="player-score-input"]', content: 'ここから自分の卓の点数を入力して送信できます。', placement: 'bottom' },
+  { target: '[data-tutorial="player-adjustment"]', content: '「得点調整」でチョンボ等のポイント調整ができます。管理者が設定した値が反映されます。', placement: 'bottom' },
   { target: '[data-tutorial="player-standings"]', content: '全体の順位と各ラウンドの成績を確認できます。', placement: 'top' },
   { target: '[data-tutorial="player-chart"]', content: 'ポイント推移のグラフで、大会を通じた成績の変化を確認できます。', placement: 'top' },
 ]

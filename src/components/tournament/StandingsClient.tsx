@@ -306,7 +306,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
                   {Array.from({ length: tournament.num_rounds }, (_, i) => (
                     <th key={i} style={{ ...thStyle(), ...(schedulePath ? { cursor: 'pointer' } : {}) }} onClick={() => schedulePath && router.push(`${schedulePath}?round=${i + 1}`)}>R{i + 1}</th>
                   ))}
-                  <th style={thStyle()}>ポイント調整</th>
+                  <th data-tutorial="standings-adjustment" style={thStyle()}>ポイント調整</th>
                   <th style={{ ...thStyle('total'), textAlign: 'right' }} onClick={() => handleSort('total')}>合計 <span>{sortIcon('total')}</span></th>
                 </tr>
               </thead>

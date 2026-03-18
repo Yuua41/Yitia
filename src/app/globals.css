@@ -131,6 +131,10 @@ body[data-theme="light"] {
   --rank-shimmer-to:   #3d7d73;
 }
 
+body[data-theme="light"] .score-glow {
+  display: none;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

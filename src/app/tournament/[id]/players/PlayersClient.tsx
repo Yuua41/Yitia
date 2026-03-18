@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import { nanoid } from 'nanoid'
 import type { Tournament, Player } from '@/types'
 import HeaderIcons from '@/components/ui/HeaderIcons'
+import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
+import { playersSteps } from '@/components/tutorial/steps'
 
 interface Props {
   tournament: Tournament
@@ -165,6 +167,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
   const qrPlayer = qrPlayerId ? players.find(p => p.id === qrPlayerId) : null
 
   return (
+    <TutorialProvider>
     <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <style>{`
         .players-header { padding: 0 26px; }
@@ -183,7 +186,10 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
-        <HeaderIcons />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <HelpButton steps={playersSteps} pageKey="players" />
+          <HeaderIcons />
+        </div>
       </div>
 
       <div className="players-content" style={{ flex: 1, overflowY: 'auto' }}>
@@ -242,7 +248,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
           </div>
 
           {/* 参加者一覧 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div data-tutorial="players-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {players.map((player, idx) => (
               <div key={player.id} id={`player-${player.id}`} style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
@@ -346,7 +352,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
             ))}
 
             {/* 参加者追加 */}
-            <div style={{
+            <div data-tutorial="players-add" style={{
               display: 'flex', alignItems: 'center', gap: '10px',
               padding: '12px 16px',
               background: 'var(--card-bg)',
@@ -474,7 +480,8 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
         </div>
       )}
     </div>
-  )
+    </TutorialProvider>
+  );
 }
 
 function QRCode({ value, size }: { value: string; size: number }) {

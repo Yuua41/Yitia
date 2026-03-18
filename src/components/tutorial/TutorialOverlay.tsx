@@ -202,28 +202,65 @@ function Overlay({ steps, idx, next, prev, skip }: {
   return createPortal(overlay, document.body)
 }
 
-/* ── HelpButton ── */
+/* ── HelpButton (dropdown menu) ── */
 export function HelpButton({ steps, pageKey }: { steps: TutorialStep[]; pageKey: string }) {
   const { start, isActive } = useTutorial()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  // close on outside click
+  useEffect(() => {
+    if (!open) return
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [open])
 
   return (
-    <button
-      title="使い方ガイド"
-      onClick={() => start(steps, pageKey)}
-      disabled={isActive}
-      onMouseEnter={e => { e.currentTarget.style.color = 'var(--cyan)'; e.currentTarget.style.background = 'var(--hover-bg)' }}
-      onMouseLeave={e => { e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.background = 'transparent' }}
-      style={{
-        width: '32px', height: '32px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        borderRadius: '50%', border: 'none', cursor: 'pointer',
-        background: 'transparent', color: 'var(--mist)',
-        transition: 'color 0.15s, background 0.15s',
-        flexShrink: 0, fontSize: '15px', fontWeight: 700,
-      }}
-    >
-      ?
-    </button>
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
+      <button
+        title="ヘルプ"
+        onClick={() => setOpen(o => !o)}
+        disabled={isActive}
+        onMouseEnter={e => { e.currentTarget.style.color = 'var(--cyan)'; e.currentTarget.style.background = 'var(--hover-bg)' }}
+        onMouseLeave={e => { e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.background = 'transparent' }}
+        style={{
+          width: '32px', height: '32px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          borderRadius: '50%', border: 'none', cursor: 'pointer',
+          background: 'transparent', color: 'var(--mist)',
+          transition: 'color 0.15s, background 0.15s',
+          fontSize: '15px', fontWeight: 700,
+        }}
+      >
+        ?
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', top: '110%', right: 0, minWidth: '140px',
+          background: 'var(--surface)', border: '1px solid var(--card-border)',
+          borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
+          padding: '4px', zIndex: 9000,
+        }}>
+          <button
+            onClick={() => { setOpen(false); start(steps, pageKey) }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+              padding: '8px 12px', border: 'none', borderRadius: '8px', cursor: 'pointer',
+              background: 'transparent', color: 'var(--ink)', fontSize: '13px', fontWeight: 500,
+              textAlign: 'left',
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            使い方
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
