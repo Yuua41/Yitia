@@ -6,7 +6,9 @@ import Link from 'next/link'
 import DraggableMenuButton from '@/components/ui/DraggableMenuButton'
 
 const NAV_ITEMS = [
-  { label: '大会一覧', href: '/dashboard' },
+  { label: 'ダッシュボード', href: '/dashboard' },
+  { label: 'プロフィール', href: '/dashboard/profile' },
+  { label: '設定', href: '/dashboard/settings' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

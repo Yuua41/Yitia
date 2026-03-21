@@ -271,6 +271,7 @@ export default function DashboardClient({ tournaments }: Props) {
           .dash-header { padding: 0 16px !important; }
           .dash-content { padding: 16px !important; }
           .dash-grid { grid-template-columns: 1fr !important; }
+          .dash-summary { grid-template-columns: 1fr !important; }
         }
       `}</style>
       <div className="dash-header" style={{
@@ -282,7 +283,7 @@ export default function DashboardClient({ tournaments }: Props) {
         padding: '0 26px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
-        <span style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em' }}>大会一覧</span>
+        <span style={{ fontSize: '17px', fontWeight: 700, letterSpacing: '-0.02em' }}>ダッシュボード</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <HelpButton steps={dashboardSteps} pageKey="dashboard" />
           <HeaderIcons />
@@ -290,8 +291,48 @@ export default function DashboardClient({ tournaments }: Props) {
       </div>
 
       <div className="dash-content" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+        {/* サマリーカード */}
+        {(() => {
+          const ongoingCount = tournaments.filter(t => t.status === 'ongoing').length
+          const totalPlayers = tournaments.reduce((sum, t) => sum + (t.players?.length ?? 0), 0)
+          const latestDate = tournaments.map(t => t.held_on).filter(Boolean).sort().reverse()[0] ?? null
+          const latest = tournaments[0] ?? null
+          const summaryCards = [
+            { label: 'STATUS', value: ongoingCount > 0 ? `進行中 (${ongoingCount})` : 'なし', color: ongoingCount > 0 ? 'var(--cyan)' : 'var(--mist)' },
+            { label: 'LAST TOURNAMENT', value: latestDate ?? '未定', color: 'var(--ink)' },
+            { label: 'TOTAL PLAYERS', value: `${totalPlayers}名`, color: 'var(--ink)' },
+            { label: 'TOURNAMENTS', value: `${tournaments.length}件`, color: 'var(--ink)' },
+            { label: 'LATEST', value: latest?.name ?? 'なし', color: 'var(--ink)', onClick: latest ? () => {
+              setNavigatingId(latest.id)
+              const dest = latest.status === 'draft' ? 'settings' : latest.status === 'finished' ? 'standings' : 'schedule'
+              router.push(`/tournament/${latest.id}/${dest}`)
+            } : undefined },
+          ]
+          return (
+            <div className="dash-summary" style={{
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px',
+            }}>
+              {summaryCards.map((card, i) => (
+                <div key={i} onClick={card.onClick} style={{
+                  background: 'var(--card-bg)', border: '1px solid var(--card-border)',
+                  borderRadius: '12px', padding: '16px 18px',
+                  cursor: card.onClick ? 'pointer' : 'default',
+                  gridColumn: i >= 3 ? (i === 4 ? 'span 2' : undefined) : undefined,
+                  transition: 'box-shadow 0.2s',
+                }}
+                  onMouseEnter={e => { if (card.onClick) e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)' }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none' }}
+                >
+                  <div style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.18em', color: 'var(--mist)', marginBottom: '8px', textTransform: 'uppercase' }}>{card.label}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 700, color: card.color, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.value}</div>
+                </div>
+              ))}
+            </div>
+          )
+        })()}
+
         <div style={{ marginBottom: '14px' }}>
-          <div style={{ fontSize: '12px', color: 'var(--mist)' }}>{tournaments.length}件の大会</div>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)' }}>大会一覧<span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--mist)', marginLeft: '8px' }}>{tournaments.length}件</span></div>
         </div>
 
         <div data-tutorial="tournament-cards" className="dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
