@@ -9,6 +9,7 @@ export interface RuleConfig {
   umaMode: 'simple' | 'detail'
   rounding: 'none' | 'round' | 'round_half_up'  // 小数点以下反映 | 四捨五入 | 五捨六入
   allowPlayerEntry?: boolean  // プレイヤーによるスコア入力を許可するか（デフォルトtrue）
+  byeMode?: 'dummy' | 'bye'  // dummy: 黒子で4の倍数に補完（デフォルト）, bye: 休みを許容
 }
 
 export interface RuleTemplate {

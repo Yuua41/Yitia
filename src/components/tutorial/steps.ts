@@ -11,7 +11,7 @@ export const settingsOngoingSteps: TutorialStep[] = [
 
 export const settingsSteps: TutorialStep[] = [
   { target: '[data-tutorial="basic-info"]', content: '大会名や開催日など，基本情報を設定します。', placement: 'bottom' },
-  { target: '[data-tutorial="players-input"]', content: '参加者を改行区切りで入力します。あとから追加・削除も可能です。', placement: 'top' },
+  { target: '[data-tutorial="players-input"]', content: '参加者の一覧です。クリックすると参加者管理ページに移動します。', placement: 'top' },
   { target: '[data-tutorial="rule-settings"]', content: '持ち点・返し・ウマ・同点処理などのルールを設定できます。', placement: 'top' },
   { target: '[data-tutorial="settings-mode-toggle"]', content: '「詳細設定」に切り替えると，細かくルールが設定できます。', placement: 'top' },
   { target: '[data-tutorial="start-button"]', content: '設定が完了したら，ここから大会を開始します。開始すると卓組が自動生成されます。', placement: 'top' },
@@ -33,8 +33,7 @@ export const qrSteps: TutorialStep[] = [
 ]
 
 export const playersSteps: TutorialStep[] = [
-  { target: '[data-tutorial="players-list"]', content: '参加者の一覧です。名前の編集，削除，QRコード表示，個人ページへのリンクができます。', placement: 'top' },
-  { target: '[data-tutorial="players-add"]', content: 'ここから新しい参加者を追加できます。', placement: 'top' },
+  { target: '[data-tutorial="players-list"]', content: '参加者の一覧です。名前の編集，QRコード表示ができます。下書き中は追加・削除や一括編集も可能です。', placement: 'top' },
 ]
 
 export const playerSteps: TutorialStep[] = [

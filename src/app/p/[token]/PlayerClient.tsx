@@ -678,58 +678,69 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
           </div>
           {openSections.adjustment && (
             <div style={{ padding: '12px 15px' }}>
-              <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '8px' }}>
-                チョンボ等のペナルティや調整ポイントを入力してください
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <button onClick={() => setAdjustmentNeg(n => !n)} style={{
-                  width: '28px', height: '28px', borderRadius: '6px', flexShrink: 0,
-                  border: `1.5px solid ${adjustmentNeg ? 'rgba(239,68,68,0.3)' : 'var(--border-md)'}`,
-                  background: adjustmentNeg ? 'var(--red-pale)' : 'var(--paper)',
-                  color: adjustmentNeg ? 'var(--red)' : 'var(--cyan-deep)',
-                  fontSize: '13px', fontWeight: 700, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>{adjustmentNeg ? '▲' : '+'}</button>
-                <input
-                  type="number"
-                  value={adjustmentInput}
-                  onChange={e => setAdjustmentInput(e.target.value)}
-                  placeholder="0"
-                  style={{
-                    flex: 1, padding: '6px 8px',
-                    border: '1.5px solid var(--border-md)', borderRadius: '6px',
-                    fontSize: '14px', fontWeight: 600, textAlign: 'right',
-                    fontFamily: 'monospace', background: 'var(--surface)', color: 'var(--ink)', outline: 'none',
-                  }}
-                />
-                <span style={{ fontSize: '12px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>pt</span>
-                <button
-                  onClick={async () => {
-                    setSavingAdjustment(true)
-                    const val = parseFloat(adjustmentInput) || 0
-                    const bonus = adjustmentNeg ? -Math.abs(val) : Math.abs(val)
-                    await supabase.from('players').update({ bonus }).eq('id', player.id)
-                    setLocalPlayer(prev => ({ ...prev, bonus }))
-                    setLocalPlayers(prev => prev.map(p => p.id === player.id ? { ...p, bonus } : p))
-                    setSavingAdjustment(false)
-                  }}
-                  disabled={savingAdjustment}
-                  style={{
-                    padding: '6px 14px', flexShrink: 0,
-                    background: savingAdjustment ? 'var(--mist)' : 'transparent',
-                    color: savingAdjustment ? '#fff' : 'var(--cyan-deep)',
-                    border: `1.5px solid ${savingAdjustment ? 'transparent' : 'var(--cyan-deep)'}`,
-                    borderRadius: '7px',
-                    fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-                  }}
-                >{savingAdjustment ? '保存中...' : '保存'}</button>
-              </div>
-              {(localPlayer.bonus ?? 0) !== 0 && (
-                <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--mist)' }}>
-                  現在の調整: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: localPlayer.bonus < 0 ? 'var(--red)' : 'var(--cyan-deep)' }}>
-                    {formatPoint(localPlayer.bonus)}
+              {tournament.status === 'finished' ? (
+                <div style={{ fontSize: '12px', color: 'var(--mist)' }}>
+                  現在の調整: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: (localPlayer.bonus ?? 0) < 0 ? 'var(--red)' : (localPlayer.bonus ?? 0) > 0 ? 'var(--cyan-deep)' : 'var(--mist)' }}>
+                    {(localPlayer.bonus ?? 0) !== 0 ? formatPoint(localPlayer.bonus) : '—'}
                   </span>
+                  <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--mist)' }}>大会終了後は調整できません</div>
                 </div>
+              ) : (
+                <>
+                  <div style={{ fontSize: '12px', color: 'var(--mist)', marginBottom: '8px' }}>
+                    チョンボ等のペナルティや調整ポイントを入力してください
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button onClick={() => setAdjustmentNeg(n => !n)} style={{
+                      width: '28px', height: '28px', borderRadius: '6px', flexShrink: 0,
+                      border: `1.5px solid ${adjustmentNeg ? 'rgba(239,68,68,0.3)' : 'var(--border-md)'}`,
+                      background: adjustmentNeg ? 'var(--red-pale)' : 'var(--paper)',
+                      color: adjustmentNeg ? 'var(--red)' : 'var(--cyan-deep)',
+                      fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>{adjustmentNeg ? '▲' : '+'}</button>
+                    <input
+                      type="number"
+                      value={adjustmentInput}
+                      onChange={e => setAdjustmentInput(e.target.value)}
+                      placeholder="0"
+                      style={{
+                        flex: 1, padding: '6px 8px',
+                        border: '1.5px solid var(--border-md)', borderRadius: '6px',
+                        fontSize: '14px', fontWeight: 600, textAlign: 'right',
+                        fontFamily: 'monospace', background: 'var(--surface)', color: 'var(--ink)', outline: 'none',
+                      }}
+                    />
+                    <span style={{ fontSize: '12px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>pt</span>
+                    <button
+                      onClick={async () => {
+                        setSavingAdjustment(true)
+                        const val = parseFloat(adjustmentInput) || 0
+                        const bonus = adjustmentNeg ? -Math.abs(val) : Math.abs(val)
+                        await supabase.from('players').update({ bonus }).eq('id', player.id)
+                        setLocalPlayer(prev => ({ ...prev, bonus }))
+                        setLocalPlayers(prev => prev.map(p => p.id === player.id ? { ...p, bonus } : p))
+                        setSavingAdjustment(false)
+                      }}
+                      disabled={savingAdjustment}
+                      style={{
+                        padding: '6px 14px', flexShrink: 0,
+                        background: savingAdjustment ? 'var(--mist)' : 'transparent',
+                        color: savingAdjustment ? '#fff' : 'var(--cyan-deep)',
+                        border: `1.5px solid ${savingAdjustment ? 'transparent' : 'var(--cyan-deep)'}`,
+                        borderRadius: '7px',
+                        fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                      }}
+                    >{savingAdjustment ? '保存中...' : '保存'}</button>
+                  </div>
+                  {(localPlayer.bonus ?? 0) !== 0 && (
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--mist)' }}>
+                      現在の調整: <span style={{ fontFamily: 'monospace', fontWeight: 600, color: localPlayer.bonus < 0 ? 'var(--red)' : 'var(--cyan-deep)' }}>
+                        {formatPoint(localPlayer.bonus)}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

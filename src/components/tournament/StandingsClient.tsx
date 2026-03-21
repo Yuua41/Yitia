@@ -262,7 +262,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
                 cursor: 'pointer',
               }}>CSV出力</button>
             )}
-            {isOwner && (
+            {isOwner && tournament.status !== 'finished' && (
               <button onClick={saveAdjustments} disabled={savingAdj} style={{
                 padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
                 border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
@@ -284,7 +284,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
               cursor: 'pointer', flex: 1,
             }}>CSV出力</button>
           )}
-          {isOwner && (
+          {isOwner && tournament.status !== 'finished' && (
             <button onClick={saveAdjustments} disabled={savingAdj} style={{
               padding: '8px 16px', background: 'transparent', color: 'var(--cyan-deep)',
               border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
@@ -347,7 +347,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
                         }}>{pt === null ? '—' : formatPoint(pt)}</td>
                       ))}
                       <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)' }}>
-                        {isOwner ? (
+                        {isOwner && tournament.status !== 'finished' ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <button
                               onClick={() => {
@@ -462,7 +462,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--mist)', position: 'relative' }}>
                   <span>調整:</span>
-                  {isOwner ? (
+                  {isOwner && tournament.status !== 'finished' ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <button
                         onClick={() => {

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Tournament, Player, RuleTemplate, RuleConfig } from '@/types'
-import { nanoid } from 'nanoid'
 import HeaderIcons from '@/components/ui/HeaderIcons'
 import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
 import { settingsSteps, settingsOngoingSteps } from '@/components/tutorial/steps'
@@ -28,10 +27,10 @@ export default function SettingsClient({ tournament, players, templates }: Props
     ...tournament.config,
     rounding: tournament.config.rounding ?? 'none',
     allowPlayerEntry: tournament.config.allowPlayerEntry ?? true,
+    byeMode: tournament.config.byeMode ?? 'dummy',
   })
   const [uma14, setUma14] = useState(tournament.config.uma[0])
   const [uma23, setUma23] = useState(tournament.config.uma[1])
-  const [playerText, setPlayerText] = useState(players.map(p => p.name).join('\n'))
   const [selectedTemplate, setSelectedTemplate] = useState('')
   const [settingsMode, setSettingsMode] = useState<'basic' | 'advanced'>('basic')
   const [saving, setSaving] = useState(false)
@@ -39,8 +38,8 @@ export default function SettingsClient({ tournament, players, templates }: Props
   const [finishing, setFinishing] = useState(false)
 
   // 未保存状態の追跡
-  const initialSnapshot = useRef(JSON.stringify({ name: tournament.name, heldOn: tournament.held_on ?? '', notes: tournament.notes ?? '', numRounds: tournament.num_rounds, config: tournament.config, playerText: players.map(p => p.name).join('\n') }))
-  const isDirty = isDraft && JSON.stringify({ name, heldOn, notes, numRounds, config: { ...config, uma: getUma() }, playerText }) !== initialSnapshot.current
+  const initialSnapshot = useRef(JSON.stringify({ name: tournament.name, heldOn: tournament.held_on ?? '', notes: tournament.notes ?? '', numRounds: tournament.num_rounds, config: tournament.config }))
+  const isDirty = isDraft && JSON.stringify({ name, heldOn, notes, numRounds, config: { ...config, uma: getUma() } }) !== initialSnapshot.current
 
   useEffect(() => {
     if (!isDirty) return
@@ -68,33 +67,15 @@ export default function SettingsClient({ tournament, players, templates }: Props
   async function handleSave(redirect?: 'dashboard') {
     if (!name.trim()) return alert('大会名を入力してください')
 
-    const newNames = playerText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean)
-    if (newNames.length < 4) return alert('プレイヤーを4名以上入力してください')
-
     setSaving(true)
 
     const finalConfig: RuleConfig = { ...config, uma: getUma(), umaMode: settingsMode === 'basic' ? 'simple' : 'detail' }
     const roundsChanged = numRounds !== tournament.num_rounds
 
-    // 参加者の変更チェック
-    let adjustedNames = [...newNames]
-    while (adjustedNames.length % 4 !== 0) {
-      adjustedNames.push(`黒子${4 - (adjustedNames.length % 4)}`)
-    }
-    const playersChanged = adjustedNames.length !== players.length ||
-      adjustedNames.some((n, i) => n !== players[i]?.name)
-
-    const needsRegeneration = roundsChanged || playersChanged
-
-    if (needsRegeneration) {
-      const msg = roundsChanged && playersChanged
-        ? '試合数と参加者が変更されました。卓組が再生成されます。入力済みのスコアは削除されます。よろしいですか？'
-        : roundsChanged
-          ? '試合数を変更すると卓組が再生成されます。入力済みのスコアは削除されます。よろしいですか？'
-          : '参加者が変更されました。卓組が再生成されます。入力済みのスコアは削除されます。よろしいですか？'
-      const ok = confirm(msg)
+    if (roundsChanged) {
+      const ok = confirm('試合数を変更すると卓組が再生成されます。入力済みのスコアは削除されます。よろしいですか？')
       if (!ok) {
-        if (roundsChanged) setNumRounds(tournament.num_rounds)
+        setNumRounds(tournament.num_rounds)
         setSaving(false)
         return
       }
@@ -117,7 +98,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
       return
     }
 
-    if (needsRegeneration) {
+    if (roundsChanged) {
       // 既存のtables/resultsを削除
       const { data: existingTables } = await supabase
         .from('tables')
@@ -129,30 +110,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
       }
       await supabase.from('tables').delete().eq('tournament_id', tournament.id)
 
-      let playerIds: string[]
-
-      if (playersChanged) {
-        // 既存プレイヤーを削除して新規作成
-        await supabase.from('players').delete().eq('tournament_id', tournament.id)
-        const { data: newPlayers, error: pErr } = await supabase
-          .from('players')
-          .insert(adjustedNames.map((n, idx) => ({
-            tournament_id: tournament.id,
-            name: n,
-            seat_order: idx,
-            token: nanoid(12),
-            bonus: 0,
-          })))
-          .select()
-        if (pErr || !newPlayers) {
-          alert('プレイヤー更新失敗: ' + pErr?.message)
-          setSaving(false)
-          return
-        }
-        playerIds = newPlayers.map(p => p.id)
-      } else {
-        playerIds = players.map(p => p.id)
-      }
+      const playerIds = players.map(p => p.id)
 
       // 卓組を再生成
       const { generateSchedule } = await import('@/lib/mahjong/calculator')
@@ -250,7 +208,10 @@ export default function SettingsClient({ tournament, players, templates }: Props
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', minWidth: 0 }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '100px', fontSize: '9px', fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0, background: tournament.status === 'ongoing' ? 'var(--cyan-pale)' : tournament.status === 'finished' ? 'var(--gold-pale)' : 'var(--hover-bg)', color: tournament.status === 'ongoing' ? 'var(--cyan)' : tournament.status === 'finished' ? 'var(--gold)' : 'var(--mist)' }}>{tournament.status === 'ongoing' ? '進行中' : tournament.status === 'finished' ? '完了' : '下書き'}</span>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <HelpButton steps={tournament.status === 'ongoing' ? settingsOngoingSteps : settingsSteps} pageKey="settings" />
           <HeaderIcons />
@@ -260,15 +221,8 @@ export default function SettingsClient({ tournament, players, templates }: Props
       {/* コンテンツ */}
       <div className="settings-content" style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ maxWidth: '600px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <div style={{ marginBottom: '16px' }}>
             <div style={{ fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '20px', fontWeight: 800 }}>大会設定</div>
-            {isDraft && (
-              <button onClick={() => handleSave('dashboard')} disabled={saving} style={{
-                padding: '6px 14px', background: 'transparent', color: 'var(--cyan-deep)',
-                border: '1.5px solid var(--cyan-deep)', borderRadius: '7px', fontSize: '12px', fontWeight: 600,
-                cursor: 'pointer', opacity: saving ? 0.6 : 1,
-              }}>{saving ? '保存中...' : '保存'}</button>
-            )}
           </div>
 
           {/* テンプレート選択 */}
@@ -327,7 +281,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
             <div>
               <label style={labelStyle}>備考</label>
               {isDraft ? (
-                <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: '70px', resize: 'vertical', lineHeight: 1.65 }} placeholder="ルールの補足、チョンボ罰則など..." />
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} style={{ ...inputStyle, minHeight: '70px', resize: 'vertical', lineHeight: 1.65 }} placeholder="ルールの補足など..." />
               ) : (
                 <div style={displayStyle}>{notes || '—'}</div>
               )}
@@ -344,40 +298,42 @@ export default function SettingsClient({ tournament, players, templates }: Props
           }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '14px' }}>
               <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)' }}>参加者</div>
-              {isDraft && <div style={{ fontSize: '10px', color: 'var(--mist)' }}>改行、または半角カンマ区切り</div>}
+              <div style={{ fontSize: '10px', color: 'var(--mist)' }}>{players.length}名</div>
             </div>
-            {isDraft ? (
-              <>
-                <textarea
-                  value={playerText}
-                  onChange={e => setPlayerText(e.target.value)}
-                  style={{ ...inputStyle, minHeight: '100px', resize: 'vertical', lineHeight: 1.65 }}
-                  placeholder={"プレイヤー名A\nプレイヤー名B\nプレイヤー名C\n（改行または半角カンマ区切り）"}
-                />
-                <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '3px' }}>
-                  {playerText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean).length} 名入力中
-                  {playerText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean).length % 4 !== 0 && (
-                    <span style={{ color: 'var(--slate)', marginLeft: '6px' }}>
-                      (4の倍数になるよう黒子が追加されます)
-                    </span>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {players.map(p => (
-                  <span key={p.id} onClick={() => router.push(`/tournament/${tournament.id}/players#player-${p.id}`)} style={{
-                    padding: '4px 10px', background: 'var(--paper)',
-                    border: '1px solid var(--border)', borderRadius: '6px',
-                    fontSize: '12px', color: 'var(--cyan-deep)', cursor: 'pointer',
-                    transition: 'background 0.1s',
-                  }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--cyan-pale)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'var(--paper)')}
-                  >{p.name}</span>
-                ))}
-              </div>
-            )}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {players.map(p => (
+                <span key={p.id} onClick={() => router.push(`/tournament/${tournament.id}/players#player-${p.id}`)} style={{
+                  padding: '4px 10px', background: 'var(--paper)',
+                  border: '1px solid var(--border)', borderRadius: '6px',
+                  fontSize: '12px', color: 'var(--cyan-deep)', cursor: 'pointer',
+                  transition: 'background 0.1s',
+                }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--cyan-pale)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'var(--paper)')}
+                >{p.name}</span>
+              ))}
+            </div>
+            <button
+              onClick={() => router.push(`/tournament/${tournament.id}/players`)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                width: '100%', marginTop: '12px', padding: '10px',
+                background: 'transparent', border: '1.5px dashed var(--border-md)',
+                borderRadius: '9px', cursor: 'pointer',
+                fontSize: '12px', fontWeight: 600, color: 'var(--mist)',
+                transition: 'color 0.15s, border-color 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--cyan-deep)'; e.currentTarget.style.borderColor = 'rgba(0,240,255,0.3)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border-md)' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <line x1="19" y1="8" x2="19" y2="14"/>
+                <line x1="22" y1="11" x2="16" y2="11"/>
+              </svg>
+              参加者を追加
+            </button>
           </div>
 
           {/* 基本/詳細トグル */}
@@ -534,6 +490,22 @@ export default function SettingsClient({ tournament, players, templates }: Props
                 )}
               </>
             )}
+
+            <div style={cfgLabelStyle}>人数調整</div>
+            {isDraft ? (
+              <ToggleGroup
+                options={[
+                  { value: 'dummy', label: '黒子で補完' },
+                  { value: 'bye', label: '休みを許容' },
+                ]}
+                value={config.byeMode ?? 'dummy'}
+                onChange={v => setConfig(c => ({ ...c, byeMode: v as 'dummy' | 'bye' }))}
+              />
+            ) : (
+              <div style={cfgDisplayStyle}>
+                {(config.byeMode ?? 'dummy') === 'dummy' ? '黒子で補完' : '休みを許容'}
+              </div>
+            )}
           </div>
 
           {/* 終了済み通知 */}
@@ -614,12 +586,6 @@ export default function SettingsClient({ tournament, players, templates }: Props
               opacity: saving ? 0.6 : 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
             }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                <path d="M21 3v5h-5"/>
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                <path d="M3 21v-5h5"/>
-              </svg>
               {saving ? '保存中...' : '保存'}
             </button>
             <button data-tutorial="start-button" onClick={handleStart} disabled={starting} style={{

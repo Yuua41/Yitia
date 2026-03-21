@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { calcTableResults } from '@/lib/mahjong/calculator'
-import type { Tournament, RuleConfig, Result } from '@/types'
+import type { Tournament, RuleConfig } from '@/types'
 import { nanoid } from 'nanoid'
 import HeaderIcons from '@/components/ui/HeaderIcons'
 import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
@@ -31,7 +30,6 @@ export default function DashboardClient({ tournaments }: Props) {
   const [saving, setSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Tournament | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const [seeding, setSeeding] = useState(false)
   const [navigatingId, setNavigatingId] = useState<string | null>(null)
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
@@ -259,223 +257,6 @@ export default function DashboardClient({ tournaments }: Props) {
     router.refresh()
   }
 
-  async function handleCreateSample() {
-    setSeeding(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setSeeding(false); return }
-
-    const sampleConfig: RuleConfig = {
-      startingPoints: 25000,
-      returnPoints: 30000,
-      uma: [30, 10, -10, -30],
-      tieBreak: 'split',
-      seatMode: 'random',
-      umaMode: 'simple',
-      rounding: 'none',
-    }
-
-    // --- 完了済み大会 (32人 8回戦) ---
-    const { data: t1, error: e1 } = await supabase
-      .from('tournaments')
-      .insert({
-        owner_id: user.id,
-        name: '第42回 春季麻雀大会',
-        held_on: '2026-03-01',
-        notes: 'サンプル。25000点持ち30000点返し、ウマ30-10。同点は分け。',
-        num_rounds: 8,
-        config: sampleConfig,
-        admin_token: nanoid(12),
-        status: 'finished',
-      })
-      .select()
-      .single()
-
-    if (e1 || !t1) {
-      showToast('作成失敗: ' + e1?.message)
-      setSeeding(false)
-      return
-    }
-
-    const names32 = [
-      '佐藤', '田中', '鈴木', '山田', '渡辺', '高橋', '伊藤', '中村',
-      '小林', '加藤', '吉田', '山口', '松本', '井上', '木村', '清水',
-      '林', '斎藤', '山本', '池田', '橋本', '阿部', '石川', '前田',
-      '藤田', '小川', '岡田', '後藤', '長谷川', '石井', '村上', '近藤',
-    ]
-    const { data: p1 } = await supabase
-      .from('players')
-      .insert(names32.map((n, i) => ({
-        tournament_id: t1.id, name: n, seat_order: i, token: nanoid(12),
-        bonus: i === 2 ? -20 : i === 15 ? -10 : 0,
-      })))
-      .select()
-
-    if (!p1) { setSeeding(false); return }
-
-    // 32人を8卓に割り振り × 8ラウンド
-    // 各卓合計 = 100000、リアルなバリエーション（大勝ち→大負け等ジグザグ）
-    const rounds1: { r: number; t: number; pi: number[]; sc: number[] }[] = [
-      // R1 — 初戦：波乱含み
-      { r:1, t:1, pi:[0,1,2,3],     sc:[12000,35200,39800,13000] },
-      { r:1, t:2, pi:[4,5,6,7],     sc:[42100,18900,15000,24000] },
-      { r:1, t:3, pi:[8,9,10,11],   sc:[9500,38000,22500,30000] },
-      { r:1, t:4, pi:[12,13,14,15], sc:[31500,15500,41000,12000] },
-      { r:1, t:5, pi:[16,17,18,19], sc:[24000,29000,11000,36000] },
-      { r:1, t:6, pi:[20,21,22,23], sc:[16000,43800,26200,14000] },
-      { r:1, t:7, pi:[24,25,26,27], sc:[33100,10000,24900,32000] },
-      { r:1, t:8, pi:[28,29,30,31], sc:[22000,37000,13000,28000] },
-      // R2 — 巻き返しラウンド
-      { r:2, t:1, pi:[0,5,10,15],   sc:[41000,14000,31000,14000] },
-      { r:2, t:2, pi:[1,4,11,14],   sc:[18000,26700,42300,13000] },
-      { r:2, t:3, pi:[2,7,8,13],    sc:[15500,35000,28000,21500] },
-      { r:2, t:4, pi:[3,6,9,12],    sc:[28000,20000,27000,25000] },
-      { r:2, t:5, pi:[16,21,26,31], sc:[15000,25500,39500,20000] },
-      { r:2, t:6, pi:[17,20,27,30], sc:[33000,16000,22000,29000] },
-      { r:2, t:7, pi:[18,23,24,29], sc:[14000,46000,18000,22000] },
-      { r:2, t:8, pi:[19,22,25,28], sc:[30000,15000,25000,30000] },
-      // R3 — 混戦：同点あり
-      { r:3, t:1, pi:[0,7,9,14],    sc:[15000,21000,37500,26500] },
-      { r:3, t:2, pi:[1,6,8,15],    sc:[25000,25000,25000,25000] },
-      { r:3, t:3, pi:[2,5,11,12],   sc:[43200,13000,24800,19000] },
-      { r:3, t:4, pi:[3,4,10,13],   sc:[14000,34000,22000,30000] },
-      { r:3, t:5, pi:[16,23,25,30], sc:[28500,21000,28500,22000] },
-      { r:3, t:6, pi:[17,22,24,31], sc:[14000,27000,19000,40000] },
-      { r:3, t:7, pi:[18,21,27,28], sc:[32000,16000,28000,24000] },
-      { r:3, t:8, pi:[19,20,26,29], sc:[18000,36000,26000,20000] },
-      // R4 — 上位陣が沈む展開
-      { r:4, t:1, pi:[0,6,11,13],   sc:[28000,16000,28000,28000] },
-      { r:4, t:2, pi:[1,7,10,12],   sc:[14000,27500,38500,20000] },
-      { r:4, t:3, pi:[2,4,9,15],    sc:[25000,25000,25000,25000] },
-      { r:4, t:4, pi:[3,5,8,14],    sc:[14000,44000,18000,24000] },
-      { r:4, t:5, pi:[16,22,27,29], sc:[35000,16000,28000,21000] },
-      { r:4, t:6, pi:[17,23,26,28], sc:[17000,23000,31000,29000] },
-      { r:4, t:7, pi:[18,20,25,31], sc:[13000,42500,25500,19000] },
-      { r:4, t:8, pi:[19,21,24,30], sc:[27000,20000,29000,24000] },
-      // R5 — 中盤：逆転の兆し
-      { r:5, t:1, pi:[0,4,8,12],    sc:[39000,15000,26000,20000] },
-      { r:5, t:2, pi:[1,5,9,13],    sc:[16000,33500,28500,22000] },
-      { r:5, t:3, pi:[2,6,10,14],   sc:[19000,27000,27000,27000] },
-      { r:5, t:4, pi:[3,7,11,15],   sc:[13000,23000,47000,17000] },
-      { r:5, t:5, pi:[16,20,24,28], sc:[30000,18000,30000,22000] },
-      { r:5, t:6, pi:[17,21,25,29], sc:[25500,17000,36500,21000] },
-      { r:5, t:7, pi:[18,22,26,30], sc:[41000,13000,18000,28000] },
-      { r:5, t:8, pi:[19,23,27,31], sc:[25000,25000,25000,25000] },
-      // R6 — 終盤戦突入
-      { r:6, t:1, pi:[0,13,22,31],  sc:[16000,23000,32000,29000] },
-      { r:6, t:2, pi:[1,12,23,30],  sc:[44500,13000,24500,18000] },
-      { r:6, t:3, pi:[2,15,20,29],  sc:[28000,19000,28000,25000] },
-      { r:6, t:4, pi:[3,14,21,28],  sc:[15000,37000,27000,21000] },
-      { r:6, t:5, pi:[4,9,18,27],   sc:[35500,16000,22000,26500] },
-      { r:6, t:6, pi:[5,8,19,26],   sc:[15000,40000,25000,20000] },
-      { r:6, t:7, pi:[6,11,16,25],  sc:[28000,19000,29000,24000] },
-      { r:6, t:8, pi:[7,10,17,24],  sc:[12000,43000,27000,18000] },
-      // R7 — 最終盤：大荒れ
-      { r:7, t:1, pi:[0,14,19,28],  sc:[22000,26000,26000,26000] },
-      { r:7, t:2, pi:[1,15,18,29],  sc:[14000,36000,28000,22000] },
-      { r:7, t:3, pi:[2,12,17,30],  sc:[41500,13000,26500,19000] },
-      { r:7, t:4, pi:[3,13,16,31],  sc:[30000,16000,30000,24000] },
-      { r:7, t:5, pi:[4,10,23,26],  sc:[17000,38000,25000,20000] },
-      { r:7, t:6, pi:[5,11,22,27],  sc:[33000,16000,23000,28000] },
-      { r:7, t:7, pi:[6,8,21,24],   sc:[14000,45000,23000,18000] },
-      { r:7, t:8, pi:[7,9,20,25],   sc:[28500,19000,28500,24000] },
-      // R8 — 最終戦：逆転劇
-      { r:8, t:1, pi:[0,11,17,26],  sc:[34000,16000,28000,22000] },
-      { r:8, t:2, pi:[1,10,16,27],  sc:[15000,39500,25500,20000] },
-      { r:8, t:3, pi:[2,9,19,24],   sc:[30000,17000,23000,30000] },
-      { r:8, t:4, pi:[3,8,18,25],   sc:[42000,14000,26000,18000] },
-      { r:8, t:5, pi:[4,15,21,30],  sc:[27000,19000,27000,27000] },
-      { r:8, t:6, pi:[5,14,20,31],  sc:[15000,37500,26500,21000] },
-      { r:8, t:7, pi:[6,13,23,28],  sc:[33000,16000,29000,22000] },
-      { r:8, t:8, pi:[7,12,22,29],  sc:[46000,13000,24000,17000] },
-    ]
-
-    for (const rd of rounds1) {
-      const { data: tbl } = await supabase
-        .from('tables')
-        .insert({ tournament_id: t1.id, round_number: rd.r, table_number: rd.t, has_extra_sticks: false, is_validated: true })
-        .select().single()
-      if (!tbl) continue
-
-      const initResults = rd.pi.map((pIdx, seat) => ({
-        table_id: tbl.id, player_id: p1[pIdx].id, seat_index: seat,
-        score: rd.sc[seat], point: 0, rank: 0, is_negative_mode: false,
-      }))
-      const { data: rows } = await supabase.from('results').insert(initResults).select()
-      if (!rows) continue
-
-      const calc = calcTableResults(rows as Result[], sampleConfig)
-      for (const c of calc) {
-        await supabase.from('results').update({ point: c.point, rank: c.rank }).eq('id', c.id)
-      }
-    }
-
-    // --- 進行中大会 ---
-    const { data: t2 } = await supabase
-      .from('tournaments')
-      .insert({
-        owner_id: user.id,
-        name: '月例大会 3月',
-        held_on: '2026-03-15',
-        notes: null,
-        num_rounds: 3,
-        config: sampleConfig,
-        admin_token: nanoid(12),
-        status: 'ongoing',
-      })
-      .select().single()
-
-    if (t2) {
-      const names8 = ['佐藤', '田中', '鈴木', '山田', '渡辺', '高橋', '伊藤', '中村']
-      const { data: p2 } = await supabase
-        .from('players')
-        .insert(names8.map((n, i) => ({
-          tournament_id: t2.id, name: n, seat_order: i, token: nanoid(12), bonus: 0,
-        })))
-        .select()
-
-      if (p2) {
-        const rounds2: { r: number; t: number; pi: number[]; sc: number[]; validated: boolean }[] = [
-          { r: 1, t: 1, pi: [0,1,2,3], sc: [32000,29000,24000,15000], validated: true },
-          { r: 1, t: 2, pi: [4,5,6,7], sc: [36000,28000,21000,15000], validated: true },
-          { r: 2, t: 1, pi: [0,5,2,7], sc: [40000,25000,20000,15000], validated: true },
-          { r: 2, t: 2, pi: [1,4,3,6], sc: [30000,30000,25000,15000], validated: true },
-          { r: 3, t: 1, pi: [0,6,1,7], sc: [35000,18000,28000,19000], validated: true },
-          { r: 3, t: 2, pi: [2,4,3,5], sc: [22000,38000,14000,26000], validated: true },
-        ]
-
-        for (const rd of rounds2) {
-          const { data: tbl } = await supabase
-            .from('tables')
-            .insert({ tournament_id: t2.id, round_number: rd.r, table_number: rd.t, has_extra_sticks: false, is_validated: rd.validated })
-            .select().single()
-          if (!tbl) continue
-
-          if (rd.validated) {
-            const initResults = rd.pi.map((pIdx, seat) => ({
-              table_id: tbl.id, player_id: p2[pIdx].id, seat_index: seat,
-              score: rd.sc[seat], point: 0, rank: 0, is_negative_mode: false,
-            }))
-            const { data: rows } = await supabase.from('results').insert(initResults).select()
-            if (!rows) continue
-            const calc = calcTableResults(rows as Result[], sampleConfig)
-            for (const c of calc) {
-              await supabase.from('results').update({ point: c.point, rank: c.rank }).eq('id', c.id)
-            }
-          } else {
-            const initResults = rd.pi.map((pIdx, seat) => ({
-              table_id: tbl.id, player_id: p2[pIdx].id, seat_index: seat,
-              score: 0, point: 0, rank: 0, is_negative_mode: false,
-            }))
-            await supabase.from('results').insert(initResults)
-          }
-        }
-      }
-    }
-
-    setSeeding(false)
-    router.refresh()
-  }
-
   const statusLabel = (t: Tournament) => {
     if (t.status === 'ongoing') return { text: '進行中', color: 'var(--cyan)', bg: 'var(--cyan-pale)' }
     if (t.status === 'finished') return { text: '完了', color: 'var(--gold)', bg: 'var(--gold-pale)' }
@@ -509,18 +290,8 @@ export default function DashboardClient({ tournaments }: Props) {
       </div>
 
       <div className="dash-content" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <div style={{ marginBottom: '14px' }}>
           <div style={{ fontSize: '12px', color: 'var(--mist)' }}>{tournaments.length}件の大会</div>
-          <button
-            onClick={handleCreateSample}
-            disabled={seeding}
-            style={{
-              padding: '5px 14px', background: 'transparent',
-              border: '1.5px solid var(--cyan-deep)', borderRadius: '7px',
-              fontSize: '12px', color: 'var(--cyan-deep)', cursor: 'pointer',
-              fontWeight: 600, whiteSpace: 'nowrap',
-            }}
-          >{seeding ? '作成中...' : 'サンプルデータを作成'}</button>
         </div>
 
         <div data-tutorial="tournament-cards" className="dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
@@ -840,11 +611,6 @@ const inputStyle: React.CSSProperties = {
   background: 'var(--surface)', border: '1.5px solid var(--border-md)',
   borderRadius: '9px', fontSize: '15px', color: 'var(--ink)', outline: 'none',
   fontFamily: 'inherit', boxSizing: 'border-box',
-}
-const btnPrimary: React.CSSProperties = {
-  padding: '10px 22px', background: 'linear-gradient(135deg, #00c8d4, #00a0aa)', color: '#fff',
-  border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
-  boxShadow: '0 0 16px rgba(0,240,255,0.2)',
 }
 const btnOutline: React.CSSProperties = {
   padding: '10px 20px', background: 'var(--surface)',

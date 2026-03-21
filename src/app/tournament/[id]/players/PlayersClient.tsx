@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { nanoid } from 'nanoid'
 import type { Tournament, Player } from '@/types'
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function PlayersClient({ tournament, players: initialPlayers }: Props) {
+  const router = useRouter()
   const supabase = createClient()
   const [players, setPlayers] = useState(initialPlayers)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -24,6 +26,9 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
   const [qrPlayerId, setQrPlayerId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [bulkText, setBulkText] = useState(initialPlayers.map(p => p.name).join('\n'))
+  const [bulkSaving, setBulkSaving] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
   const addInputRef = useRef<HTMLInputElement>(null)
 
   // ハッシュで指定されたプレーヤーにスクロール
@@ -48,6 +53,133 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
   }, [editingId])
+
+  /** 卓組を再生成する共通関数（黒子自動追加対応） */
+  async function regenerateSchedule(currentPlayerIds: string[]) {
+    const byeMode = tournament.config.byeMode ?? 'dummy'
+
+    let allPlayerIds = [...currentPlayerIds]
+
+    // デフォルト: 4の倍数に足りない分は黒子を自動追加
+    if (byeMode === 'dummy' && allPlayerIds.length % 4 !== 0) {
+      const shortage = 4 - (allPlayerIds.length % 4)
+      const nextOrder = players.length > 0 ? Math.max(...players.map(p => p.seat_order)) + 1 : 0
+      const dummyInserts = Array.from({ length: shortage }, (_, i) => ({
+        tournament_id: tournament.id,
+        name: `黒子${i + 1}`,
+        seat_order: nextOrder + i,
+        token: nanoid(12),
+        bonus: 0,
+      }))
+      const { data: dummies, error: dErr } = await supabase
+        .from('players')
+        .insert(dummyInserts)
+        .select()
+      if (dErr || !dummies) {
+        alert('黒子の追加に失敗しました: ' + dErr?.message)
+        return
+      }
+      const updatedPlayers = [...players, ...dummies]
+      setPlayers(updatedPlayers)
+      setBulkText(updatedPlayers.map(p => p.name).join('\n'))
+      allPlayerIds = [...allPlayerIds, ...dummies.map(d => d.id)]
+    }
+
+    // 既存のtables/resultsを削除
+    const { data: existingTables } = await supabase
+      .from('tables')
+      .select('id')
+      .eq('tournament_id', tournament.id)
+
+    if (existingTables && existingTables.length > 0) {
+      await supabase.from('results').delete().in('table_id', existingTables.map(t => t.id))
+    }
+    await supabase.from('tables').delete().eq('tournament_id', tournament.id)
+
+    const { generateSchedule } = await import('@/lib/mahjong/calculator')
+    const schedule = generateSchedule(allPlayerIds, tournament.num_rounds)
+
+    for (const round of schedule) {
+      for (const tbl of round.tables) {
+        const { data: tableRow } = await supabase
+          .from('tables')
+          .insert({
+            tournament_id: tournament.id,
+            round_number: round.roundNumber,
+            table_number: round.tables.indexOf(tbl) + 1,
+            has_extra_sticks: false,
+            is_validated: false,
+          })
+          .select()
+          .single()
+        if (!tableRow) continue
+
+        await supabase.from('results').insert(
+          tbl.seatOrder.map((pid, seatIdx) => ({
+            table_id: tableRow.id,
+            player_id: pid,
+            seat_index: seatIdx,
+            score: 0,
+            point: 0,
+            rank: 0,
+            is_negative_mode: false,
+          }))
+        )
+      }
+    }
+  }
+
+  async function handleBulkSave() {
+    const newNames = bulkText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean)
+    if (newNames.length < 4) return alert('プレイヤーを4名以上入力してください')
+
+    let adjustedNames = [...newNames]
+    while (adjustedNames.length % 4 !== 0) {
+      adjustedNames.push(`黒子${4 - (adjustedNames.length % 4)}`)
+    }
+
+    const playersChanged = adjustedNames.length !== players.length ||
+      adjustedNames.some((n, i) => n !== players[i]?.name)
+    if (!playersChanged) return showToast('変更はありません')
+
+    const ok = confirm('参加者を一括更新します。卓組が再生成され，入力済みのスコアは削除されます。よろしいですか？')
+    if (!ok) return
+
+    setBulkSaving(true)
+
+    // 既存プレイヤーを削除して新規作成
+    await supabase.from('players').delete().eq('tournament_id', tournament.id)
+    const { data: newPlayers, error: pErr } = await supabase
+      .from('players')
+      .insert(adjustedNames.map((n, idx) => ({
+        tournament_id: tournament.id,
+        name: n,
+        seat_order: idx,
+        token: nanoid(12),
+        bonus: 0,
+      })))
+      .select()
+    if (pErr || !newPlayers) {
+      alert('プレイヤー更新失敗: ' + pErr?.message)
+      setBulkSaving(false)
+      return
+    }
+
+    await regenerateSchedule(newPlayers.map(p => p.id))
+    setBulkSaving(false)
+    router.refresh()
+  }
+
+  async function handleRegenerate() {
+    const ok = confirm('卓組を再生成します。入力済みのスコアは削除されます。よろしいですか？')
+    if (!ok) return
+
+    setRegenerating(true)
+    await regenerateSchedule(players.map(p => p.id))
+    setRegenerating(false)
+    showToast('卓組を再生成しました')
+    router.refresh()
+  }
 
   async function handleRefresh() {
     setRefreshing(true)
@@ -105,18 +237,8 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
   }
 
   async function handleDeletePlayer(player: Player) {
-    const ok = confirm(`「${player.name}」を削除しますか？\nこの参加者のスコアデータも全て削除されます。`)
+    const ok = confirm(`「${player.name}」を削除しますか？\n卓組が再生成され，入力済みのスコアは削除されます。`)
     if (!ok) return
-
-    const { error: rErr } = await supabase
-      .from('results')
-      .delete()
-      .eq('player_id', player.id)
-
-    if (rErr) {
-      alert('削除に失敗しました: ' + rErr.message)
-      return
-    }
 
     const { error } = await supabase
       .from('players')
@@ -128,8 +250,12 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
       return
     }
 
-    setPlayers(prev => prev.filter(p => p.id !== player.id))
+    const updatedPlayers = players.filter(p => p.id !== player.id)
+    setPlayers(updatedPlayers)
+    setBulkText(updatedPlayers.map(p => p.name).join('\n'))
+    await regenerateSchedule(updatedPlayers.map(p => p.id))
     showToast(`「${player.name}」を削除しました`)
+    router.refresh()
   }
 
   async function handleAddPlayer() {
@@ -157,10 +283,14 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
       return
     }
 
-    setPlayers(prev => [...prev, data])
+    const updatedPlayers = [...players, data]
+    setPlayers(updatedPlayers)
+    setBulkText(updatedPlayers.map(p => p.name).join('\n'))
     setNewName('')
+    await regenerateSchedule(updatedPlayers.map(p => p.id))
     setAdding(false)
     showToast(`「${data.name}」を追加しました`)
+    router.refresh()
   }
 
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
@@ -185,7 +315,10 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
         position: 'relative', zIndex: 100, overflow: 'visible',
       }}>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', minWidth: 0 }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '100px', fontSize: '9px', fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0, background: tournament.status === 'ongoing' ? 'var(--cyan-pale)' : tournament.status === 'finished' ? 'var(--gold-pale)' : 'var(--hover-bg)', color: tournament.status === 'ongoing' ? 'var(--cyan)' : tournament.status === 'finished' ? 'var(--gold)' : 'var(--mist)' }}>{tournament.status === 'ongoing' ? '進行中' : tournament.status === 'finished' ? '完了' : '下書き'}</span>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <HelpButton steps={playersSteps} pageKey="players" />
           <HeaderIcons />
@@ -204,6 +337,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
               }}>{players.length}名</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {tournament.status === 'draft' && (
               <button
                 onClick={() => {
                   addInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -225,27 +359,57 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
                 </svg>
                 追加
               </button>
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                style={{
-                  padding: '5px 14px', borderRadius: '7px',
-                  background: 'transparent', color: 'var(--cyan-deep)',
-                  border: '1.5px solid var(--cyan-deep)', fontSize: '12px', fontWeight: 600,
-                  cursor: 'pointer', opacity: refreshing ? 0.6 : 1,
-                  display: 'flex', alignItems: 'center', gap: '5px',
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                  <path d="M21 3v5h-5"/>
-                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                  <path d="M3 21v-5h5"/>
-                </svg>
-                {refreshing ? '保存中...' : '保存'}
-              </button>
+              )}
             </div>
           </div>
+
+          {/* テキスト一括編集 (下書き時のみ) */}
+          {tournament.status === 'draft' && (
+          <div style={{
+            background: 'var(--card-bg)',
+            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+            border: '1.5px solid var(--card-border)',
+            borderRadius: '12px', padding: '18px', marginBottom: '16px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '14px' }}>
+              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)' }}>一括編集</div>
+              <div style={{ fontSize: '10px', color: 'var(--mist)' }}>改行または半角カンマ区切り</div>
+            </div>
+            <textarea
+              value={bulkText}
+              onChange={e => setBulkText(e.target.value)}
+              style={{
+                width: '100%', padding: '8px 12px',
+                background: 'var(--paper)', border: '1.5px solid var(--border-md)',
+                borderRadius: '9px', fontSize: '13px', color: 'var(--ink)', outline: 'none',
+                fontFamily: 'inherit', minHeight: '100px', resize: 'vertical', lineHeight: 1.65,
+                boxSizing: 'border-box',
+              }}
+              placeholder={"プレイヤー名A\nプレイヤー名B\nプレイヤー名C"}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--mist)' }}>
+                {bulkText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean).length} 名入力中
+                {bulkText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean).length % 4 !== 0 && (
+                  <span style={{ color: 'var(--slate)', marginLeft: '6px' }}>
+                    (4の倍数になるよう黒子が追加されます)
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={handleBulkSave}
+                disabled={bulkSaving}
+                style={{
+                  padding: '6px 16px', borderRadius: '7px',
+                  background: 'transparent', color: 'var(--cyan-deep)',
+                  border: '1.5px solid var(--cyan-deep)', fontSize: '12px', fontWeight: 600,
+                  cursor: 'pointer', opacity: bulkSaving ? 0.6 : 1,
+                }}
+              >{bulkSaving ? '保存中...' : '一括更新'}</button>
+            </div>
+          </div>
+          )}
 
           {/* 参加者一覧 */}
           <div data-tutorial="players-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -306,6 +470,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
                   onMouseLeave={e => { e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border)' }}
                 ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg></button>
 
+                {tournament.status === 'draft' && (
                 <button
                   onClick={() => handleDeletePlayer(player)}
                   style={{
@@ -318,40 +483,27 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
                   onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)' }}
                   onMouseLeave={e => { e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border)' }}
                 ><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                )}
 
                 <button
                   onClick={() => setQrPlayerId(player.id)}
+                  title="QRコード"
                   style={{
-                    fontSize: '10px', fontFamily: 'monospace',
                     color: 'var(--mist)', background: 'var(--paper)',
                     border: '1px solid var(--border)', borderRadius: '5px',
                     padding: '3px 7px', cursor: 'pointer',
-                    flexShrink: 0, transition: 'color 0.1s',
+                    flexShrink: 0, transition: 'color 0.1s, border-color 0.1s',
+                    lineHeight: 1,
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--cyan-deep)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--mist)')}
-                >QR</button>
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--cyan-deep)'; e.currentTarget.style.borderColor = 'rgba(0,240,255,0.3)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="4" height="4"/><line x1="22" y1="14" x2="22" y2="18"/><line x1="18" y1="22" x2="22" y2="22"/></svg></button>
 
-                <a
-                  href={`/p/${player.token}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    fontSize: '10px', fontFamily: 'monospace',
-                    color: 'var(--mist)', textDecoration: 'none',
-                    padding: '3px 7px', borderRadius: '5px',
-                    background: 'var(--paper)', border: '1px solid var(--border)',
-                    flexShrink: 0, transition: 'color 0.1s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--cyan-deep)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--mist)')}
-                >
-                  個人ページ →
-                </a>
               </div>
             ))}
 
-            {/* 参加者追加 */}
+            {/* 参加者追加 (下書き時のみ) */}
+            {tournament.status === 'draft' && (
             <div data-tutorial="players-add" style={{
               display: 'flex', alignItems: 'center', gap: '10px',
               padding: '12px 16px',
@@ -393,6 +545,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
                 }}
               >{adding ? '追加中...' : '追加'}</button>
             </div>
+            )}
           </div>
 
           {/* 将来拡張エリア */}
@@ -405,7 +558,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
               Coming Soon
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {['連絡先', 'メモ', 'プロ同卓設定'].map(label => (
+              {['連絡先', 'メモ', 'マッチング設定', 'プロ同卓設定'].map(label => (
                 <span key={label} style={{
                   padding: '5px 12px', borderRadius: '6px',
                   background: 'rgba(0,240,255,0.05)', border: '1px solid var(--border)',
@@ -416,6 +569,37 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
           </div>
         </div>
       </div>
+
+      {/* 下部固定フッター (終了後は非表示) */}
+      {tournament.status !== 'finished' && (
+      <div className="players-header" style={{
+        borderTop: '1px solid var(--header-border)',
+        background: 'var(--header-bg)',
+        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        flexShrink: 0,
+      }}>
+        <div style={{ maxWidth: '600px', padding: '14px 0', display: 'flex', gap: '10px' }}>
+          <button onClick={handleRefresh} disabled={refreshing} style={{
+            flex: 1, padding: '10px', background: 'transparent', color: 'var(--cyan-deep)',
+            border: '1.5px solid var(--cyan-deep)', borderRadius: '8px',
+            fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+            opacity: refreshing ? 0.6 : 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+          }}>
+            {refreshing ? '保存中...' : '保存'}
+          </button>
+          <button onClick={handleRegenerate} disabled={regenerating} style={{
+            flex: 1, padding: '10px', background: 'transparent', color: 'var(--gold)',
+            border: '1.5px solid var(--gold)', borderRadius: '8px',
+            fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+            opacity: regenerating ? 0.6 : 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+          }}>
+            {regenerating ? '再編中...' : '卓組を再編'}
+          </button>
+        </div>
+      </div>
+      )}
 
       {/* トースト通知 */}
       {toast && (

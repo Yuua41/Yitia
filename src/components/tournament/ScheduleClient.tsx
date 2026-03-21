@@ -357,12 +357,6 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
                 display: 'flex', alignItems: 'center', gap: '5px',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                <path d="M21 3v5h-5"/>
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                <path d="M3 21v-5h5"/>
-              </svg>
               {refreshing ? '更新中...' : '更新'}
             </button>
           </div>
@@ -532,11 +526,13 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
                           <span style={{ color: 'var(--cyan-deep)' }}>✓</span> 卓外点棒あり
                         </div>
                       )}
+                      {tournament.status !== 'finished' && (
                       <button onClick={() => handleUnvalidate(table.id)} style={{
                         width: '100%', padding: '6px', background: 'transparent',
                         border: '1.5px solid var(--border-md)', borderRadius: '7px',
                         fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', color: 'var(--slate)',
                       }}>スコア修正</button>
+                      )}
                     </>
                   ) : (
                     <>

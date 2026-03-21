@@ -137,17 +137,36 @@ export function generateSchedule(
     playerIds.forEach((id2) => { if (id !== id2) matchCounts[id][id2] = 0 })
   })
 
+  const remainder = playerIds.length % 4
   const numTables = Math.floor(playerIds.length / 4)
   const rounds = []
 
+  // 休み回数を追跡（bye モード用）
+  const byeCounts: Record<string, number> = {}
+  playerIds.forEach((id) => (byeCounts[id] = 0))
+
   for (let r = 1; r <= numRounds; r++) {
+    // 余りがある場合、休み回数が少ないプレイヤーからbyeを選出
+    let activePlayers = [...playerIds]
+    if (remainder > 0) {
+      const byeCount = playerIds.length - numTables * 4
+      const sorted = [...playerIds].sort((a, b) => byeCounts[a] - byeCounts[b])
+      // 休み回数が最も少ないグループからランダムにbye選出
+      const minBye = byeCounts[sorted[0]]
+      const candidates = sorted.filter(id => byeCounts[id] === minBye)
+      const shuffledCandidates = candidates.sort(() => Math.random() - 0.5)
+      const byePlayers = new Set(shuffledCandidates.slice(0, byeCount))
+      byePlayers.forEach(id => byeCounts[id]++)
+      activePlayers = playerIds.filter(id => !byePlayers.has(id))
+    }
+
     // 複数のランダムシャッフルを試行し、対戦重複コストが最小のものを選択
     const attempts = Math.min(200, 20 + playerIds.length * 5)
     let bestGrouping: string[][] = []
     let bestCost = Infinity
 
     for (let a = 0; a < attempts; a++) {
-      const shuffled = [...playerIds].sort(() => Math.random() - 0.5)
+      const shuffled = [...activePlayers].sort(() => Math.random() - 0.5)
       const groups: string[][] = []
       for (let t = 0; t < numTables; t++) {
         groups.push(shuffled.slice(t * 4, (t + 1) * 4))
