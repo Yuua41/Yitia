@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Tournament, RuleConfig } from '@/types'
@@ -310,7 +310,9 @@ export default function DashboardClient({ tournaments }: Props) {
                   if (card.count > 0) document.getElementById(card.anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                 }} style={{
                   background: 'var(--card-bg)', border: '1px solid var(--card-border)',
+                  backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
                   borderRadius: '12px', padding: '16px 18px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
                   cursor: card.count > 0 ? 'pointer' : 'default',
                   transition: 'box-shadow 0.2s',
                 }}
@@ -324,6 +326,34 @@ export default function DashboardClient({ tournaments }: Props) {
             </div>
           )
         })()}
+
+        {/* 新しい大会を作成 */}
+        <div
+          data-tutorial="new-tournament"
+          onClick={() => setShowForm(true)}
+          style={{
+            background: 'var(--card-bg)', border: '1px solid var(--card-border)',
+            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+            borderRadius: '14px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center',
+            padding: '18px 20px', gap: '14px', marginBottom: '24px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            transition: 'all 0.18s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-md)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--card-border)' }}
+        >
+          <div style={{
+            width: '40px', height: '40px', borderRadius: '50%',
+            border: '1.5px solid var(--border-md)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '18px', color: 'var(--cyan-deep)', fontWeight: 300, flexShrink: 0,
+          }}>+</div>
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.01em' }}>新しい大会を作成</div>
+            <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '2px' }}>大会情報を入力して開始</div>
+          </div>
+        </div>
 
         {/* カレンダー */}
         <DashboardCalendar tournaments={tournaments} onNavigate={(id, status) => {
@@ -466,38 +496,6 @@ export default function DashboardClient({ tournaments }: Props) {
             )
                   })}
 
-                  {section.key === 'draft' && (
-                    <div
-                      data-tutorial="new-tournament"
-                      onClick={() => setShowForm(true)}
-                      style={{
-                        background: 'var(--card-bg)', border: '1px solid var(--card-border)',
-                        borderRadius: '14px', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center',
-                        padding: '18px 20px', gap: '14px',
-                        transition: 'all 0.18s',
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.background = 'var(--card-bg)'
-                        e.currentTarget.style.borderColor = 'var(--border-md)'
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.background = 'var(--card-bg)'
-                        e.currentTarget.style.borderColor = 'var(--card-border)'
-                      }}
-                    >
-                      <div style={{
-                        width: '40px', height: '40px', borderRadius: '50%',
-                        border: '1.5px solid var(--border-md)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '18px', color: 'var(--cyan-deep)', fontWeight: 300, flexShrink: 0,
-                      }}>+</div>
-                      <div>
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.01em' }}>新しい大会を作成</div>
-                        <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '2px' }}>大会情報を入力して開始</div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             )
@@ -693,6 +691,8 @@ function DashboardCalendar({ tournaments, onNavigate, onDateClick }: {
     const now = new Date()
     return { year: now.getFullYear(), month: now.getMonth() }
   })
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const calRef = useRef<HTMLDivElement>(null)
 
   const { year, month } = current
   const firstDay = new Date(year, month, 1)
@@ -719,19 +719,34 @@ function DashboardCalendar({ tournaments, onNavigate, onDateClick }: {
 
   function prev() {
     setCurrent(c => c.month === 0 ? { year: c.year - 1, month: 11 } : { year: c.year, month: c.month - 1 })
+    setSelectedDay(null)
   }
   function next() {
     setCurrent(c => c.month === 11 ? { year: c.year + 1, month: 0 } : { year: c.year, month: c.month + 1 })
+    setSelectedDay(null)
   }
   function goToday() {
     const now = new Date()
     setCurrent({ year: now.getFullYear(), month: now.getMonth() })
+    setSelectedDay(null)
   }
 
+  // 外側クリックで閉じる
+  useEffect(() => {
+    if (selectedDay === null) return
+    function handleClick(e: MouseEvent) {
+      if (calRef.current && !calRef.current.contains(e.target as Node)) setSelectedDay(null)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [selectedDay])
+
   return (
-    <div style={{
+    <div ref={calRef} style={{
       background: 'var(--card-bg)', border: '1px solid var(--card-border)',
+      backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
       borderRadius: '12px', padding: '16px 18px', marginBottom: '24px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
     }}>
       {/* ヘッダー */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
@@ -772,35 +787,78 @@ function DashboardCalendar({ tournaments, onNavigate, onDateClick }: {
           const events = dateMap.get(dateStr) ?? []
           const isToday = dateStr === todayStr
           const dayOfWeek = i % 7
+          const isOpen = selectedDay === day
 
           return (
             <div key={i} style={{
-              position: 'relative', textAlign: 'center', padding: '6px 2px',
-              borderRadius: '6px',
-              background: isToday ? 'var(--cyan-pale)' : 'transparent',
+              position: 'relative', textAlign: 'center', padding: '8px 2px',
+              borderRadius: '8px',
+              background: isToday ? 'var(--cyan-pale)' : isOpen ? 'var(--hover-bg)' : 'transparent',
               cursor: 'pointer',
               transition: 'background 0.1s',
             }}
-              onMouseEnter={e => { if (!isToday) e.currentTarget.style.background = 'var(--hover-bg)' }}
-              onMouseLeave={e => { if (!isToday) e.currentTarget.style.background = 'transparent' }}
-              onClick={() => {
-                if (events.length === 1) onNavigate(events[0].id, events[0].status)
-                else onDateClick(dateStr)
-              }}
+              onClick={() => setSelectedDay(isOpen ? null : day)}
             >
               <div style={{
-                fontSize: '12px', fontWeight: isToday ? 700 : 400,
+                fontSize: '14px', fontWeight: isToday ? 700 : 500,
                 fontFamily: 'monospace',
                 color: isToday ? 'var(--cyan-deep)' : dayOfWeek === 0 ? 'var(--red)' : dayOfWeek === 6 ? 'var(--cyan-deep)' : 'var(--ink)',
               }}>{day}</div>
               {events.length > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '2px', marginTop: '2px' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '2px', marginTop: '3px' }}>
                   {events.slice(0, 3).map((t, j) => (
                     <div key={j} style={{
                       width: '5px', height: '5px', borderRadius: '50%',
                       background: t.status === 'ongoing' ? 'var(--cyan)' : t.status === 'finished' ? 'var(--gold)' : 'var(--mist)',
                     }} />
                   ))}
+                </div>
+              )}
+              {/* ホバー時のポップオーバー */}
+              {isOpen && (
+                <div style={{
+                  position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+                  marginBottom: '4px', zIndex: 100,
+                  background: 'var(--surface)', border: '1px solid var(--border-md)',
+                  borderRadius: '8px', padding: '6px 0', minWidth: '160px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {events.map(t => {
+                    const dotColor = t.status === 'ongoing' ? 'var(--cyan)' : t.status === 'finished' ? 'var(--gold)' : 'var(--mist)'
+                    return (
+                      <div
+                        key={t.id}
+                        onClick={e => { e.stopPropagation(); setSelectedDay(null); onNavigate(t.id, t.status) }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '6px',
+                          padding: '6px 12px', fontSize: '11px', fontWeight: 600,
+                          color: 'var(--ink)', cursor: 'pointer',
+                          transition: 'background 0.1s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                      >
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.name}</span>
+                      </div>
+                    )
+                  })}
+                  {events.length > 0 && <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />}
+                  <div
+                    onClick={e => { e.stopPropagation(); setSelectedDay(null); onDateClick(dateStr) }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      padding: '6px 12px', fontSize: '11px', fontWeight: 600,
+                      color: 'var(--cyan-deep)', cursor: 'pointer',
+                      transition: 'background 0.1s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <span style={{ fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>+</span>
+                    <span>新しい大会を作成</span>
+                  </div>
                 </div>
               )}
             </div>
