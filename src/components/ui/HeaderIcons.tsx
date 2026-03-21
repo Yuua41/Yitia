@@ -231,18 +231,6 @@ export default function HeaderIcons() {
               )}
               <span>{isDark ? 'ライトモード' : 'ダークモード'}</span>
             </button>
-            <button
-              style={menuItemStyle}
-              onClick={() => setOpenMenu(null)}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--hover-bg)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-              <span>プロフィール(未実装)</span>
-            </button>
           </div>
         )}
       </div>

@@ -20,9 +20,11 @@ export default async function ProfilePage() {
       </div>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', color: 'var(--mist)' }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>👤</div>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--mist)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '12px' }}>
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
           <div style={{ fontSize: '16px', fontWeight: 600 }}>準備中</div>
-          <div style={{ fontSize: '13px', marginTop: '6px' }}>この機能は近日公開予定です</div>
         </div>
       </div>
     </div>

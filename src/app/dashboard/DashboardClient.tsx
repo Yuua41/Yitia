@@ -293,53 +293,70 @@ export default function DashboardClient({ tournaments }: Props) {
       <div className="dash-content" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
         {/* サマリーカード */}
         {(() => {
+          const draftCount = tournaments.filter(t => t.status === 'draft').length
           const ongoingCount = tournaments.filter(t => t.status === 'ongoing').length
-          const totalPlayers = tournaments.reduce((sum, t) => sum + (t.players?.length ?? 0), 0)
-          const latestDate = tournaments.map(t => t.held_on).filter(Boolean).sort().reverse()[0] ?? null
-          const latest = tournaments[0] ?? null
-          const summaryCards = [
-            { label: 'STATUS', value: ongoingCount > 0 ? `進行中 (${ongoingCount})` : 'なし', color: ongoingCount > 0 ? 'var(--cyan)' : 'var(--mist)' },
-            { label: 'LAST TOURNAMENT', value: latestDate ?? '未定', color: 'var(--ink)' },
-            { label: 'TOTAL PLAYERS', value: `${totalPlayers}名`, color: 'var(--ink)' },
-            { label: 'TOURNAMENTS', value: `${tournaments.length}件`, color: 'var(--ink)' },
-            { label: 'LATEST', value: latest?.name ?? 'なし', color: 'var(--ink)', onClick: latest ? () => {
-              setNavigatingId(latest.id)
-              const dest = latest.status === 'draft' ? 'settings' : latest.status === 'finished' ? 'standings' : 'schedule'
-              router.push(`/tournament/${latest.id}/${dest}`)
-            } : undefined },
+          const finishedCount = tournaments.filter(t => t.status === 'finished').length
+          const statusCards = [
+            { label: '進行中', count: ongoingCount, color: 'var(--cyan)', anchor: 'section-ongoing' },
+            { label: '下書き', count: draftCount, color: 'var(--mist)', anchor: 'section-draft' },
+            { label: '完了', count: finishedCount, color: 'var(--gold)', anchor: 'section-finished' },
           ]
           return (
             <div className="dash-summary" style={{
               display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px',
             }}>
-              {summaryCards.map((card, i) => (
-                <div key={i} onClick={card.onClick} style={{
+              {statusCards.map(card => (
+                <div key={card.label} onClick={() => {
+                  if (card.count > 0) document.getElementById(card.anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }} style={{
                   background: 'var(--card-bg)', border: '1px solid var(--card-border)',
                   borderRadius: '12px', padding: '16px 18px',
-                  cursor: card.onClick ? 'pointer' : 'default',
-                  gridColumn: i >= 3 ? (i === 4 ? 'span 2' : undefined) : undefined,
+                  cursor: card.count > 0 ? 'pointer' : 'default',
                   transition: 'box-shadow 0.2s',
                 }}
-                  onMouseEnter={e => { if (card.onClick) e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)' }}
+                  onMouseEnter={e => { if (card.count > 0) e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)' }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none' }}
                 >
                   <div style={{ fontSize: '10px', fontFamily: 'monospace', letterSpacing: '0.18em', color: 'var(--mist)', marginBottom: '8px', textTransform: 'uppercase' }}>{card.label}</div>
-                  <div style={{ fontSize: '18px', fontWeight: 700, color: card.color, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{card.value}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 700, color: card.count > 0 ? card.color : 'var(--mist)', letterSpacing: '-0.01em' }}>{card.count}件</div>
                 </div>
               ))}
             </div>
           )
         })()}
 
-        <div style={{ marginBottom: '14px' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)' }}>大会一覧<span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--mist)', marginLeft: '8px' }}>{tournaments.length}件</span></div>
-        </div>
+        {/* カレンダー */}
+        <DashboardCalendar tournaments={tournaments} onNavigate={(id, status) => {
+          setNavigatingId(id)
+          const dest = status === 'draft' ? 'settings' : status === 'finished' ? 'standings' : 'schedule'
+          router.push(`/tournament/${id}/${dest}`)
+        }} onDateClick={(dateStr) => {
+          setHeldOn(dateStr)
+          setShowForm(true)
+        }} />
 
-        <div data-tutorial="tournament-cards" className="dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
-          {tournaments.map(t => {
-            const s = statusLabel(t)
-            return (
-              <div key={t.id} style={{
+        {/* ステータス別大会一覧 */}
+        <div data-tutorial="tournament-cards">
+        {([
+          { key: 'ongoing' as const, label: '進行中', id: 'section-ongoing' },
+          { key: 'draft' as const, label: '下書き', id: 'section-draft' },
+          { key: 'finished' as const, label: '完了', id: 'section-finished' },
+        ] as const).map(section => {
+          const filtered = tournaments.filter(t => t.status === section.key)
+          if (filtered.length === 0 && section.key !== 'draft') return null
+          return (
+            <div key={section.key} id={section.id} style={{ marginBottom: '24px' }}>
+              <div style={{ marginBottom: '14px' }}>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)' }}>
+                  {section.label}
+                  <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--mist)', marginLeft: '8px' }}>{filtered.length}件</span>
+                </div>
+              </div>
+              <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
+                {filtered.map(t => {
+                  const s = statusLabel(t)
+                  return (
+                    <div key={t.id} style={{
                 background: 'var(--card-bg)',
                 border: '1px solid var(--card-border)',
                 backdropFilter: 'blur(16px)',
@@ -447,38 +464,44 @@ export default function DashboardClient({ tournaments }: Props) {
                 </div>
               </div>
             )
-          })}
+                  })}
 
-          <div
-            data-tutorial="new-tournament"
-            onClick={() => setShowForm(true)}
-            style={{
-              background: 'var(--card-bg)', border: '1px solid var(--card-border)',
-              borderRadius: '14px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center',
-              padding: '18px 20px', gap: '14px',
-              transition: 'all 0.18s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'var(--card-bg)'
-              e.currentTarget.style.borderColor = 'var(--border-md)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'var(--card-bg)'
-              e.currentTarget.style.borderColor = 'var(--card-border)'
-            }}
-          >
-            <div style={{
-              width: '40px', height: '40px', borderRadius: '50%',
-              border: '1.5px solid var(--border-md)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '18px', color: 'var(--cyan-deep)', fontWeight: 300, flexShrink: 0,
-            }}>+</div>
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.01em' }}>新しい大会を作成</div>
-              <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '2px' }}>大会情報を入力して開始</div>
-            </div>
-          </div>
+                  {section.key === 'draft' && (
+                    <div
+                      data-tutorial="new-tournament"
+                      onClick={() => setShowForm(true)}
+                      style={{
+                        background: 'var(--card-bg)', border: '1px solid var(--card-border)',
+                        borderRadius: '14px', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center',
+                        padding: '18px 20px', gap: '14px',
+                        transition: 'all 0.18s',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = 'var(--card-bg)'
+                        e.currentTarget.style.borderColor = 'var(--border-md)'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'var(--card-bg)'
+                        e.currentTarget.style.borderColor = 'var(--card-border)'
+                      }}
+                    >
+                      <div style={{
+                        width: '40px', height: '40px', borderRadius: '50%',
+                        border: '1.5px solid var(--border-md)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '18px', color: 'var(--cyan-deep)', fontWeight: 300, flexShrink: 0,
+                      }}>+</div>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.01em' }}>新しい大会を作成</div>
+                        <div style={{ fontSize: '11px', color: 'var(--mist)', marginTop: '2px' }}>大会情報を入力して開始</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -657,4 +680,133 @@ const btnOutline: React.CSSProperties = {
   padding: '10px 20px', background: 'var(--surface)',
   border: '1.5px solid var(--border-md)', color: 'var(--slate)',
   borderRadius: '8px', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
+}
+
+/* ─── Dashboard Calendar ─── */
+
+function DashboardCalendar({ tournaments, onNavigate, onDateClick }: {
+  tournaments: Tournament[]
+  onNavigate: (id: string, status: Tournament['status']) => void
+  onDateClick: (dateStr: string) => void
+}) {
+  const [current, setCurrent] = useState(() => {
+    const now = new Date()
+    return { year: now.getFullYear(), month: now.getMonth() }
+  })
+
+  const { year, month } = current
+  const firstDay = new Date(year, month, 1)
+  const startOffset = firstDay.getDay() // 0=Sun already
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+  const cells: (number | null)[] = []
+  for (let i = 0; i < startOffset; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+  while (cells.length % 7 !== 0) cells.push(null)
+
+  // 大会の日付マップ
+  const dateMap = new Map<string, Tournament[]>()
+  tournaments.forEach(t => {
+    if (!t.held_on) return
+    const key = t.held_on // "YYYY-MM-DD"
+    if (!dateMap.has(key)) dateMap.set(key, [])
+    dateMap.get(key)!.push(t)
+  })
+
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  const weekDays = ['日', '月', '火', '水', '木', '金', '土']
+
+  function prev() {
+    setCurrent(c => c.month === 0 ? { year: c.year - 1, month: 11 } : { year: c.year, month: c.month - 1 })
+  }
+  function next() {
+    setCurrent(c => c.month === 11 ? { year: c.year + 1, month: 0 } : { year: c.year, month: c.month + 1 })
+  }
+  function goToday() {
+    const now = new Date()
+    setCurrent({ year: now.getFullYear(), month: now.getMonth() })
+  }
+
+  return (
+    <div style={{
+      background: 'var(--card-bg)', border: '1px solid var(--card-border)',
+      borderRadius: '12px', padding: '16px 18px', marginBottom: '24px',
+    }}>
+      {/* ヘッダー */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <button onClick={prev} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--mist)', fontSize: '16px', padding: '4px 8px' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', fontFamily: 'monospace' }}>
+            {year}年{month + 1}月
+          </span>
+          <button onClick={goToday} style={{
+            padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 600,
+            background: 'var(--paper)', border: '1px solid var(--border)', color: 'var(--mist)',
+            cursor: 'pointer',
+          }}>今日</button>
+        </div>
+        <button onClick={next} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--mist)', fontSize: '16px', padding: '4px 8px' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+
+      {/* 曜日ヘッダー */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '4px' }}>
+        {weekDays.map((d, i) => (
+          <div key={d} style={{
+            textAlign: 'center', fontSize: '10px', fontWeight: 600, fontFamily: 'monospace',
+            color: i === 0 ? 'var(--red)' : i === 6 ? 'var(--cyan-deep)' : 'var(--mist)',
+            padding: '4px 0',
+          }}>{d}</div>
+        ))}
+      </div>
+
+      {/* 日付グリッド */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+        {cells.map((day, i) => {
+          if (day === null) return <div key={`e${i}`} />
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+          const events = dateMap.get(dateStr) ?? []
+          const isToday = dateStr === todayStr
+          const dayOfWeek = i % 7
+
+          return (
+            <div key={i} style={{
+              position: 'relative', textAlign: 'center', padding: '6px 2px',
+              borderRadius: '6px',
+              background: isToday ? 'var(--cyan-pale)' : 'transparent',
+              cursor: 'pointer',
+              transition: 'background 0.1s',
+            }}
+              onMouseEnter={e => { if (!isToday) e.currentTarget.style.background = 'var(--hover-bg)' }}
+              onMouseLeave={e => { if (!isToday) e.currentTarget.style.background = 'transparent' }}
+              onClick={() => {
+                if (events.length === 1) onNavigate(events[0].id, events[0].status)
+                else onDateClick(dateStr)
+              }}
+            >
+              <div style={{
+                fontSize: '12px', fontWeight: isToday ? 700 : 400,
+                fontFamily: 'monospace',
+                color: isToday ? 'var(--cyan-deep)' : dayOfWeek === 0 ? 'var(--red)' : dayOfWeek === 6 ? 'var(--cyan-deep)' : 'var(--ink)',
+              }}>{day}</div>
+              {events.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '2px', marginTop: '2px' }}>
+                  {events.slice(0, 3).map((t, j) => (
+                    <div key={j} style={{
+                      width: '5px', height: '5px', borderRadius: '50%',
+                      background: t.status === 'ongoing' ? 'var(--cyan)' : t.status === 'finished' ? 'var(--gold)' : 'var(--mist)',
+                    }} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
