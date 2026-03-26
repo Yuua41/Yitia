@@ -817,7 +817,8 @@ function DashboardCalendar({ tournaments, onNavigate, onDateClick }: {
               {/* ホバー時のポップオーバー */}
               {isOpen && (
                 <div style={{
-                  position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+                  position: 'absolute', bottom: '100%',
+                  ...(dayOfWeek >= 5 ? { right: 0 } : dayOfWeek <= 1 ? { left: 0 } : { left: '50%', transform: 'translateX(-50%)' }),
                   marginBottom: '4px', zIndex: 100,
                   background: 'var(--surface)', border: '1px solid var(--border-md)',
                   borderRadius: '8px', padding: '6px 0', minWidth: '160px',
