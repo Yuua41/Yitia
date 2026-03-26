@@ -271,7 +271,7 @@ export default function DashboardClient({ tournaments }: Props) {
           .dash-header { padding: 0 16px !important; }
           .dash-content { padding: 16px !important; }
           .dash-grid { grid-template-columns: 1fr !important; }
-          .dash-summary { grid-template-columns: 1fr !important; }
+          .dash-summary { grid-template-columns: repeat(3, 1fr) !important; }
         }
       `}</style>
       <div className="dash-header" style={{
