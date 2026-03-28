@@ -30,6 +30,8 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
   const [bulkSaving, setBulkSaving] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
   const addInputRef = useRef<HTMLInputElement>(null)
+  const initialPlayerCount = useRef(initialPlayers.length)
+  const playerCountChanged = players.length !== initialPlayerCount.current
 
   // ハッシュで指定されたプレーヤーにスクロール
   useEffect(() => {
@@ -53,6 +55,27 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
   }, [editingId])
+
+  // 人数変更時にレイアウト側へ通知
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('players-count-changed', { detail: playerCountChanged }))
+    return () => { window.dispatchEvent(new CustomEvent('players-count-changed', { detail: false })) }
+  }, [playerCountChanged])
+
+  // レイアウトからの卓組再編リクエストを受け取る
+  useEffect(() => {
+    const handler = async () => {
+      setRegenerating(true)
+      await regenerateSchedule(players.map(p => p.id))
+      setRegenerating(false)
+      initialPlayerCount.current = players.length
+      window.dispatchEvent(new CustomEvent('players-count-changed', { detail: false }))
+      showToast('卓組を再生成しました')
+      router.refresh()
+    }
+    window.addEventListener('players-regenerate-request', handler)
+    return () => window.removeEventListener('players-regenerate-request', handler)
+  }, [players, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /** 卓組を再生成する共通関数（黒子自動追加対応） */
   async function regenerateSchedule(currentPlayerIds: string[]) {

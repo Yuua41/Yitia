@@ -69,8 +69,8 @@
 
 body[data-theme="light"] {
   --ink:       #1a2a28;
-  --paper:     #f0ebe3;
-  --surface:   #f7f4ef;
+  --paper:     #f5f0e8;
+  --surface:   #faf7f0;
   --navy:      #1B2E2D;
   --navy-mid:  #243b3a;
   --cyan:      #7BADAB;
@@ -87,17 +87,17 @@ body[data-theme="light"] {
   --mist:      #5a7472;
   --border:    rgba(27,46,45,0.10);
   --border-md: rgba(27,46,45,0.18);
-  --card-bg:      rgba(247,244,239,0.85);
-  --card-border:  rgba(27,46,45,0.10);
-  --header-bg:    rgba(240,235,227,0.95);
-  --header-border: rgba(27,46,45,0.10);
-  --hover-bg:     rgba(27,46,45,0.05);
+  --card-bg:      rgba(250,247,240,0.88);
+  --card-border:  rgba(61,125,115,0.12);
+  --header-bg:    rgba(245,240,232,0.95);
+  --header-border: rgba(61,125,115,0.10);
+  --hover-bg:     rgba(61,125,115,0.06);
   --grid-line:    transparent;
   --scrollbar-thumb: rgba(27,46,45,0.15);
   --focus-shadow: rgba(61,125,115,0.2);
   --skeleton-from: rgba(27,46,45,0.03);
   --skeleton-mid:  rgba(27,46,45,0.07);
-  --body-grad1:   transparent;
+  --body-grad1:   rgba(61,125,115,0.03);
   --body-grad2:   transparent;
 
   /* Sidebar / Logo — icon matches dark mode */

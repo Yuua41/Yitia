@@ -272,7 +272,7 @@ export default function HeaderIcons() {
                 <rect x="3" y="14" width="7" height="7" rx="1"/>
                 <rect x="14" y="14" width="7" height="7" rx="1"/>
               </svg>
-              <span>大会一覧</span>
+              <span>ダッシュボード</span>
             </Link>
             <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
             <button

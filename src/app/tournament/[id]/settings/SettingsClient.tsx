@@ -48,6 +48,12 @@ export default function SettingsClient({ tournament, players, templates }: Props
     return () => window.removeEventListener('beforeunload', handler)
   }, [isDirty])
 
+  // レイアウト側にdirty状態を通知
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('settings-dirty', { detail: isDirty }))
+    return () => { window.dispatchEvent(new CustomEvent('settings-dirty', { detail: false })) }
+  }, [isDirty])
+
   function applyTemplate(tplId: string) {
     setSelectedTemplate(tplId)
     const tpl = templates.find(t => t.id === tplId)
@@ -149,6 +155,9 @@ export default function SettingsClient({ tournament, players, templates }: Props
     setSaving(false)
     if (redirect === 'dashboard') {
       router.push('/dashboard')
+    } else if (roundsChanged) {
+      // 試合数変更時はキャッシュをクリアするためフルリロード
+      window.location.reload()
     } else {
       router.refresh()
     }

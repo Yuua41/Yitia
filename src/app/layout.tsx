@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${ibmPlex.variable} ${mplus.variable}`} suppressHydrationWarning>
-        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme');if(t==='light')document.body.setAttribute('data-theme','light')})()` }} />
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme');if(t!=='dark')document.body.setAttribute('data-theme','light')})()` }} />
         {children}
       </body>
     </html>

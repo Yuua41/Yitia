@@ -247,12 +247,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div style={{
             fontFamily: "var(--font-jp, 'M PLUS 1p'), sans-serif", fontSize: '20px', fontWeight: 800,
-            backgroundImage: 'linear-gradient(90deg, var(--ink) 20%, var(--cyan) 40%, var(--gold) 60%, var(--ink) 80%)',
-            backgroundSize: '200% auto',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            animation: 'stTitleFade 0.5s ease both, stTitleShimmer 4s linear 1s infinite',
+            color: 'var(--ink)',
           }}>総合成績</div>
           <div className="standings-header-btns" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             {showExport && (

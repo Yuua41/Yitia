@@ -1,10 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
+  useEffect(() => {
+    document.body.setAttribute('data-theme', 'light')
+  }, [])
   const router = useRouter()
   const supabase = createClient()
   const [email, setEmail] = useState('')
@@ -119,8 +122,8 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%', padding: '11px',
-              background: loading ? 'var(--mist)' : 'linear-gradient(135deg, var(--logo-from), var(--logo-to) 180%)',
-              boxShadow: loading ? 'none' : '0 2px 12px var(--logo-shadow)',
+              background: loading ? 'var(--mist)' : 'linear-gradient(135deg, var(--cyan-deep), var(--cyan) 180%)',
+              boxShadow: loading ? 'none' : '0 2px 12px var(--focus-shadow)',
               color: '#fff', border: 'none', borderRadius: '12px',
               fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
               marginTop: '8px', letterSpacing: '0.01em',
