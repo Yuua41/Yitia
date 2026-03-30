@@ -15,6 +15,7 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
   const pathname = usePathname()
   const router = useRouter()
   const base = `/tournament/${tournament.id}`
+  const isMonitorPage = pathname.endsWith('/monitor')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [settingsDirty, setSettingsDirty] = useState(false)
   const [playersCountChanged, setPlayersCountChanged] = useState(false)
@@ -95,11 +96,13 @@ export default function TournamentLayoutClient({ children, tournament }: Props) 
         }
       `}</style>
 
-      <div className="tournament-hamburger" style={{ display: 'none' }}>
-        <DraggableMenuButton onClick={() => setSidebarOpen(true)} storageKey="tournament-hamburger-pos" />
-      </div>
+      {!isMonitorPage && (
+        <div className="tournament-hamburger" style={{ display: 'none' }}>
+          <DraggableMenuButton onClick={() => setSidebarOpen(true)} storageKey="tournament-hamburger-pos" />
+        </div>
+      )}
 
-      {sidebarOpen && (
+      {sidebarOpen && !isMonitorPage && (
         <div className="tournament-overlay" onClick={() => setSidebarOpen(false)} />
       )}
 

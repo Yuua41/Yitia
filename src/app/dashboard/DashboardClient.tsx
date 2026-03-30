@@ -23,6 +23,8 @@ const DEFAULT_CONFIG: RuleConfig = {
   rounding: 'none',
 }
 
+const MAX_TOURNAMENTS = 15
+
 export default function DashboardClient({ tournaments }: Props) {
   const router = useRouter()
   const supabase = createClient()
@@ -48,6 +50,7 @@ export default function DashboardClient({ tournaments }: Props) {
   async function handleCreate() {
     if (!name.trim()) return showToast('大会名を入力してください')
     if (playerCount < 4) return showToast('プレイヤーを4名以上入力してください')
+    if (tournaments.length >= MAX_TOURNAMENTS) return showToast(`大会数の上限（${MAX_TOURNAMENTS}件）に達しています。`)
 
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -330,7 +333,13 @@ export default function DashboardClient({ tournaments }: Props) {
         {/* 新しい大会を作成 */}
         <div
           data-tutorial="new-tournament"
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            if (tournaments.length >= MAX_TOURNAMENTS) {
+              showToast(`大会数の上限（${MAX_TOURNAMENTS}件）に達しています。不要な大会を削除してください。`)
+              return
+            }
+            setShowForm(true)
+          }}
           style={{
             background: 'var(--card-bg)', border: '1px solid var(--card-border)',
             backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
@@ -361,6 +370,10 @@ export default function DashboardClient({ tournaments }: Props) {
           const dest = status === 'draft' ? 'settings' : status === 'finished' ? 'standings' : 'schedule'
           router.push(`/tournament/${id}/${dest}`)
         }} onDateClick={(dateStr) => {
+          if (tournaments.length >= MAX_TOURNAMENTS) {
+            showToast(`大会数の上限（${MAX_TOURNAMENTS}件）に達しています。不要な大会を削除してください。`)
+            return
+          }
           setHeldOn(dateStr)
           setShowForm(true)
         }} />

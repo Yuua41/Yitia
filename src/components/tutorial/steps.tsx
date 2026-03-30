@@ -76,7 +76,7 @@ const IconToggle = (
 /* ── Dashboard ── */
 export const dashboardSteps: TutorialStep[] = [
   { target: '', title: '大会一覧', icon: IconCards, content: '作成した大会がカード形式で表示されます。カードをクリックすると大会の管理画面に移動します。' },
-  { target: '', title: '新しい大会を作成', icon: IconPlus, content: '「+」ボタンから新しい大会を作成できます。大会名・日付・参加者を入力してスタートしましょう。' },
+  { target: '', title: '新しい大会を作成', icon: IconPlus, content: '「+」ボタンまたはカレンダーから新しい大会を作成できます。大会名・日付・参加者を入力してスタートしましょう。' },
 ]
 
 /* ── Settings (ongoing) ── */

@@ -22,3 +22,8 @@ npm-debug.log*
 .DS_Store
 *.tgz
 *.tar.gz
+
+# LP (未公開)
+/src/app/LandingClient.tsx
+/src/app/page.tsx.lp
+/public/screenshots/

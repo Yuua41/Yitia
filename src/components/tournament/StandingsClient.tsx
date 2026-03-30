@@ -9,6 +9,7 @@ import HeaderIcons from '@/components/ui/HeaderIcons'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
 import { standingsSteps } from '@/components/tutorial/steps'
+import TournamentStatusActions from '@/components/ui/TournamentStatusActions'
 
 interface Props {
   tournament: Tournament
@@ -237,6 +238,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', minWidth: 0 }}>
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '100px', fontSize: '9px', fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0, background: tournament.status === 'ongoing' ? 'var(--cyan-pale)' : tournament.status === 'finished' ? 'var(--gold-pale)' : 'var(--hover-bg)', color: tournament.status === 'ongoing' ? 'var(--cyan)' : tournament.status === 'finished' ? 'var(--gold)' : 'var(--mist)' }}>{tournament.status === 'ongoing' ? '進行中' : tournament.status === 'finished' ? '完了' : '下書き'}</span>
+          {isOwner && <TournamentStatusActions tournament={tournament} />}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <HelpButton steps={standingsSteps} pageKey="standings" />
@@ -529,9 +531,20 @@ interface ChartEntry {
 }
 
 function PointChart({ ranked, numRounds, adjustments }: { ranked: ChartEntry[]; numRounds: number; adjustments: Record<string, number> }) {
+  // Only animate/draw data up to the last round with results
+  const displayRounds = (() => {
+    let last = 0
+    for (const s of ranked) {
+      for (let r = s.roundPoints.length - 1; r >= 0; r--) {
+        if (s.roundPoints[r] !== null) { last = Math.max(last, r + 1); break }
+      }
+    }
+    return Math.max(last, 1)
+  })()
+
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [progress, setProgress] = useState(0) // 0 → numRounds, float for smooth animation
+  const [progress, setProgress] = useState(0) // 0 → displayRounds, float for smooth animation
   const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null)
   const [containerWidth, setContainerWidth] = useState(600)
   const [isVisible, setIsVisible] = useState(false)
@@ -567,7 +580,7 @@ function PointChart({ ranked, numRounds, adjustments }: { ranked: ChartEntry[]; 
     if (!isVisible) return
     hasAnimated.current = true
     setProgress(0)
-    const duration = numRounds * 500 // 500ms per round
+    const duration = displayRounds * 500 // 500ms per round
     let raf: number
     let start: number | null = null
     function animate(ts: number) {
@@ -576,12 +589,12 @@ function PointChart({ ranked, numRounds, adjustments }: { ranked: ChartEntry[]; 
       const t = Math.min(elapsed / duration, 1)
       // ease-out cubic for a decelerating feel
       const eased = 1 - Math.pow(1 - t, 3)
-      setProgress(eased * numRounds)
+      setProgress(eased * displayRounds)
       if (t < 1) raf = requestAnimationFrame(animate)
     }
     raf = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(raf)
-  }, [isVisible, numRounds])
+  }, [isVisible, displayRounds])
 
   // Compute cumulative points per player
   const topN = ranked
@@ -589,7 +602,7 @@ function PointChart({ ranked, numRounds, adjustments }: { ranked: ChartEntry[]; 
     const adj = adjustments[entry.player.id] ?? (entry.player.bonus ?? 0)
     const cumulative: number[] = [adj] // start from adjustment
     let sum = adj
-    for (let r = 0; r < numRounds; r++) {
+    for (let r = 0; r < displayRounds; r++) {
       sum += entry.roundPoints[r] ?? 0
       cumulative.push(Math.round(sum * 10) / 10)
     }
@@ -701,11 +714,11 @@ function PointChart({ ranked, numRounds, adjustments }: { ranked: ChartEntry[]; 
           const completedRounds = Math.floor(progress)
           const frac = progress - completedRounds
           const points: string[] = []
-          for (let r = 0; r <= Math.min(completedRounds, numRounds); r++) {
+          for (let r = 0; r <= Math.min(completedRounds, displayRounds); r++) {
             points.push(`${scaleX(r)},${scaleY(data.cumulative[r])}`)
           }
           // Interpolate to fractional position between rounds
-          if (frac > 0 && completedRounds < numRounds) {
+          if (frac > 0 && completedRounds < displayRounds) {
             const nextR = completedRounds + 1
             const prevVal = data.cumulative[completedRounds]
             const nextVal = data.cumulative[nextR]
@@ -717,11 +730,11 @@ function PointChart({ ranked, numRounds, adjustments }: { ranked: ChartEntry[]; 
           const d = points.length > 0 ? `M${points.join('L')}` : ''
 
           // End position for dot & tooltip
-          const endRound = Math.min(progress, numRounds)
+          const endRound = Math.min(progress, displayRounds)
           const endComplete = Math.floor(endRound)
           const endFrac = endRound - endComplete
           let endX: number, endY: number
-          if (endFrac > 0 && endComplete < numRounds) {
+          if (endFrac > 0 && endComplete < displayRounds) {
             const prevVal = data.cumulative[endComplete]
             const nextVal = data.cumulative[endComplete + 1]
             endX = scaleX(endRound)
@@ -762,7 +775,7 @@ function PointChart({ ranked, numRounds, adjustments }: { ranked: ChartEntry[]; 
               )}
               {/* Label on hover */}
               {isHovered && progress > 0 && (() => {
-                const lastR = Math.min(Math.floor(progress), numRounds)
+                const lastR = Math.min(Math.floor(progress), displayRounds)
                 const cx = endX
                 const cy = endY
                 const labelRight = cx > marginLeft + chartWidth * 0.7

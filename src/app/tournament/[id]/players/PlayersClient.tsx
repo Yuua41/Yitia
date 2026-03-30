@@ -8,6 +8,7 @@ import type { Tournament, Player } from '@/types'
 import HeaderIcons from '@/components/ui/HeaderIcons'
 import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
 import { playersSteps } from '@/components/tutorial/steps'
+import TournamentStatusActions from '@/components/ui/TournamentStatusActions'
 
 interface Props {
   tournament: Tournament
@@ -341,6 +342,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', minWidth: 0 }}>
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '100px', fontSize: '9px', fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0, background: tournament.status === 'ongoing' ? 'var(--cyan-pale)' : tournament.status === 'finished' ? 'var(--gold-pale)' : 'var(--hover-bg)', color: tournament.status === 'ongoing' ? 'var(--cyan)' : tournament.status === 'finished' ? 'var(--gold)' : 'var(--mist)' }}>{tournament.status === 'ongoing' ? '進行中' : tournament.status === 'finished' ? '完了' : '下書き'}</span>
+          <TournamentStatusActions tournament={tournament} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <HelpButton steps={playersSteps} pageKey="players" />

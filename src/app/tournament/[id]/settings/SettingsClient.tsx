@@ -7,6 +7,7 @@ import type { Tournament, Player, RuleTemplate, RuleConfig } from '@/types'
 import HeaderIcons from '@/components/ui/HeaderIcons'
 import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
 import { settingsSteps, settingsOngoingSteps } from '@/components/tutorial/steps'
+import TournamentStatusActions from '@/components/ui/TournamentStatusActions'
 
 interface Props {
   tournament: Tournament
@@ -220,6 +221,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', minWidth: 0 }}>
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--mist)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '100px', fontSize: '9px', fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0, background: tournament.status === 'ongoing' ? 'var(--cyan-pale)' : tournament.status === 'finished' ? 'var(--gold-pale)' : 'var(--hover-bg)', color: tournament.status === 'ongoing' ? 'var(--cyan)' : tournament.status === 'finished' ? 'var(--gold)' : 'var(--mist)' }}>{tournament.status === 'ongoing' ? '進行中' : tournament.status === 'finished' ? '完了' : '下書き'}</span>
+          <TournamentStatusActions tournament={tournament} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <HelpButton steps={tournament.status === 'ongoing' ? settingsOngoingSteps : settingsSteps} pageKey="settings" />
@@ -322,27 +324,29 @@ export default function SettingsClient({ tournament, players, templates }: Props
                 >{p.name}</span>
               ))}
             </div>
-            <button
-              onClick={() => router.push(`/tournament/${tournament.id}/players`)}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                width: '100%', marginTop: '12px', padding: '10px',
-                background: 'transparent', border: '1.5px dashed var(--border-md)',
-                borderRadius: '9px', cursor: 'pointer',
-                fontSize: '12px', fontWeight: 600, color: 'var(--mist)',
-                transition: 'color 0.15s, border-color 0.15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'var(--cyan-deep)'; e.currentTarget.style.borderColor = 'rgba(0,240,255,0.3)' }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border-md)' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <line x1="19" y1="8" x2="19" y2="14"/>
-                <line x1="22" y1="11" x2="16" y2="11"/>
-              </svg>
-              参加者を追加
-            </button>
+            {isDraft && (
+              <button
+                onClick={() => router.push(`/tournament/${tournament.id}/players`)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  width: '100%', marginTop: '12px', padding: '10px',
+                  background: 'transparent', border: '1.5px dashed var(--border-md)',
+                  borderRadius: '9px', cursor: 'pointer',
+                  fontSize: '12px', fontWeight: 600, color: 'var(--mist)',
+                  transition: 'color 0.15s, border-color 0.15s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--cyan-deep)'; e.currentTarget.style.borderColor = 'rgba(0,240,255,0.3)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--mist)'; e.currentTarget.style.borderColor = 'var(--border-md)' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <line x1="19" y1="8" x2="19" y2="14"/>
+                  <line x1="22" y1="11" x2="16" y2="11"/>
+                </svg>
+                参加者を追加
+              </button>
+            )}
           </div>
 
           {/* 基本/詳細トグル */}
@@ -478,10 +482,10 @@ export default function SettingsClient({ tournament, players, templates }: Props
               </div>
             )}
 
-            {/* 詳細設定: 丸め方式 */}
+            {/* 詳細設定: ポイント切り上げ */}
             {(settingsMode === 'advanced' || !isDraft) && (
               <>
-                <div style={cfgLabelStyle}>丸め方式</div>
+                <div style={cfgLabelStyle}>ポイント切り上げ</div>
                 {isDraft ? (
                   <ToggleGroup
                     options={[

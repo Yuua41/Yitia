@@ -192,16 +192,28 @@ export default function MonitorClient({ tournament, players: initialPlayers, tab
           from { opacity: 0; transform: scale(0.95) translateY(10px); }
           to { opacity: 1; transform: scale(1) translateY(0); }
         }
+        @media (max-width: 600px) {
+          .monitor-header { flex-wrap: wrap; padding: 10px 12px !important; gap: 8px; }
+          .monitor-header-left { order: 1; flex: 1; min-width: 0; }
+          .monitor-header-timer { order: 3; width: 100%; justify-content: center; }
+          .monitor-header-views { order: 2; }
+          .monitor-timer-digit { font-size: 32px !important; }
+          .monitor-timer-colon { font-size: 24px !important; }
+          .monitor-timer-ring { width: 36px !important; height: 36px !important; }
+          .monitor-content { padding: 12px !important; }
+          .monitor-schedule-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+          .monitor-standings-title, .monitor-chart-title { font-size: 16px !important; }
+        }
       `}</style>
 
       {/* Header */}
-      <div style={{
+      <div className="monitor-header" style={{
         padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         borderBottom: `1px solid var(--mon-border)`,
         position: 'relative', zIndex: 10,
       }}>
-        <div>
-          <div style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--mon-fg)' }}>{tournament.name}</div>
+        <div className="monitor-header-left">
+          <div style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--mon-fg)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</div>
           <div style={{ fontSize: '10px', fontFamily: 'monospace', color: 'var(--mon-fg-dim)', letterSpacing: '0.1em' }}>
             {tournament.held_on ?? ''} / {tournament.num_rounds} ROUNDS
           </div>
@@ -210,25 +222,41 @@ export default function MonitorClient({ tournament, players: initialPlayers, tab
         {/* Countdown Timer */}
         <CountdownTimer />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="monitor-header-views" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {viewOrder.map(v => (
             <button key={v} onClick={() => { setPhase('out'); setTimeout(() => { setCurrentView(v); setPhase('in') }, TRANSITION_DURATION * 0.5) }}
+              title={v === 'schedule' ? `R${activeRound} 卓組` : v === 'standings' ? '総合成績' : 'グラフ'}
               style={{
-                padding: '6px 14px', borderRadius: '6px',
+                padding: '8px', borderRadius: '6px',
                 background: currentView === v ? 'var(--mon-accent-pale)' : 'transparent',
                 border: currentView === v ? '1px solid var(--mon-accent-mid)' : `1px solid var(--mon-border)`,
                 color: currentView === v ? 'var(--mon-accent)' : 'var(--mon-fg-dim)',
-                fontSize: '11px', fontFamily: 'monospace', fontWeight: 600, cursor: 'pointer',
-                transition: 'all 0.2s',
+                cursor: 'pointer', transition: 'all 0.2s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-              {v === 'schedule' ? `R${activeRound} 卓組` : v === 'standings' ? '総合成績' : 'グラフ'}
+              {v === 'schedule' ? (
+                /* Grid/Table icon for 卓組 */
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>
+                </svg>
+              ) : v === 'standings' ? (
+                /* Trophy/Medal icon for 総合成績 */
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                </svg>
+              ) : (
+                /* Chart/Line icon for グラフ */
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>
+                </svg>
+              )}
             </button>
           ))}
         </div>
       </div>
 
       {/* Main content area */}
-      <div style={{
+      <div className="monitor-content" style={{
         flex: 1, height: 'calc(100vh - 72px)', overflow: 'auto',
         padding: '24px 32px',
         opacity: phase === 'out' ? 0 : 1,
@@ -263,6 +291,47 @@ function CountdownTimer() {
   const [inputHour, setInputHour] = useState(1)
   const [inputMin, setInputMin] = useState(0)
   const [inputSec, setInputSec] = useState(0)
+  const [hydrated, setHydrated] = useState(false)
+
+  // Restore timer from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('monitor-timer')
+      if (saved) {
+        const { totalSeconds: ts, endAt, paused, pausedRemaining } = JSON.parse(saved)
+        if (ts > 0) {
+          setTotalSeconds(ts)
+          if (paused && pausedRemaining > 0) {
+            setRemaining(pausedRemaining)
+            setRunning(false)
+          } else if (endAt) {
+            const left = Math.round((endAt - Date.now()) / 1000)
+            if (left > 0) {
+              setRemaining(left)
+              setRunning(true)
+            } else {
+              setRemaining(0)
+              setRunning(false)
+            }
+          }
+        }
+      }
+    } catch {}
+    setHydrated(true)
+  }, [])
+
+  // Persist timer state to localStorage
+  useEffect(() => {
+    if (!hydrated) return
+    if (totalSeconds <= 0) {
+      localStorage.removeItem('monitor-timer')
+      return
+    }
+    const data = running
+      ? { totalSeconds, endAt: Date.now() + remaining * 1000, paused: false, pausedRemaining: 0 }
+      : { totalSeconds, endAt: null, paused: true, pausedRemaining: remaining }
+    localStorage.setItem('monitor-timer', JSON.stringify(data))
+  }, [hydrated, totalSeconds, running, remaining])
 
   useEffect(() => {
     if (!running || remaining <= 0) return
@@ -311,7 +380,7 @@ function CountdownTimer() {
 
   return (
     <>
-      <div
+      <div className="monitor-header-timer"
         onClick={() => { if (!running) setShowSetup(true) }}
         style={{
           display: 'flex', alignItems: 'center', gap: '12px',
@@ -321,7 +390,7 @@ function CountdownTimer() {
       >
         {/* Circular progress ring */}
         {totalSeconds > 0 && (
-          <svg width={ringSize} height={ringSize} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
+          <svg className="monitor-timer-ring" width={ringSize} height={ringSize} viewBox={`0 0 ${ringSize} ${ringSize}`} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
             {/* Background ring */}
             <circle cx={ringSize / 2} cy={ringSize / 2} r={radius}
               fill="none" stroke="var(--mon-border)" strokeWidth={strokeWidth} />
@@ -348,17 +417,17 @@ function CountdownTimer() {
         }}>
           {remaining >= 3600 && (
             <>
-              <span style={{ fontSize: '48px' }}>{h}</span>
-              <span style={{ fontSize: '36px', color: 'var(--mon-fg-dim)' }}>:</span>
+              <span className="monitor-timer-digit" style={{ fontSize: '48px' }}>{h}</span>
+              <span className="monitor-timer-colon" style={{ fontSize: '36px', color: 'var(--mon-fg-dim)' }}>:</span>
             </>
           )}
-          <span style={{ fontSize: '48px' }}>{m}</span>
-          <span style={{ fontSize: '36px', color: 'var(--mon-fg-dim)', animation: running ? 'monitorFadeIn 1s ease infinite alternate' : 'none' }}>:</span>
-          <span style={{ fontSize: '48px' }}>{s}</span>
+          <span className="monitor-timer-digit" style={{ fontSize: '48px' }}>{m}</span>
+          <span className="monitor-timer-colon" style={{ fontSize: '36px', color: 'var(--mon-fg-dim)', animation: running ? 'monitorFadeIn 1s ease infinite alternate' : 'none' }}>:</span>
+          <span className="monitor-timer-digit" style={{ fontSize: '48px' }}>{s}</span>
         </div>
 
-        {/* Pause / Reset controls (visible when running or finished) */}
-        {(running || isFinished) && (
+        {/* Pause / Resume / Reset controls */}
+        {totalSeconds > 0 && (
           <div style={{ display: 'flex', gap: '6px', marginLeft: '4px' }}>
             {running && (
               <button onClick={e => { e.stopPropagation(); setRunning(false) }}
@@ -366,7 +435,7 @@ function CountdownTimer() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
               </button>
             )}
-            {!running && totalSeconds > 0 && remaining > 0 && (
+            {!running && remaining > 0 && (
               <button onClick={e => { e.stopPropagation(); setRunning(true) }}
                 style={timerBtnStyle} title="再開">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
@@ -414,7 +483,7 @@ function CountdownTimer() {
             </div>
             {/* Quick presets */}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
-              {[35, 40, 45, 50, 55, 60, 90].map(mins => {
+              {[35, 40, 45, 50, 55, 60].map(mins => {
                 const preH = Math.floor(mins / 60)
                 const preM = mins % 60
                 const active = inputHour === preH && inputMin === preM && inputSec === 0
@@ -497,7 +566,7 @@ function ScheduleView({ tables, activeRound, flashTableId }: { tables: Table[]; 
       <div style={{ fontSize: '14px', fontFamily: 'monospace', letterSpacing: '0.15em', color: 'var(--mon-fg-dim)', marginBottom: '20px' }}>
         ROUND {activeRound}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+      <div className="monitor-schedule-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
         {tables.map((table, idx) => {
           const isFlashing = table.id === flashTableId
           const results = (table.results ?? []).sort((a, b) => a.seat_index - b.seat_index)
@@ -601,7 +670,7 @@ function StandingsView({ standings, numRounds }: { standings: ReturnType<typeof 
 
   return (
     <div>
-      <div style={{
+      <div className="monitor-standings-title" style={{
         fontSize: '22px', fontWeight: 800, marginBottom: '24px',
         backgroundImage: 'var(--mon-shimmer)',
         backgroundSize: '200% auto',
@@ -710,6 +779,17 @@ const tdStyle: React.CSSProperties = {
 function ChartView({ standings, numRounds }: {
   standings: ReturnType<typeof calcStandings>; numRounds: number
 }) {
+  // Only show up to the last round with data
+  const displayRounds = (() => {
+    let last = 0
+    for (const s of standings) {
+      for (let r = s.roundPoints.length - 1; r >= 0; r--) {
+        if (s.roundPoints[r] !== null) { last = Math.max(last, r + 1); break }
+      }
+    }
+    return Math.max(last, 1)
+  })()
+
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(800)
   const [containerHeight, setContainerHeight] = useState(500)
@@ -736,31 +816,31 @@ function ChartView({ standings, numRounds }: {
   useEffect(() => {
     setProgress(0)
     setHighlightIdx(-1)
-    const duration = numRounds * 1200
+    const duration = displayRounds * 1200
     let raf: number
     let start: number | null = null
     function animate(ts: number) {
       if (start === null) start = ts
       const t = Math.min((ts - start) / duration, 1)
       const eased = 1 - Math.pow(1 - t, 3)
-      setProgress(eased * numRounds)
+      setProgress(eased * displayRounds)
       if (t < 1) raf = requestAnimationFrame(animate)
     }
     raf = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(raf)
-  }, [numRounds])
+  }, [displayRounds])
 
   // After chart animation completes, cycle highlight through top players
   const TOP_N = 5
   useEffect(() => {
-    if (progress < numRounds) return
+    if (progress < displayRounds) return
     // Start highlight cycle after a short delay
     const startDelay = setTimeout(() => {
       setHighlightIdx(0)
       setBlinkCount(0)
     }, 500)
     return () => clearTimeout(startDelay)
-  }, [progress >= numRounds]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [progress >= displayRounds]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (highlightIdx < 0) return
@@ -782,7 +862,7 @@ function ChartView({ standings, numRounds }: {
     const adj = entry.player.bonus ?? 0
     const cumulative: number[] = [adj]
     let sum = adj
-    for (let r = 0; r < numRounds; r++) {
+    for (let r = 0; r < displayRounds; r++) {
       sum += entry.roundPoints[r] ?? 0
       cumulative.push(Math.round(sum * 10) / 10)
     }
@@ -812,7 +892,7 @@ function ChartView({ standings, numRounds }: {
 
   return (
     <div ref={containerRef}>
-      <div style={{
+      <div className="monitor-chart-title" style={{
         fontSize: '22px', fontWeight: 800, marginBottom: '20px',
         backgroundImage: 'var(--mon-shimmer)',
         backgroundSize: '200% auto',
@@ -873,10 +953,10 @@ function ChartView({ standings, numRounds }: {
           const completedRounds = Math.floor(progress)
           const frac = progress - completedRounds
           const points: string[] = []
-          for (let r = 0; r <= Math.min(completedRounds, numRounds); r++) {
+          for (let r = 0; r <= Math.min(completedRounds, displayRounds); r++) {
             points.push(`${scaleX(r)},${scaleY(data.cumulative[r])}`)
           }
-          if (frac > 0 && completedRounds < numRounds) {
+          if (frac > 0 && completedRounds < displayRounds) {
             const prevVal = data.cumulative[completedRounds]
             const nextVal = data.cumulative[completedRounds + 1]
             const interpVal = prevVal + (nextVal - prevVal) * frac
@@ -884,11 +964,11 @@ function ChartView({ standings, numRounds }: {
           }
           const d = points.length > 0 ? `M${points.join('L')}` : ''
 
-          const endRound = Math.min(progress, numRounds)
+          const endRound = Math.min(progress, displayRounds)
           const endComplete = Math.floor(endRound)
           const endFrac = endRound - endComplete
           let endX: number, endY: number
-          if (endFrac > 0 && endComplete < numRounds) {
+          if (endFrac > 0 && endComplete < displayRounds) {
             const prevVal = data.cumulative[endComplete]
             const nextVal = data.cumulative[endComplete + 1]
             endX = scaleX(endRound)
@@ -932,8 +1012,8 @@ function ChartView({ standings, numRounds }: {
                   opacity={isTop ? 1 : 0.4} />
               )}
               {/* Label: show for highlighted player, or for top N after animation */}
-              {((isHighlighted) || (!isAnyHighlighted && isTop && progress >= numRounds * 0.8)) && (
-                <g style={{ opacity: isHighlighted ? 1 : Math.min((progress - numRounds * 0.8) / (numRounds * 0.2), 1), transition: 'opacity 0.4s' }}>
+              {((isHighlighted) || (!isAnyHighlighted && isTop && progress >= displayRounds * 0.8)) && (
+                <g style={{ opacity: isHighlighted ? 1 : Math.min((progress - displayRounds * 0.8) / (displayRounds * 0.2), 1), transition: 'opacity 0.4s' }}>
                   <text x={endX + 10} y={endY - 6} fill={color}
                     fontSize={isHighlighted ? '15' : '12'} fontFamily="monospace" fontWeight="700"
                     style={{ transition: 'font-size 0.3s' }}>
@@ -942,7 +1022,7 @@ function ChartView({ standings, numRounds }: {
                   <text x={endX + 10} y={endY + 10} fill={color}
                     fontSize={isHighlighted ? '14' : '11'} fontFamily="monospace" fontWeight="600"
                     opacity={0.85} style={{ transition: 'font-size 0.3s' }}>
-                    {formatPoint(data.cumulative[Math.min(endComplete, numRounds)])}
+                    {formatPoint(data.cumulative[Math.min(endComplete, displayRounds)])}
                   </text>
                 </g>
               )}
