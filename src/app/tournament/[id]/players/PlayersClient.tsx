@@ -190,7 +190,11 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
     }
 
     await regenerateSchedule(newPlayers.map(p => p.id))
+    setPlayers(newPlayers)
+    setBulkText(newPlayers.map(p => p.name).join('\n'))
+    initialPlayerCount.current = newPlayers.length
     setBulkSaving(false)
+    showToast('参加者を一括更新しました')
     router.refresh()
   }
 

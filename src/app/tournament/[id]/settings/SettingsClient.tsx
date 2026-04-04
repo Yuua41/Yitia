@@ -268,7 +268,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '13px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginBottom: '13px' }}>
               <div>
                 <label style={labelStyle}>開催日</label>
                 {isDraft ? (
