@@ -79,15 +79,16 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
   }, [players, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /** 卓組を再生成する共通関数（黒子自動追加対応） */
-  async function regenerateSchedule(currentPlayerIds: string[]) {
+  async function regenerateSchedule(currentPlayerIds: string[], currentPlayers?: Player[]) {
     const byeMode = tournament.config.byeMode ?? 'dummy'
+    const latestPlayers = currentPlayers ?? players
 
     let allPlayerIds = [...currentPlayerIds]
 
     // デフォルト: 4の倍数に足りない分は黒子を自動追加
     if (byeMode === 'dummy' && allPlayerIds.length % 4 !== 0) {
       const shortage = 4 - (allPlayerIds.length % 4)
-      const nextOrder = players.length > 0 ? Math.max(...players.map(p => p.seat_order)) + 1 : 0
+      const nextOrder = latestPlayers.length > 0 ? Math.max(...latestPlayers.map(p => p.seat_order)) + 1 : 0
       const dummyInserts = Array.from({ length: shortage }, (_, i) => ({
         tournament_id: tournament.id,
         name: `黒子${i + 1}`,
@@ -103,10 +104,11 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
         alert('黒子の追加に失敗しました: ' + dErr?.message)
         return
       }
-      const updatedPlayers = [...players, ...dummies]
-      setPlayers(updatedPlayers)
-      setBulkText(updatedPlayers.map(p => p.name).join('\n'))
+      const withDummies = [...latestPlayers, ...dummies]
+      setPlayers(withDummies)
+      setBulkText(withDummies.map(p => p.name).join('\n'))
       allPlayerIds = [...allPlayerIds, ...dummies.map(d => d.id)]
+      showToast('黒子を追加しました')
     }
 
     // 既存のtables/resultsを削除
@@ -315,9 +317,9 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
     setPlayers(updatedPlayers)
     setBulkText(updatedPlayers.map(p => p.name).join('\n'))
     setNewName('')
-    await regenerateSchedule(updatedPlayers.map(p => p.id))
     setAdding(false)
     showToast(`「${data.name}」を追加しました`)
+    await regenerateSchedule(updatedPlayers.map(p => p.id), updatedPlayers)
     router.refresh()
   }
 
