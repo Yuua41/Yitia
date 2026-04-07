@@ -8,6 +8,7 @@ export interface RuleConfig {
   seatMode: 'random' | 'none'
   umaMode: 'simple' | 'detail'
   rounding: 'none' | 'round' | 'round_half_up'  // 小数点以下反映 | 四捨五入 | 五捨六入
+  splitRemainderToDealer?: boolean  // 同点分けの端数を親に近い人（上家）に振り分ける
   allowPlayerEntry?: boolean  // プレイヤーによるスコア入力を許可するか（デフォルトtrue）
   byeMode?: 'dummy' | 'bye'  // dummy: 黒子で4の倍数に補完（デフォルト）, bye: 休みを許容
 }

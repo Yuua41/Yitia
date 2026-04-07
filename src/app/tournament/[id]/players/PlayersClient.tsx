@@ -158,6 +158,7 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
   async function handleBulkSave() {
     const newNames = bulkText.split(/[\n,]+/).map(n => n.trim()).filter(Boolean)
     if (newNames.length < 4) return alert('プレイヤーを4名以上入力してください')
+    if (newNames.length > MAX_PLAYERS) return alert(`参加人数は${MAX_PLAYERS}名までです`)
 
     let adjustedNames = [...newNames]
     while (adjustedNames.length % 4 !== 0) {
@@ -288,9 +289,15 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
     router.refresh()
   }
 
+  const MAX_PLAYERS = 40
+
   async function handleAddPlayer() {
     const trimmed = newName.trim()
     if (!trimmed) return
+    if (players.length >= MAX_PLAYERS) {
+      alert(`参加人数は${MAX_PLAYERS}名までです`)
+      return
+    }
 
     setAdding(true)
     const nextOrder = players.length > 0 ? Math.max(...players.map(p => p.seat_order)) + 1 : 0

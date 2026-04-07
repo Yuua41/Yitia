@@ -18,12 +18,15 @@ const DEFAULT_CONFIG: RuleConfig = {
   returnPoints: 30000,
   uma: [30, 10, -10, -30],
   tieBreak: 'split',
+  splitRemainderToDealer: true,
   seatMode: 'random',
   umaMode: 'simple',
   rounding: 'none',
 }
 
 const MAX_TOURNAMENTS = 15
+const MAX_ROUNDS = 8
+const MAX_PLAYERS = 40
 
 export default function DashboardClient({ tournaments }: Props) {
   const router = useRouter()
@@ -50,6 +53,7 @@ export default function DashboardClient({ tournaments }: Props) {
   async function handleCreate() {
     if (!name.trim()) return showToast('大会名を入力してください')
     if (playerCount < 4) return showToast('プレイヤーを4名以上入力してください')
+    if (playerCount > MAX_PLAYERS) return showToast(`参加人数は${MAX_PLAYERS}名までです`)
     if (tournaments.length >= MAX_TOURNAMENTS) return showToast(`大会数の上限（${MAX_TOURNAMENTS}件）に達しています。`)
 
     setSaving(true)
@@ -597,18 +601,20 @@ export default function DashboardClient({ tournaments }: Props) {
                 <button
                   type="button"
                   onClick={() => setPlayerCount(c => Math.max(4, c - 1))}
+                  disabled={playerCount <= 4}
                   style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid var(--border-md)', background: 'var(--surface)', color: 'var(--ink)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 >−</button>
                 <input
                   type="number"
                   min={4}
                   value={playerCount}
-                  onChange={e => setPlayerCount(Math.max(4, parseInt(e.target.value) || 4))}
+                  onChange={e => setPlayerCount(Math.min(MAX_PLAYERS, Math.max(4, parseInt(e.target.value) || 4)))}
                   style={{ ...inputStyle, width: '70px', textAlign: 'center', flexShrink: 0 }}
                 />
                 <button
                   type="button"
-                  onClick={() => setPlayerCount(c => c + 1)}
+                  onClick={() => setPlayerCount(c => Math.min(MAX_PLAYERS, c + 1))}
+                  disabled={playerCount >= MAX_PLAYERS}
                   style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid var(--border-md)', background: 'var(--surface)', color: 'var(--ink)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 >＋</button>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
@@ -656,6 +662,14 @@ export default function DashboardClient({ tournaments }: Props) {
           </div>
         </div>
       )}
+
+      {/* 広告枠 */}
+      <div id="ad-slot-dashboard" style={{ margin:'24px 0 0', padding:'16px', minHeight:'100px', background:'var(--hover-bg)', border:'1px dashed var(--border-md)', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', color:'var(--mist)' }}><span>AD</span></div>
+
+      {/* コピーライト */}
+      <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--mist)', padding: '24px 0 12px' }}>
+        © 2026 Yitia
+      </div>
 
       {/* トースト通知 */}
       {toast && (

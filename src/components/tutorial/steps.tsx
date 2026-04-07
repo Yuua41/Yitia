@@ -75,51 +75,51 @@ const IconToggle = (
 
 /* ── Dashboard ── */
 export const dashboardSteps: TutorialStep[] = [
-  { target: '', title: '大会一覧', icon: IconCards, content: '作成した大会がカード形式で表示されます。カードをクリックすると大会の管理画面に移動します。' },
-  { target: '', title: '新しい大会を作成', icon: IconPlus, content: '「+」ボタンまたはカレンダーから新しい大会を作成できます。大会名・日付・参加者を入力してスタートしましょう。' },
+  { target: '[data-tutorial="tournament-cards"]', title: '大会一覧', icon: IconCards, content: '作成した大会がカード形式で表示されます。カードをクリックすると大会の管理画面に移動します。' },
+  { target: '[data-tutorial="new-tournament"]', title: '新しい大会を作成', icon: IconPlus, content: '「+」ボタンまたはカレンダーから新しい大会を作成できます。大会名・日付・参加者を入力してスタートしましょう。' },
 ]
 
 /* ── Settings (ongoing) ── */
 export const settingsOngoingSteps: TutorialStep[] = [
-  { target: '', title: 'プレイヤー入力', icon: IconToggle, content: 'プレイヤーが自分でスコアを入力できるかどうかを切り替えられます。' },
+  { target: '[data-tutorial="player-entry-toggle"]', title: 'プレイヤー入力', icon: IconToggle, content: 'プレイヤーが自分でスコアを入力できるかどうかを切り替えられます。' },
 ]
 
 /* ── Settings ── */
 export const settingsSteps: TutorialStep[] = [
-  { target: '', title: '基本情報', icon: IconSettings, content: '大会名や開催日など，基本情報を設定します。' },
-  { target: '', title: '参加者', icon: IconUsers, content: '参加者の一覧です。クリックすると参加者管理ページに移動します。' },
-  { target: '', title: 'ルール設定', icon: IconScore, content: '持ち点・返し・ウマ・同点処理などのルールを設定できます。' },
-  { target: '', title: '詳細設定', icon: IconToggle, content: '「詳細設定」に切り替えると，細かくルールが設定できます。' },
-  { target: '', title: '大会を開始', icon: IconCheck, content: '設定が完了したら，ここから大会を開始します。開始すると卓組が自動生成されます。' },
+  { target: '[data-tutorial="basic-info"]', title: '基本情報', icon: IconSettings, content: '大会名や開催日など，基本情報を設定します。' },
+  { target: '[data-tutorial="players-input"]', title: '参加者', icon: IconUsers, content: '参加者の一覧です。クリックすると参加者管理ページに移動します。' },
+  { target: '[data-tutorial="rule-settings"]', title: 'ルール設定', icon: IconScore, content: '持ち点・返し・ウマ・同点処理などのルールを設定できます。' },
+  { target: '[data-tutorial="settings-mode-toggle"]', title: '詳細設定', icon: IconToggle, content: '「詳細設定」に切り替えると，細かくルールが設定できます。' },
+  { target: '[data-tutorial="start-button"]', title: '大会を開始', icon: IconCheck, content: '設定が完了したら，ここから大会を開始します。開始すると卓組が自動生成されます。' },
 ]
 
 /* ── Schedule ── */
 export const scheduleSteps: TutorialStep[] = [
-  { target: '', title: 'ラウンド切り替え', icon: IconRound, content: 'ラウンドのタブを切り替えて，各ラウンドの卓組と成績を確認できます。' },
-  { target: '', title: '点数入力', icon: IconScore, content: '各卓の点数を入力します。参加者がQRコードから入力した点数もここに反映されます。プレイヤーをドラッグ＆ドロップで入れ替えることもできます。' },
-  { target: '', title: '成績を確定', icon: IconCheck, content: '点数を確認したら「確定」を押して成績を確定します。' },
+  { target: '[data-tutorial="round-tabs"]', title: 'ラウンド切り替え', icon: IconRound, content: 'ラウンドのタブを切り替えて，各ラウンドの卓組と成績を確認できます。' },
+  { target: '[data-tutorial="table-card"]', title: '点数入力', icon: IconScore, content: '各卓の点数を入力します。参加者がQRコードから入力した点数もここに反映されます。プレイヤーをドラッグ＆ドロップで入れ替えることもできます。' },
+  { target: '[data-tutorial="validate-button"]', title: '成績を確定', icon: IconCheck, content: '点数を確認したら「確定」を押して成績を確定します。' },
 ]
 
 /* ── Standings ── */
 export const standingsSteps: TutorialStep[] = [
-  { target: '', title: '総合成績', icon: IconStandings, content: '全参加者の順位と合計ポイントを確認できます。ラウンドごとの成績も表示されます。' },
-  { target: '', title: 'ポイント調整', icon: IconAdjust, content: '「ポイント調整」でチョンボ等の調整ができます。セルをクリックして値を入力してください。' },
+  { target: '[data-tutorial="standings-table"]', title: '総合成績', icon: IconStandings, content: '全参加者の順位と合計ポイントを確認できます。ラウンドごとの成績も表示されます。' },
+  { target: '[data-tutorial="standings-adjustment"]', title: 'ポイント調整', icon: IconAdjust, content: '「ポイント調整」でチョンボ等の調整ができます。セルをクリックして値を入力してください。' },
 ]
 
 /* ── QR ── */
 export const qrSteps: TutorialStep[] = [
-  { target: '', title: 'QRコード共有', icon: IconQR, content: 'このQRコードを参加者に共有すると，スマホから直接点数を入力できるようになります。' },
+  { target: '[data-tutorial="qr-section"]', title: 'QRコード共有', icon: IconQR, content: 'このQRコードを参加者に共有すると，スマホから直接点数を入力できるようになります。' },
 ]
 
 /* ── Players ── */
 export const playersSteps: TutorialStep[] = [
-  { target: '', title: '参加者管理', icon: IconUsers, content: '参加者の一覧です。名前の編集，QRコード表示ができます。下書き中は追加・削除や一括編集も可能です。' },
+  { target: '[data-tutorial="players-list"]', title: '参加者管理', icon: IconUsers, content: '参加者の一覧です。名前の編集，QRコード表示ができます。下書き中は追加・削除や一括編集も可能です。' },
 ]
 
 /* ── Player (individual) ── */
 export const playerSteps: TutorialStep[] = [
-  { target: '', title: 'スコア入力・卓確認', icon: IconScore, content: 'ここから自分の卓の点数を入力して送信できます。席が固定でなければ，卓内でプレイヤーを入れ替えできます。' },
-  { target: '', title: '得点調整', icon: IconAdjust, content: '「得点調整」でチョンボ等のポイント調整ができます。管理者が設定した調整値が反映されます。' },
-  { target: '', title: '全体成績', icon: IconStandings, content: '全体の順位と各ラウンドの成績を確認できます。自分の順位がリアルタイムで更新されます。' },
-  { target: '', title: 'ポイント推移', icon: IconChart, content: 'ポイント推移のグラフで，大会を通じた成績の変化を確認できます。' },
+  { target: '[data-tutorial="player-score-input"]', title: 'スコア入力・卓確認', icon: IconScore, content: 'ここから自分の卓の点数を入力して送信できます。席が固定でなければ，卓内でプレイヤーを入れ替えできます。' },
+  { target: '[data-tutorial="player-adjustment"]', title: '得点調整', icon: IconAdjust, content: '「得点調整」でチョンボ等のポイント調整ができます。管理者が設定した調整値が反映されます。' },
+  { target: '[data-tutorial="player-standings"]', title: '全体成績', icon: IconStandings, content: '全体の順位と各ラウンドの成績を確認できます。自分の順位がリアルタイムで更新されます。' },
+  { target: '[data-tutorial="player-chart"]', title: 'ポイント推移', icon: IconChart, content: 'ポイント推移のグラフで，大会を通じた成績の変化を確認できます。' },
 ]

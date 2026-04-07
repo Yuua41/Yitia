@@ -27,6 +27,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
   const [config, setConfig] = useState<RuleConfig>({
     ...tournament.config,
     rounding: tournament.config.rounding ?? 'none',
+    splitRemainderToDealer: tournament.config.splitRemainderToDealer ?? true,
     allowPlayerEntry: tournament.config.allowPlayerEntry ?? true,
     byeMode: tournament.config.byeMode ?? 'dummy',
   })
@@ -469,6 +470,26 @@ export default function SettingsClient({ tournament, players, templates }: Props
                   value={config.tieBreak}
                   onChange={v => setConfig(c => ({ ...c, tieBreak: v as 'kamicha' | 'split' }))}
                 />
+                {config.tieBreak === 'split' && (
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--ink)' }}>
+                    <div
+                      onClick={() => setConfig(c => ({ ...c, splitRemainderToDealer: !c.splitRemainderToDealer }))}
+                      style={{
+                        width: '36px', height: '20px', borderRadius: '10px', position: 'relative',
+                        background: config.splitRemainderToDealer ? 'var(--cyan-deep)' : 'var(--border-md)',
+                        transition: 'background 0.2s', flexShrink: 0, cursor: 'pointer',
+                      }}
+                    >
+                      <div style={{
+                        width: '16px', height: '16px', borderRadius: '50%', background: '#fff',
+                        position: 'absolute', top: '2px',
+                        left: config.splitRemainderToDealer ? '18px' : '2px',
+                        transition: 'left 0.2s',
+                      }} />
+                    </div>
+                    <span>端数上家取り</span>
+                  </label>
+                )}
                 <ToggleGroup
                   options={[{ value: 'random', label: '席ランダム' }, { value: 'none', label: '席順なし' }]}
                   value={config.seatMode}
@@ -477,7 +498,10 @@ export default function SettingsClient({ tournament, players, templates }: Props
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={cfgDisplayStyle}>{config.tieBreak === 'kamicha' ? '上家取り' : '同点分け'}</div>
+                <div style={cfgDisplayStyle}>
+                  {config.tieBreak === 'kamicha' ? '上家取り' : '同点分け'}
+                  {config.tieBreak === 'split' && config.splitRemainderToDealer && '（端数上家取り）'}
+                </div>
                 <div style={cfgDisplayStyle}>{config.seatMode === 'random' ? '席ランダム' : '席順なし'}</div>
               </div>
             )}

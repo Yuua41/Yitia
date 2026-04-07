@@ -24,6 +24,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
+      <head>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-M173D9JZQH" />
+        <script dangerouslySetInnerHTML={{ __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-M173D9JZQH');` }} />
+      </head>
       <body className={`${ibmPlex.variable} ${mplus.variable}`} suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme');if(t!=='dark')document.body.setAttribute('data-theme','light')})()` }} />
         {children}

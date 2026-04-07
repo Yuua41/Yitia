@@ -3,9 +3,11 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
+const IS_DEV = process.env.NODE_ENV === 'development'
+
 /* ── Types ── */
 export interface TutorialStep {
-  target: string          // kept for backward compat (not used in card mode)
+  target: string          // CSS selector e.g. [data-tutorial="xxx"]
   content: string
   placement?: 'top' | 'bottom' | 'left' | 'right'
   title?: string
@@ -61,12 +63,151 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{ isActive: active, start }}>
       {children}
-      {active && <CardOverlay steps={steps} idx={idx} next={next} prev={prev} skip={end} />}
+      {active && (
+        IS_DEV
+          ? <TooltipOverlay steps={steps} idx={idx} next={next} prev={prev} skip={end} />
+          : <CardOverlay steps={steps} idx={idx} next={next} prev={prev} skip={end} />
+      )}
     </Ctx.Provider>
   )
 }
 
-/* ── Card Overlay (slideshow) ── */
+/* ══════════════════════════════════════════════════════════════
+   Tooltip Overlay (dev only) — highlights target elements
+   ══════════════════════════════════════════════════════════════ */
+interface Rect { top: number; left: number; width: number; height: number }
+
+function TooltipOverlay({ steps, idx, next, prev, skip }: {
+  steps: TutorialStep[]; idx: number; next: () => void; prev: () => void; skip: () => void
+}) {
+  const [rect, setRect] = useState<Rect | null>(null)
+  const [tipPos, setTipPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
+  const tipRef = useRef<HTMLDivElement>(null)
+  const step = steps[idx]
+  const isLast = idx === steps.length - 1
+  const pad = 6
+
+  const measure = useCallback(() => {
+    if (!step) return
+    // If no target, show centered fallback
+    if (!step.target) {
+      const vw = window.innerWidth, vh = window.innerHeight
+      setRect({ top: vh / 2 - 30, left: vw / 2 - 60, width: 120, height: 60 })
+      return
+    }
+    const el = document.querySelector(step.target) as HTMLElement | null
+    if (!el) { next(); return }
+
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const r = el.getBoundingClientRect()
+        setRect({ top: r.top - pad, left: r.left - pad, width: r.width + pad * 2, height: r.height + pad * 2 })
+      })
+    })
+  }, [step, next])
+
+  useEffect(() => { measure() }, [measure])
+
+  useEffect(() => {
+    const h = () => measure()
+    window.addEventListener('resize', h)
+    window.addEventListener('scroll', h, true)
+    return () => { window.removeEventListener('resize', h); window.removeEventListener('scroll', h, true) }
+  }, [measure])
+
+  useEffect(() => {
+    if (!rect || !tipRef.current) return
+    const tip = tipRef.current.getBoundingClientRect()
+    const placement = step?.placement ?? 'bottom'
+    const vw = window.innerWidth, vh = window.innerHeight
+    let t = 0, l = 0
+    const gap = 12
+
+    if (placement === 'bottom') { t = rect.top + rect.height + gap; l = rect.left + rect.width / 2 - tip.width / 2 }
+    else if (placement === 'top') { t = rect.top - tip.height - gap; l = rect.left + rect.width / 2 - tip.width / 2 }
+    else if (placement === 'right') { t = rect.top + rect.height / 2 - tip.height / 2; l = rect.left + rect.width + gap }
+    else { t = rect.top + rect.height / 2 - tip.height / 2; l = rect.left - tip.width - gap }
+
+    l = Math.max(12, Math.min(l, vw - tip.width - 12))
+    t = Math.max(12, Math.min(t, vh - tip.height - 12))
+    setTipPos({ top: t, left: l })
+  }, [rect, step?.placement, idx])
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') skip() }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [skip])
+
+  if (!step || !rect) return null
+
+  const { top: rT, left: rL, width: rW, height: rH } = rect
+  const hasTarget = !!step.target
+
+  const clipPath = hasTarget
+    ? `polygon(0 0, 0 100%, 100% 100%, 100% 0, 0 0, ${rL}px ${rT}px, ${rL}px ${rT + rH}px, ${rL + rW}px ${rT + rH}px, ${rL + rW}px ${rT}px, ${rL}px ${rT}px)`
+    : undefined
+
+  const overlay = (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 10000 }}>
+      <div
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(10,14,26,0.7)',
+          clipPath,
+          transition: 'clip-path 0.3s ease',
+        }}
+        onClick={skip}
+      />
+      {hasTarget && (
+        <div style={{
+          position: 'fixed',
+          top: rT, left: rL, width: rW, height: rH,
+          borderRadius: '8px',
+          boxShadow: '0 0 0 2px var(--cyan-deep), 0 0 20px rgba(0,240,255,0.15)',
+          pointerEvents: 'none',
+          transition: 'all 0.3s ease',
+        }} />
+      )}
+
+      <div ref={tipRef} style={{
+        position: 'fixed',
+        top: tipPos.top, left: tipPos.left,
+        background: 'var(--surface)',
+        border: '1px solid var(--card-border)',
+        borderRadius: '12px',
+        padding: '16px 18px 14px',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+        maxWidth: '300px',
+        minWidth: '200px',
+        zIndex: 10001,
+        transition: 'top 0.3s ease, left 0.3s ease',
+      }}>
+        {step.title && (
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', marginBottom: '6px' }}>{step.title}</div>
+        )}
+        <div style={{ fontSize: '13px', color: 'var(--ink)', lineHeight: 1.6, marginBottom: '14px' }}>
+          {step.content}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '11px', color: 'var(--mist)' }}>{idx + 1} / {steps.length}</span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button onClick={skip} style={linkBtn}>スキップ</button>
+            {idx > 0 && <button onClick={prev} style={outlineBtn}>前へ</button>}
+            <button onClick={next} style={primaryBtn}>{isLast ? '完了' : '次へ'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+
+  return createPortal(overlay, document.body)
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Card Overlay (production) — slideshow style
+   ══════════════════════════════════════════════════════════════ */
 function CardOverlay({ steps, idx, next, prev, skip }: {
   steps: TutorialStep[]; idx: number; next: () => void; prev: () => void; skip: () => void
 }) {
@@ -75,14 +216,12 @@ function CardOverlay({ steps, idx, next, prev, skip }: {
   const touchStartX = useRef(0)
   const touchEndX = useRef(0)
 
-  // close on Escape
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') skip() }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [skip])
 
-  // prevent body scroll
   useEffect(() => {
     const orig = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -96,8 +235,8 @@ function CardOverlay({ steps, idx, next, prev, skip }: {
     touchEndX.current = e.changedTouches[0].clientX
     const dx = touchStartX.current - touchEndX.current
     if (Math.abs(dx) > 50) {
-      if (dx > 0) next()       // swipe left → next
-      else if (idx > 0) prev() // swipe right → prev
+      if (dx > 0) next()
+      else if (idx > 0) prev()
     }
   }
 
@@ -117,7 +256,6 @@ function CardOverlay({ steps, idx, next, prev, skip }: {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Card */}
       <div style={{
         width: '100%', maxWidth: '360px',
         background: 'var(--surface)',
@@ -127,7 +265,6 @@ function CardOverlay({ steps, idx, next, prev, skip }: {
         boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
         animation: 'tutorialFadeIn 0.25s ease',
       }}>
-        {/* Progress bar */}
         <div style={{ display: 'flex', gap: '4px', padding: '16px 20px 0' }}>
           {steps.map((_, i) => (
             <div key={i} style={{
@@ -138,7 +275,6 @@ function CardOverlay({ steps, idx, next, prev, skip }: {
           ))}
         </div>
 
-        {/* Icon area */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '28px 20px 16px',
@@ -156,7 +292,6 @@ function CardOverlay({ steps, idx, next, prev, skip }: {
           </div>
         </div>
 
-        {/* Title */}
         {step.title && (
           <div style={{
             textAlign: 'center', padding: '0 24px',
@@ -167,7 +302,6 @@ function CardOverlay({ steps, idx, next, prev, skip }: {
           </div>
         )}
 
-        {/* Content */}
         <div style={{
           textAlign: 'center', padding: '10px 24px 0',
           fontSize: '14px', color: 'var(--mist)', lineHeight: 1.7,
@@ -175,7 +309,6 @@ function CardOverlay({ steps, idx, next, prev, skip }: {
           {step.content}
         </div>
 
-        {/* Step counter */}
         <div style={{
           textAlign: 'center', padding: '12px 0 0',
           fontSize: '11px', color: 'var(--mist)', opacity: 0.6,
@@ -183,24 +316,21 @@ function CardOverlay({ steps, idx, next, prev, skip }: {
           {idx + 1} / {steps.length}
         </div>
 
-        {/* Buttons */}
         <div style={{
           display: 'flex', gap: '10px', padding: '16px 20px 20px',
           justifyContent: 'center',
         }}>
           {idx > 0 && (
-            <button onClick={prev} style={outlineBtn}>前へ</button>
+            <button onClick={prev} style={cardOutlineBtn}>前へ</button>
           )}
-          <button onClick={next} style={primaryBtn}>{isLast ? '完了' : '次へ'}</button>
+          <button onClick={next} style={cardPrimaryBtn}>{isLast ? '完了' : '次へ'}</button>
         </div>
 
-        {/* Skip link */}
         <div style={{ textAlign: 'center', paddingBottom: '16px' }}>
           <button onClick={skip} style={linkBtn}>スキップ</button>
         </div>
       </div>
 
-      {/* animation keyframe */}
       <style>{`
         @keyframes tutorialFadeIn {
           from { opacity: 0; transform: translateY(16px) scale(0.97); }
@@ -219,7 +349,6 @@ export function HelpButton({ steps, pageKey }: { steps: TutorialStep[]; pageKey:
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
-  // close on outside click
   useEffect(() => {
     if (!open) return
     const h = (e: MouseEvent) => {
@@ -277,13 +406,28 @@ export function HelpButton({ steps, pageKey }: { steps: TutorialStep[]; pageKey:
 
 /* ── button styles ── */
 const primaryBtn: React.CSSProperties = {
+  padding: '5px 14px', borderRadius: '7px', border: 'none', cursor: 'pointer',
+  fontSize: '12px', fontWeight: 600,
+  background: 'var(--cyan-deep)', color: '#fff',
+  transition: 'opacity 0.15s',
+}
+
+const outlineBtn: React.CSSProperties = {
+  padding: '5px 14px', borderRadius: '7px', cursor: 'pointer',
+  fontSize: '12px', fontWeight: 600,
+  background: 'transparent', color: 'var(--cyan-deep)',
+  border: '1.5px solid var(--cyan-deep)',
+  transition: 'opacity 0.15s',
+}
+
+const cardPrimaryBtn: React.CSSProperties = {
   padding: '10px 28px', borderRadius: '12px', border: 'none', cursor: 'pointer',
   fontSize: '14px', fontWeight: 600,
   background: 'var(--cyan-deep)', color: '#fff',
   transition: 'opacity 0.15s',
 }
 
-const outlineBtn: React.CSSProperties = {
+const cardOutlineBtn: React.CSSProperties = {
   padding: '10px 28px', borderRadius: '12px', cursor: 'pointer',
   fontSize: '14px', fontWeight: 600,
   background: 'transparent', color: 'var(--cyan-deep)',

@@ -84,7 +84,13 @@ export function calcTableResults(
   }
 
   // split (同点分け)
+  const splitRemainder = config.splitRemainderToDealer ?? true
   const final = results.map((r) => ({ ...r, rank: 0, point: 0 }))
+
+  // seat_index → player_id のマップ（端数上家取り用）
+  const seatOf: Record<string, number> = {}
+  results.forEach((r) => { seatOf[r.player_id] = r.seat_index })
+
   const scoreGroups: Record<number, string[]> = {}
   results.forEach((r) => {
     if (!scoreGroups[r.score]) scoreGroups[r.score] = []
@@ -99,24 +105,51 @@ export function calcTableResults(
   sortedScores.forEach((score) => {
     const pIds = scoreGroups[score]
     const count = pIds.length
-    let totalUma = 0
-    let totalRank = 0
-    for (let i = 0; i < count; i++) {
-      totalUma += uma[curRank - 1 + i]
-      totalRank += curRank + i
-    }
-    const avgUma = totalUma / count
-    const avgRank = totalRank / count
-    const splitOka = curRank === 1 ? oka / count : 0
 
-    pIds.forEach((id) => {
-      const idx = final.findIndex((f) => f.player_id === id)
-      final[idx].rank = avgRank
-      final[idx].point = roundPoint(
-        (score - returnPoints) / 1000 + avgUma + splitOka,
-        rounding
-      )
-    })
+    if (splitRemainder && count > 1) {
+      // 端数上家取り: ウマ合計を整数で割り、余りを seat_index 昇順で1ずつ配分
+      let totalUma = 0
+      for (let i = 0; i < count; i++) {
+        totalUma += uma[curRank - 1 + i]
+      }
+      const totalOka = curRank === 1 ? oka : 0
+      const totalPool = totalUma + totalOka  // 分配対象の合計
+
+      // 整数の商と余り — 余りは最も親に近い1人がまとめて取る
+      const baseShare = Math.trunc(totalPool / count)
+      const remainder = totalPool - baseShare * count  // 余り（正 or 負 or 0）
+
+      // seat_index 昇順（親に近い順）でソート
+      const sortedByseat = [...pIds].sort((a, b) => seatOf[a] - seatOf[b])
+      const dealerSideId = sortedByseat[0]  // 最も親に近いプレイヤー
+
+      sortedByseat.forEach((id) => {
+        const idx = final.findIndex((f) => f.player_id === id)
+        const extra = id === dealerSideId ? remainder : 0
+        final[idx].rank = curRank
+        final[idx].point = roundPoint(
+          (score - returnPoints) / 1000 + baseShare + extra,
+          rounding
+        )
+      })
+    } else {
+      // 通常の同点分け（均等割）
+      let totalUma = 0
+      for (let i = 0; i < count; i++) {
+        totalUma += uma[curRank - 1 + i]
+      }
+      const avgUma = totalUma / count
+      const splitOka = curRank === 1 ? oka / count : 0
+
+      pIds.forEach((id) => {
+        const idx = final.findIndex((f) => f.player_id === id)
+        final[idx].rank = curRank
+        final[idx].point = roundPoint(
+          (score - returnPoints) / 1000 + avgUma + splitOka,
+          rounding
+        )
+      })
+    }
     curRank += count
   })
 

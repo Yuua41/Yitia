@@ -23,7 +23,5 @@ npm-debug.log*
 *.tgz
 *.tar.gz
 
-# LP (未公開)
-/src/app/LandingClient.tsx
+# LP assets
 /src/app/page.tsx.lp
-/public/screenshots/

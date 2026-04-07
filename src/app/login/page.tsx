@@ -1,10 +1,21 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
+  const searchParams = useSearchParams()
+  const initialMode = searchParams.get('mode') === 'register' ? 'register' : 'login'
+
   useEffect(() => {
     document.body.setAttribute('data-theme', 'light')
   }, [])
@@ -12,8 +23,17 @@ export default function LoginPage() {
   const supabase = createClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode)
+
+  function switchMode() {
+    setMode(m => m === 'login' ? 'register' : 'login')
+    setError('')
+    setSuccess('')
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -27,6 +47,32 @@ export default function LoginPage() {
     }
     router.push('/dashboard')
     router.refresh()
+  }
+
+  async function handleRegister(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+
+    if (!/^[a-zA-Z0-9]{8,}$/.test(password)) {
+      setError('パスワードは英数字8文字以上で入力してください')
+      return
+    }
+    if (password !== passwordConfirm) {
+      setError('パスワードが一致しません')
+      return
+    }
+
+    setLoading(true)
+    const { error } = await supabase.auth.signUp({ email, password })
+    if (error) {
+      setError('登録に失敗しました: ' + error.message)
+      setLoading(false)
+      return
+    }
+
+    setSuccess('確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。')
+    setLoading(false)
   }
 
   return (
@@ -77,7 +123,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
+        <form onSubmit={mode === 'login' ? handleLogin : handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
           <div>
             <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: 'var(--slate)', marginBottom: '6px' }}>
               メールアドレス
@@ -103,6 +149,7 @@ export default function LoginPage() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
+              placeholder={mode === 'register' ? '英数字8文字以上' : ''}
               style={{
                 width: '100%', padding: '11px 14px',
                 background: 'var(--surface)', border: '1px solid var(--border-md)',
@@ -111,9 +158,34 @@ export default function LoginPage() {
             />
           </div>
 
+          {mode === 'register' && (
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: 'var(--slate)', marginBottom: '6px' }}>
+                パスワード（確認）
+              </label>
+              <input
+                type="password"
+                value={passwordConfirm}
+                onChange={e => setPasswordConfirm(e.target.value)}
+                required
+                style={{
+                  width: '100%', padding: '11px 14px',
+                  background: 'var(--surface)', border: '1px solid var(--border-md)',
+                  borderRadius: '12px', fontSize: '14px', color: 'var(--ink)', outline: 'none',
+                }}
+              />
+            </div>
+          )}
+
           {error && (
             <div style={{ fontSize: '12px', color: 'var(--red)', background: 'var(--red-pale)', padding: '8px 12px', borderRadius: '7px' }}>
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div style={{ fontSize: '12px', color: 'var(--cyan-deep)', background: 'var(--cyan-pale)', padding: '8px 12px', borderRadius: '7px' }}>
+              {success}
             </div>
           )}
 
@@ -129,13 +201,22 @@ export default function LoginPage() {
               marginTop: '8px', letterSpacing: '0.01em',
             }}
           >
-            {loading ? 'ログイン中...' : 'ログイン'}
+            {loading
+              ? (mode === 'login' ? 'ログイン中...' : '登録中...')
+              : (mode === 'login' ? 'ログイン' : 'アカウント登録')}
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', fontSize: '11px', color: 'var(--mist)', marginTop: '14px' }}>
-          アカウント登録は管理者にお問い合わせください
+        <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--mist)', marginTop: '16px' }}>
+          {mode === 'login' ? (
+            <>アカウントをお持ちでない方は<button onClick={switchMode} style={{ background: 'none', border: 'none', color: 'var(--cyan-deep)', fontWeight: 600, cursor: 'pointer', fontSize: '12px', padding: 0 }}>新規登録</button></>
+          ) : (
+            <>アカウントをお持ちの方は<button onClick={switchMode} style={{ background: 'none', border: 'none', color: 'var(--cyan-deep)', fontWeight: 600, cursor: 'pointer', fontSize: '12px', padding: 0 }}>ログイン</button></>
+          )}
         </p>
+      </div>
+      <div style={{ position: 'fixed', bottom: '16px', left: 0, right: 0, textAlign: 'center', fontSize: '10px', color: 'var(--mist)' }}>
+        <a href="/" style={{ color: 'inherit', textDecoration: 'none' }}>© 2026 Yitia</a>
       </div>
     </div>
   )
