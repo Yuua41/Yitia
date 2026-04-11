@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { calcTableResults, calcStandings, formatPoint } from '@/lib/mahjong/calculator'
 import ThemeToggle from '@/components/ui/ThemeToggle'
+import ProBadge from '@/components/ui/ProBadge'
 import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
 import { playerSteps } from '@/components/tutorial/steps'
 import type { Tournament, Player, Table, Result } from '@/types'
@@ -52,6 +53,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
 
   const noSeat = tournament.config.seatMode === 'none'
   const allowPlayerEntry = tournament.config.allowPlayerEntry !== false
+  const isDraft = tournament.status === 'draft'
 
 
   // Refetch data from Supabase (client-side, no SSR roundtrip)
@@ -505,8 +507,9 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                             <div style={{ width: '18px', height: '18px', borderRadius: noSeat ? '4px' : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: noSeat ? '10px' : '9px', fontWeight: 700, fontFamily: noSeat ? 'monospace' : 'serif', background: sc2.bg, color: sc2.color, flexShrink: 0 }}>
                               {noSeat ? `${ri + 1}` : SEAT_LABELS[r.seat_index]}
                             </div>
-                            <div style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
-                              {rPlayer?.name}
+                            <div style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)', display: 'flex', alignItems: 'center' }}>
+                              <span>{rPlayer?.name}</span>
+                              <ProBadge playerId={rPlayer?.id} config={tournament.config} />
                             </div>
                             <span style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace', minWidth: '38px', textAlign: 'right' }}>{(r.score / 100).toLocaleString()}00</span>
                             <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(r.rank)}位</span>
@@ -549,8 +552,9 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                             <div style={{ width: '18px', height: '18px', borderRadius: noSeat ? '4px' : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: noSeat ? '10px' : '9px', fontWeight: 700, fontFamily: noSeat ? 'monospace' : 'serif', background: sc2.bg, color: sc2.color, flexShrink: 0 }}>
                               {noSeat ? `${ri + 1}` : SEAT_LABELS[r.seat_index]}
                             </div>
-                            <div style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
-                              {rPlayer?.name}
+                            <div style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)', display: 'flex', alignItems: 'center' }}>
+                              <span>{rPlayer?.name}</span>
+                              <ProBadge playerId={rPlayer?.id} config={tournament.config} />
                             </div>
                             <span style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace', minWidth: '38px', textAlign: 'right' }}>{(r.score / 100).toLocaleString()}00</span>
                             <span style={{ fontSize: '11px', color: 'var(--mist)', fontFamily: 'monospace' }}>{Math.floor(r.rank)}位</span>
@@ -562,7 +566,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                       })}
                     </div>
                   </div>
-                ) : allowPlayerEntry ? (
+                ) : allowPlayerEntry && !isDraft ? (
                   <div>
                     <div style={{ fontSize: '10.5px', fontFamily: 'monospace', color: 'var(--cyan-deep)', marginBottom: '8px' }}>
                       卓{myTable.table_number} スコア入力（全員分）
@@ -598,7 +602,8 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                               border: noSeat ? `1px dashed ${isSwapSelected ? 'var(--cyan-deep)' : 'transparent'}` : 'none',
                             }}
                           >
-                            {rPlayer?.name}
+                            <span>{rPlayer?.name}</span>
+                            <ProBadge playerId={rPlayer?.id} config={tournament.config} />
                           </div>
                           <button onClick={() => setScores(s => ({ ...s, [r.id]: { ...sc, negative: !sc.negative } }))} style={{
                             width: '32px', height: '32px', borderRadius: '6px', flexShrink: 0,
@@ -654,14 +659,15 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                           <div style={{ width: '18px', height: '18px', borderRadius: noSeat ? '4px' : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: noSeat ? '10px' : '9px', fontWeight: 700, fontFamily: noSeat ? 'monospace' : 'serif', background: sc2.bg, color: sc2.color, flexShrink: 0 }}>
                             {noSeat ? `${ri + 1}` : SEAT_LABELS[r.seat_index]}
                           </div>
-                          <div style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)' }}>
-                            {rPlayer?.name}
+                          <div style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: isMe ? 'var(--cyan-deep)' : 'var(--ink)', display: 'flex', alignItems: 'center' }}>
+                            <span>{rPlayer?.name}</span>
+                            <ProBadge playerId={rPlayer?.id} config={tournament.config} />
                           </div>
                         </div>
                       )
                     })}
                     <div style={{ marginTop: '10px', padding: '8px 12px', background: 'var(--paper)', borderRadius: '7px', fontSize: '12px', color: 'var(--mist)', textAlign: 'center' }}>
-                      スコアは管理者が入力します
+                      {isDraft ? '下書き中は入力できません' : 'スコアは管理者が入力します'}
                     </div>
                   </div>
                 )}
@@ -798,6 +804,7 @@ export default function PlayerClient({ player, tournament, players, tables }: Pr
                   )}
                   <div style={{ flex: 1, fontSize: '13.5px', fontWeight: 600, color: isMe ? 'var(--cyan)' : 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {s.player.name}
+                    <ProBadge playerId={s.player.id} config={tournament.config} />
                     {isMe && (
                       <span style={{
                         fontSize: '11px', color: 'var(--cyan)',

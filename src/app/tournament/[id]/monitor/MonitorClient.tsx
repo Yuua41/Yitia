@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { calcStandings, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table } from '@/types'
+import ProBadge from '@/components/ui/ProBadge'
 
 interface Props {
   tournament: Tournament
@@ -266,10 +267,10 @@ export default function MonitorClient({ tournament, players: initialPlayers, tab
           : `opacity ${TRANSITION_DURATION * 0.6}ms ease-out, transform ${TRANSITION_DURATION * 0.6}ms ease-out`,
       }}>
         {currentView === 'schedule' && (
-          <ScheduleView tables={roundTables} activeRound={activeRound} flashTableId={flash?.tableId ?? null} />
+          <ScheduleView tables={roundTables} activeRound={activeRound} flashTableId={flash?.tableId ?? null} config={tournament.config} />
         )}
         {currentView === 'standings' && (
-          <StandingsView standings={standings} numRounds={tournament.num_rounds} />
+          <StandingsView standings={standings} numRounds={tournament.num_rounds} config={tournament.config} />
         )}
         {currentView === 'chart' && (
           <ChartView standings={standings} numRounds={tournament.num_rounds} />
@@ -560,7 +561,7 @@ const timerInputStyle: React.CSSProperties = {
 }
 
 /* ─── Schedule View ─── */
-function ScheduleView({ tables, activeRound, flashTableId }: { tables: Table[]; activeRound: number; flashTableId: string | null }) {
+function ScheduleView({ tables, activeRound, flashTableId, config }: { tables: Table[]; activeRound: number; flashTableId: string | null; config: import('@/types').RuleConfig }) {
   return (
     <div>
       <div style={{ fontSize: '14px', fontFamily: 'monospace', letterSpacing: '0.15em', color: 'var(--mon-fg-dim)', marginBottom: '20px' }}>
@@ -603,7 +604,10 @@ function ScheduleView({ tables, activeRound, flashTableId }: { tables: Table[]; 
                     background: `${SEAT_COLORS[r.seat_index]}22`,
                     color: SEAT_COLORS[r.seat_index],
                   }}>{SEAT_LABELS[r.seat_index]}</span>
-                  <span style={{ flex: 1, fontSize: '14px', fontWeight: 500, color: 'var(--mon-fg)' }}>{r.player?.name ?? '—'}</span>
+                  <span style={{ flex: 1, fontSize: '14px', fontWeight: 500, color: 'var(--mon-fg)', display: 'inline-flex', alignItems: 'center' }}>
+                    {r.player?.name ?? '—'}
+                    <ProBadge playerId={r.player_id} config={config} />
+                  </span>
                   {table.is_validated && (
                     <>
                       <span style={{ fontSize: '14px', fontFamily: 'monospace', color: 'var(--mon-fg-dim)' }}>{r.score.toLocaleString()}</span>
@@ -655,7 +659,7 @@ function AnimatedPoint({ value, fontSize = '18px' }: { value: number; fontSize?:
 }
 
 /* ─── Standings View (reveal from bottom) ─── */
-function StandingsView({ standings, numRounds }: { standings: ReturnType<typeof calcStandings>; numRounds: number }) {
+function StandingsView({ standings, numRounds, config }: { standings: ReturnType<typeof calcStandings>; numRounds: number; config: import('@/types').RuleConfig }) {
   const maxTotal = Math.max(...standings.map(s => Math.abs(s.total)), 1)
   const [revealedCol, setRevealedCol] = useState(0)
   const total = standings.length
@@ -724,6 +728,7 @@ function StandingsView({ standings, numRounds }: { standings: ReturnType<typeof 
                   </td>
                   <td style={{ ...tdStyle, fontWeight: 600, fontSize: '15px', color: 'var(--mon-fg)' }}>
                     {player.name}
+                    <ProBadge playerId={player.id} config={config} />
                   </td>
                   {roundPoints.map((pt, i) => (
                     <td key={i} style={{

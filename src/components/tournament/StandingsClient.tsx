@@ -7,6 +7,7 @@ import { calcStandings, formatPoint } from '@/lib/mahjong/calculator'
 import type { Tournament, Player, Table } from '@/types'
 import HeaderIcons from '@/components/ui/HeaderIcons'
 import ThemeToggle from '@/components/ui/ThemeToggle'
+import ProBadge from '@/components/ui/ProBadge'
 import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
 import { standingsSteps } from '@/components/tutorial/steps'
 import TournamentStatusActions from '@/components/ui/TournamentStatusActions'
@@ -333,6 +334,7 @@ export default function StandingsClient({ tournament, players, tables, isOwner, 
                       </td>
                       <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--paper)', fontWeight: 600 }}>
                         {player.seat_order + 1}. {player.name}
+                        <ProBadge playerId={player.id} config={tournament.config} />
                       </td>
                       {roundPoints.map((pt, i) => (
                         <td key={i} style={{

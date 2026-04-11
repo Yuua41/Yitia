@@ -122,7 +122,14 @@ export default function SettingsClient({ tournament, players, templates }: Props
 
       // 卓組を再生成
       const { generateSchedule } = await import('@/lib/mahjong/calculator')
-      const schedule = generateSchedule(playerIds, numRounds)
+      const fixedSeats: Record<string, number> = {}
+      const fixedTables: Record<string, number> = {}
+      Object.entries(config.proPlayers ?? {}).forEach(([pid, info]) => {
+        if (info.fixedSeat !== null && info.fixedSeat !== undefined) fixedSeats[pid] = info.fixedSeat
+        if (info.fixedTable !== null && info.fixedTable !== undefined) fixedTables[pid] = info.fixedTable
+      })
+      const proIds = Object.keys(config.proPlayers ?? {})
+      const schedule = generateSchedule(playerIds, numRounds, fixedSeats, fixedTables, proIds)
 
       for (const round of schedule) {
         for (const tbl of round.tables) {
@@ -462,7 +469,7 @@ export default function SettingsClient({ tournament, players, templates }: Props
               </div>
             )}
 
-            <div style={cfgLabelStyle}>同点処理 / 席順</div>
+            <div style={cfgLabelStyle}>同点処理</div>
             {isDraft ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
                 <ToggleGroup
@@ -470,8 +477,9 @@ export default function SettingsClient({ tournament, players, templates }: Props
                   value={config.tieBreak}
                   onChange={v => setConfig(c => ({ ...c, tieBreak: v as 'kamicha' | 'split' }))}
                 />
-                {config.tieBreak === 'split' && (
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: 'var(--ink)' }}>
+                {config.tieBreak === 'split' && settingsMode === 'advanced' && (
+                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', cursor: 'pointer' }}>
+                    <span style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)' }}>端数上家取り</span>
                     <div
                       onClick={() => setConfig(c => ({ ...c, splitRemainderToDealer: !c.splitRemainderToDealer }))}
                       style={{
@@ -487,23 +495,25 @@ export default function SettingsClient({ tournament, players, templates }: Props
                         transition: 'left 0.2s',
                       }} />
                     </div>
-                    <span>端数上家取り</span>
                   </label>
                 )}
-                <ToggleGroup
-                  options={[{ value: 'random', label: '席ランダム' }, { value: 'none', label: '席順なし' }]}
-                  value={config.seatMode}
-                  onChange={v => setConfig(c => ({ ...c, seatMode: v as 'random' | 'none' }))}
-                />
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={cfgDisplayStyle}>
-                  {config.tieBreak === 'kamicha' ? '上家取り' : '同点分け'}
-                  {config.tieBreak === 'split' && config.splitRemainderToDealer && '（端数上家取り）'}
-                </div>
-                <div style={cfgDisplayStyle}>{config.seatMode === 'random' ? '席ランダム' : '席順なし'}</div>
+              <div style={cfgDisplayStyle}>
+                {config.tieBreak === 'kamicha' ? '上家取り' : '同点分け'}
+                {config.tieBreak === 'split' && config.splitRemainderToDealer && '（端数上家取り）'}
               </div>
+            )}
+
+            <div style={cfgLabelStyle}>席順</div>
+            {isDraft ? (
+              <ToggleGroup
+                options={[{ value: 'random', label: '席ランダム' }, { value: 'none', label: '席順なし' }]}
+                value={config.seatMode}
+                onChange={v => setConfig(c => ({ ...c, seatMode: v as 'random' | 'none' }))}
+              />
+            ) : (
+              <div style={cfgDisplayStyle}>{config.seatMode === 'random' ? '席ランダム' : '席順なし'}</div>
             )}
 
             {/* 詳細設定: ポイント切り上げ */}

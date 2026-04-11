@@ -9,6 +9,7 @@ import HeaderIcons from '@/components/ui/HeaderIcons'
 import { TutorialProvider, HelpButton } from '@/components/tutorial/TutorialOverlay'
 import { playersSteps } from '@/components/tutorial/steps'
 import TournamentStatusActions from '@/components/ui/TournamentStatusActions'
+import ProBadge from '@/components/ui/ProBadge'
 
 interface Props {
   tournament: Tournament
@@ -30,6 +31,14 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
   const [bulkText, setBulkText] = useState(initialPlayers.map(p => p.name).join('\n'))
   const [bulkSaving, setBulkSaving] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
+  const [proPlayers, setProPlayers] = useState<Record<string, { fixedSeat: number | null; fixedTable?: number | null }>>(
+    tournament.config.proPlayers ?? {}
+  )
+  const [proModalPlayerId, setProModalPlayerId] = useState<string | null>(null)
+  const [proModalIsPro, setProModalIsPro] = useState(false)
+  const [proModalSeat, setProModalSeat] = useState<number | null>(null)
+  const [proModalTable, setProModalTable] = useState<number | null>(null)
+  const [proSaving, setProSaving] = useState(false)
   const addInputRef = useRef<HTMLInputElement>(null)
   const initialPlayerCount = useRef(initialPlayers.length)
   const playerCountChanged = players.length !== initialPlayerCount.current
@@ -79,9 +88,14 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
   }, [players, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /** 卓組を再生成する共通関数（黒子自動追加対応） */
-  async function regenerateSchedule(currentPlayerIds: string[], currentPlayers?: Player[]) {
+  async function regenerateSchedule(
+    currentPlayerIds: string[],
+    currentPlayers?: Player[],
+    currentProPlayers?: Record<string, { fixedSeat: number | null; fixedTable?: number | null }>
+  ) {
     const byeMode = tournament.config.byeMode ?? 'dummy'
     const latestPlayers = currentPlayers ?? players
+    const latestPros = currentProPlayers ?? proPlayers
 
     let allPlayerIds = [...currentPlayerIds]
 
@@ -123,7 +137,14 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
     await supabase.from('tables').delete().eq('tournament_id', tournament.id)
 
     const { generateSchedule } = await import('@/lib/mahjong/calculator')
-    const schedule = generateSchedule(allPlayerIds, tournament.num_rounds)
+    const fixedSeats: Record<string, number> = {}
+    const fixedTables: Record<string, number> = {}
+    Object.entries(latestPros).forEach(([pid, info]) => {
+      if (info.fixedSeat !== null && info.fixedSeat !== undefined) fixedSeats[pid] = info.fixedSeat
+      if (info.fixedTable !== null && info.fixedTable !== undefined) fixedTables[pid] = info.fixedTable
+    })
+    const proIds = Object.keys(latestPros)
+    const schedule = generateSchedule(allPlayerIds, tournament.num_rounds, fixedSeats, fixedTables, proIds)
 
     for (const round of schedule) {
       for (const tbl of round.tables) {
@@ -330,6 +351,62 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
     router.refresh()
   }
 
+  function openProModal(playerId: string) {
+    const current = proPlayers[playerId]
+    setProModalPlayerId(playerId)
+    setProModalIsPro(!!current)
+    setProModalSeat(current?.fixedSeat ?? null)
+    setProModalTable(current?.fixedTable ?? null)
+  }
+
+  function closeProModal() {
+    setProModalPlayerId(null)
+    setProModalIsPro(false)
+    setProModalSeat(null)
+    setProModalTable(null)
+  }
+
+  async function saveProPlayer() {
+    if (!proModalPlayerId) return
+
+    const ok = confirm('プロ設定を更新します。卓組が再生成され，入力済みのスコアは削除されます。よろしいですか？')
+    if (!ok) return
+
+    setProSaving(true)
+
+    const next = { ...proPlayers }
+    if (proModalIsPro) {
+      next[proModalPlayerId] = { fixedSeat: proModalSeat, fixedTable: proModalTable }
+    } else {
+      delete next[proModalPlayerId]
+    }
+
+    const newConfig = { ...tournament.config, proPlayers: next }
+    const { error } = await supabase
+      .from('tournaments')
+      .update({ config: newConfig })
+      .eq('id', tournament.id)
+
+    if (error) {
+      alert('保存に失敗しました: ' + error.message)
+      setProSaving(false)
+      return
+    }
+
+    setProPlayers(next)
+    await regenerateSchedule(players.map(p => p.id), undefined, next)
+    setProSaving(false)
+    closeProModal()
+    showToast('プロ設定を更新しました')
+    router.refresh()
+  }
+
+  const seatLabels = ['東', '南', '西', '北']
+  const byeMode = tournament.config.byeMode ?? 'dummy'
+  const totalTables = byeMode === 'dummy'
+    ? Math.ceil(players.length / 4)
+    : Math.floor(players.length / 4)
+
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   const qrPlayer = qrPlayerId ? players.find(p => p.id === qrPlayerId) : null
 
@@ -488,9 +565,57 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
                     }}
                   />
                 ) : (
-                  <div style={{ flex: 1, padding: '5px 10px', fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>
-                    {player.name}
+                  <div style={{ flex: 1, padding: '5px 10px', fontSize: '13px', fontWeight: 600, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>{player.name}</span>
+                    {proPlayers[player.id] && (
+                      <span
+                        title={proPlayers[player.id].fixedSeat !== null ? `プロ (固定席: ${seatLabels[proPlayers[player.id].fixedSeat!]})` : 'プロ'}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                          width: '18px', height: '18px', borderRadius: '50%',
+                          background: 'var(--gold)', color: '#fff',
+                          fontSize: '10px', fontWeight: 800, fontFamily: 'monospace',
+                          flexShrink: 0,
+                        }}
+                      >P</span>
+                    )}
+                    {proPlayers[player.id]?.fixedTable != null && (
+                      <span style={{
+                        fontSize: '9px', fontFamily: 'monospace', color: 'var(--gold)',
+                        border: '1px solid var(--gold)', borderRadius: '4px',
+                        padding: '1px 5px', lineHeight: 1,
+                      }}>{proPlayers[player.id].fixedTable}卓</span>
+                    )}
+                    {proPlayers[player.id]?.fixedSeat != null && (
+                      <span style={{
+                        fontSize: '9px', fontFamily: 'monospace', color: 'var(--gold)',
+                        border: '1px solid var(--gold)', borderRadius: '4px',
+                        padding: '1px 5px', lineHeight: 1,
+                      }}>{seatLabels[proPlayers[player.id].fixedSeat!]}固定</span>
+                    )}
                   </div>
+                )}
+
+                {tournament.status === 'draft' && (
+                <button
+                  onClick={() => openProModal(player.id)}
+                  title="プロ設定"
+                  style={{
+                    fontSize: '11px', fontFamily: 'monospace', fontWeight: 700,
+                    color: proPlayers[player.id] ? 'var(--gold)' : 'var(--mist)',
+                    background: 'var(--paper)',
+                    border: `1px solid ${proPlayers[player.id] ? 'var(--gold)' : 'var(--border)'}`,
+                    borderRadius: '5px',
+                    padding: '3px 8px', cursor: 'pointer',
+                    flexShrink: 0, transition: 'color 0.1s, border-color 0.1s',
+                    lineHeight: 1,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--gold)'; e.currentTarget.style.borderColor = 'var(--gold)' }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.color = proPlayers[player.id] ? 'var(--gold)' : 'var(--mist)'
+                    e.currentTarget.style.borderColor = proPlayers[player.id] ? 'var(--gold)' : 'var(--border)'
+                  }}
+                >P</button>
                 )}
 
                 <button
@@ -586,25 +711,6 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
             )}
           </div>
 
-          {/* 将来拡張エリア */}
-          <div style={{
-            marginTop: '20px', background: 'var(--paper)',
-            border: '1.5px dashed var(--border-md)',
-            borderRadius: '12px', padding: '20px',
-          }}>
-            <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '10px' }}>
-              Coming Soon
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {['連絡先', 'メモ', 'マッチング設定', 'プロ同卓設定'].map(label => (
-                <span key={label} style={{
-                  padding: '5px 12px', borderRadius: '6px',
-                  background: 'rgba(0,240,255,0.05)', border: '1px solid var(--border)',
-                  fontSize: '11px', color: 'var(--mist)',
-                }}>{label}</span>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -653,6 +759,136 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
         </div>
       )}
 
+      {/* プロ設定モーダル */}
+      {proModalPlayerId && (() => {
+        const p = players.find(pl => pl.id === proModalPlayerId)
+        if (!p) return null
+        return (
+          <div
+            onClick={() => !proSaving && closeProModal()}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: 'var(--header-bg)',
+                backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
+                border: '1px solid var(--card-border)',
+                borderRadius: '16px', padding: '24px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 20px var(--header-border)',
+                maxWidth: '340px', width: '90%',
+              }}
+            >
+              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '6px' }}>
+                プロ設定
+              </div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ink)', marginBottom: '18px' }}>
+                {p.name}
+              </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginBottom: '14px' }}>
+                <div
+                  onClick={() => setProModalIsPro(v => !v)}
+                  style={{
+                    width: '36px', height: '20px', borderRadius: '10px', position: 'relative',
+                    background: proModalIsPro ? 'var(--gold)' : 'var(--border-md)',
+                    transition: 'background 0.2s', flexShrink: 0, cursor: 'pointer',
+                  }}
+                >
+                  <div style={{
+                    width: '16px', height: '16px', borderRadius: '50%', background: '#fff',
+                    position: 'absolute', top: '2px',
+                    left: proModalIsPro ? '18px' : '2px',
+                    transition: 'left 0.2s',
+                  }} />
+                </div>
+                <span style={{ fontSize: '13px', color: 'var(--ink)' }}>プロに設定</span>
+              </label>
+
+              {proModalIsPro && (
+                <>
+                  <div style={{ marginBottom: '12px' }}>
+                    <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '6px' }}>
+                      固定卓
+                    </div>
+                    <select
+                      value={proModalTable === null ? '' : String(proModalTable)}
+                      onChange={e => setProModalTable(e.target.value === '' ? null : Number(e.target.value))}
+                      style={{
+                        width: '100%', padding: '8px 10px',
+                        background: 'var(--paper)', border: '1.5px solid var(--border-md)',
+                        borderRadius: '7px', fontSize: '13px', fontWeight: 600,
+                        color: 'var(--ink)', outline: 'none', fontFamily: 'inherit',
+                      }}
+                    >
+                      <option value="">卓固定なし</option>
+                      {Array.from({ length: totalTables }, (_, i) => (
+                        <option key={i + 1} value={i + 1}>{i + 1}卓</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ marginBottom: '14px' }}>
+                    <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--mist)', marginBottom: '6px' }}>
+                      固定席
+                    </div>
+                    <select
+                      value={proModalSeat === null ? '' : String(proModalSeat)}
+                      onChange={e => setProModalSeat(e.target.value === '' ? null : Number(e.target.value))}
+                      style={{
+                        width: '100%', padding: '8px 10px',
+                        background: 'var(--paper)', border: '1.5px solid var(--border-md)',
+                        borderRadius: '7px', fontSize: '13px', fontWeight: 600,
+                        color: 'var(--ink)', outline: 'none', fontFamily: 'inherit',
+                      }}
+                    >
+                      <option value="">席固定なし</option>
+                      {seatLabels.map((label, i) => (
+                        <option key={i} value={i}>{label}（{i + 1}番席）</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              <div style={{
+                background: 'rgba(239,68,68,0.08)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                borderRadius: '8px', padding: '10px 12px',
+                fontSize: '11px', color: 'var(--red)', marginBottom: '16px', lineHeight: 1.5,
+              }}>
+                ⚠ 保存すると卓組が再生成され，入力済みのスコアは削除されます。
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={closeProModal}
+                  disabled={proSaving}
+                  style={{
+                    flex: 1, padding: '10px', background: 'transparent', color: 'var(--mist)',
+                    border: '1.5px solid var(--border-md)', borderRadius: '8px',
+                    fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                  }}
+                >キャンセル</button>
+                <button
+                  onClick={saveProPlayer}
+                  disabled={proSaving}
+                  style={{
+                    flex: 1, padding: '10px', background: 'transparent', color: 'var(--gold)',
+                    border: '1.5px solid var(--gold)', borderRadius: '8px',
+                    fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                    opacity: proSaving ? 0.6 : 1,
+                  }}
+                >{proSaving ? '保存中...' : '保存して卓組を再編'}</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* QRモーダル */}
       {qrPlayer && (
         <div
@@ -674,8 +910,9 @@ export default function PlayersClient({ tournament, players: initialPlayers }: P
               maxWidth: '300px', width: '90%',
             }}
           >
-            <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}>
-              {qrPlayer.seat_order + 1}. {qrPlayer.name}
+            <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '4px', display: 'inline-flex', alignItems: 'center' }}>
+              <span>{qrPlayer.seat_order + 1}. {qrPlayer.name}</span>
+              <ProBadge playerId={qrPlayer.id} config={tournament.config} />
             </div>
             <div style={{ fontSize: '10px', color: 'var(--mist)', fontFamily: 'monospace', marginBottom: '16px' }}>
               個人ページ QR

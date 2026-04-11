@@ -107,7 +107,7 @@ export function calcTableResults(
     const count = pIds.length
 
     if (splitRemainder && count > 1) {
-      // 端数上家取り: ウマ合計を整数で割り、余りを seat_index 昇順で1ずつ配分
+      // 端数上家取り: ウマ合計を割り、余りを最も親に近い1人がまとめて取る
       let totalUma = 0
       for (let i = 0; i < count; i++) {
         totalUma += uma[curRank - 1 + i]
@@ -115,9 +115,13 @@ export function calcTableResults(
       const totalOka = curRank === 1 ? oka : 0
       const totalPool = totalUma + totalOka  // 分配対象の合計
 
-      // 整数の商と余り — 余りは最も親に近い1人がまとめて取る
-      const baseShare = Math.trunc(totalPool / count)
-      const remainder = totalPool - baseShare * count  // 余り（正 or 負 or 0）
+      // 小数点以下反映モード('none')では0.1精度で分割、整数丸めモードでは1単位で分割
+      const scale = !rounding || rounding === 'none' ? 10 : 1
+      const pool_s = Math.round(totalPool * scale)
+      const baseShare_s = Math.trunc(pool_s / count)
+      const remainder_s = pool_s - baseShare_s * count  // 余り（正 or 負 or 0）
+      const baseShare = baseShare_s / scale
+      const remainder = remainder_s / scale
 
       // seat_index 昇順（親に近い順）でソート
       const sortedByseat = [...pIds].sort((a, b) => seatOf[a] - seatOf[b])
@@ -158,7 +162,10 @@ export function calcTableResults(
 
 export function generateSchedule(
   playerIds: string[],
-  numRounds: number
+  numRounds: number,
+  fixedSeats: Record<string, number> = {},
+  fixedTables: Record<string, number> = {},
+  proIds: string[] = []
 ): { roundNumber: number; tables: { playerIds: string[]; seatOrder: string[] }[] }[] {
   const seatCounts: Record<string, number[]> = {}
   playerIds.forEach((id) => (seatCounts[id] = [0, 0, 0, 0]))
@@ -169,6 +176,11 @@ export function generateSchedule(
     matchCounts[id] = {}
     playerIds.forEach((id2) => { if (id !== id2) matchCounts[id][id2] = 0 })
   })
+
+  // プロ設定: 各非プロが「プロと同卓した回数」を追跡
+  const proSet = new Set(proIds.filter(id => playerIds.includes(id)))
+  const proMetCounts: Record<string, number> = {}
+  playerIds.forEach((id) => { proMetCounts[id] = 0 })
 
   const remainder = playerIds.length % 4
   const numTables = Math.floor(playerIds.length / 4)
@@ -193,16 +205,33 @@ export function generateSchedule(
       activePlayers = playerIds.filter(id => !byePlayers.has(id))
     }
 
+    // 固定卓プロを先に配置（activePlayersに含まれる者のみ）
+    const activeSet = new Set(activePlayers)
+    const reservedGroups: string[][] = Array.from({ length: numTables }, () => [])
+    const reservedIds = new Set<string>()
+    for (const [pid, tbl] of Object.entries(fixedTables)) {
+      if (!activeSet.has(pid)) continue
+      const t = tbl - 1
+      if (t >= 0 && t < numTables && reservedGroups[t].length < 4) {
+        reservedGroups[t].push(pid)
+        reservedIds.add(pid)
+      }
+    }
+    const freePlayers = activePlayers.filter(id => !reservedIds.has(id))
+
     // 複数のランダムシャッフルを試行し、対戦重複コストが最小のものを選択
     const attempts = Math.min(200, 20 + playerIds.length * 5)
     let bestGrouping: string[][] = []
     let bestCost = Infinity
 
     for (let a = 0; a < attempts; a++) {
-      const shuffled = [...activePlayers].sort(() => Math.random() - 0.5)
-      const groups: string[][] = []
+      const shuffled = [...freePlayers].sort(() => Math.random() - 0.5)
+      const groups: string[][] = reservedGroups.map(g => [...g])
+      let idx = 0
       for (let t = 0; t < numTables; t++) {
-        groups.push(shuffled.slice(t * 4, (t + 1) * 4))
+        while (groups[t].length < 4 && idx < shuffled.length) {
+          groups[t].push(shuffled[idx++])
+        }
       }
       // 対戦重複コスト: 同卓ペアの過去対戦回数の二乗和
       let cost = 0
@@ -214,6 +243,29 @@ export function generateSchedule(
           }
         }
       }
+
+      // プロ分散コスト: プロ同卓を避け、非プロのプロ対戦回数を均等化
+      if (proSet.size > 0) {
+        let proPairs = 0
+        const simMet: Record<string, number> = { ...proMetCounts }
+        for (const g of groups) {
+          const prosHere = g.filter((id) => proSet.has(id))
+          if (prosHere.length >= 2) proPairs += prosHere.length - 1
+          if (prosHere.length >= 1) {
+            for (const id of g) if (!proSet.has(id)) simMet[id]++
+          }
+        }
+        const nonProActive = activePlayers.filter((id) => !proSet.has(id))
+        if (nonProActive.length > 0) {
+          const vals = nonProActive.map((id) => simMet[id])
+          const max = Math.max(...vals)
+          const min = Math.min(...vals)
+          const spread = max - min
+          // max-min>=2 を厳しくペナルティ、プロ同卓も強く抑制、対戦履歴より優先
+          cost += spread * spread * 100000 + (spread >= 2 ? 1000000 : 0) + proPairs * 50000
+        }
+      }
+
       if (cost < bestCost) {
         bestCost = cost
         bestGrouping = groups
@@ -224,13 +276,20 @@ export function generateSchedule(
     // 選ばれたグルーピングで席順最適化 & 対戦回数を更新
     const tables = []
     for (const group of bestGrouping) {
-      const best = findBestSeatAssignment(group, seatCounts)
+      const best = findBestSeatAssignment(group, seatCounts, fixedSeats)
       best.forEach((id, idx) => seatCounts[id][idx]++)
       // 対戦回数を更新
       for (let i = 0; i < group.length; i++) {
         for (let j = i + 1; j < group.length; j++) {
           matchCounts[group[i]][group[j]]++
           matchCounts[group[j]][group[i]]++
+        }
+      }
+      // プロ対戦カウントを更新
+      if (proSet.size > 0) {
+        const hasPro = group.some((id) => proSet.has(id))
+        if (hasPro) {
+          for (const id of group) if (!proSet.has(id)) proMetCounts[id]++
         }
       }
       tables.push({ playerIds: group, seatOrder: best })
@@ -252,19 +311,25 @@ function getPermutations(arr: string[]): string[][] {
 
 function findBestSeatAssignment(
   playerIds: string[],
-  history: Record<string, number[]>
+  history: Record<string, number[]>,
+  fixedSeats: Record<string, number> = {}
 ): string[] {
   const perms = getPermutations(playerIds)
   let minCost = Infinity
   let best = playerIds
   for (const p of perms) {
     let cost = 0
+    let violations = 0
     for (let i = 0; i < 4; i++) {
       const count = history[p[i]] ? history[p[i]][i] : 0
       cost += count * count
+      const want = fixedSeats[p[i]]
+      if (want !== undefined && want !== i) violations++
     }
-    if (cost < minCost) {
-      minCost = cost
+    // 固定席違反は履歴コストよりはるかに大きいペナルティ
+    const total = violations * 1_000_000 + cost
+    if (total < minCost) {
+      minCost = total
       best = p
     }
   }

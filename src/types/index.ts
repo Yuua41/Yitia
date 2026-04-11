@@ -11,6 +11,7 @@ export interface RuleConfig {
   splitRemainderToDealer?: boolean  // 同点分けの端数を親に近い人（上家）に振り分ける
   allowPlayerEntry?: boolean  // プレイヤーによるスコア入力を許可するか（デフォルトtrue）
   byeMode?: 'dummy' | 'bye'  // dummy: 黒子で4の倍数に補完（デフォルト）, bye: 休みを許容
+  proPlayers?: Record<string, { fixedSeat: number | null; fixedTable?: number | null }>  // プロ設定: playerId → 固定席(0=東,1=南,2=西,3=北) / 固定卓(1-indexed) / nullは固定なし
 }
 
 export interface RuleTemplate {

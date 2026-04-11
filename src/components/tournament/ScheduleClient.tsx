@@ -467,11 +467,33 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
                               userSelect: 'none',
                             }}
                           >
-                            {player?.seat_order != null ? `${player.seat_order + 1}. ` : ''}{player?.name ?? '?'}
+                            {player?.seat_order != null ? `${player.seat_order + 1}. ` : ''}{player?.name ?? '?'}{player && tournament.config.proPlayers?.[player.id] && (
+                              <span
+                                title="プロ"
+                                style={{
+                                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                  width: '15px', height: '15px', borderRadius: '50%',
+                                  background: 'var(--gold)', color: '#fff',
+                                  fontSize: '9px', fontWeight: 800, fontFamily: 'monospace',
+                                  marginLeft: '5px', verticalAlign: 'middle',
+                                }}
+                              >P</span>
+                            )}
                           </div>
                         ) : (
                           <div style={{ flex: 1, fontSize: '13.5px', fontWeight: 600 }}>
-                            {player?.seat_order != null ? `${player.seat_order + 1}. ` : ''}{player?.name ?? '?'}
+                            {player?.seat_order != null ? `${player.seat_order + 1}. ` : ''}{player?.name ?? '?'}{player && tournament.config.proPlayers?.[player.id] && (
+                              <span
+                                title="プロ"
+                                style={{
+                                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                  width: '15px', height: '15px', borderRadius: '50%',
+                                  background: 'var(--gold)', color: '#fff',
+                                  fontSize: '9px', fontWeight: 800, fontFamily: 'monospace',
+                                  marginLeft: '5px', verticalAlign: 'middle',
+                                }}
+                              >P</span>
+                            )}
                           </div>
                         )}
                         {isValidated ? (
@@ -508,11 +530,14 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
                                 }
                               }}
                               placeholder={(tournament.config.startingPoints / 100).toString()}
+                              readOnly={isDraft}
+                              disabled={isDraft}
                               style={{
                                 width: '80px', padding: '6px 7px',
                                 background: 'var(--paper)', border: '1.5px solid var(--border-md)',
                                 borderRadius: '7px', fontSize: '14px', fontWeight: 600,
                                 textAlign: 'right', fontFamily: 'monospace', color: 'var(--ink)', outline: 'none',
+                                opacity: isDraft ? 0.4 : 1, cursor: isDraft ? 'not-allowed' : 'text',
                               }}
                             />
                             <span style={{ fontSize: '10.5px', color: 'var(--mist)', fontFamily: 'monospace', flexShrink: 0 }}>00</span>
@@ -553,18 +578,27 @@ export default function ScheduleClient({ tournament, players, tables, isOwner }:
                         />
                         卓外点棒あり（合計チェックをスキップ）
                       </label>
-                      <button {...(idx === 0 ? { 'data-tutorial': 'validate-button' } : {})} onClick={() => handleValidate(table)} disabled={saving === table.id} style={{
-                        width: '100%', padding: '8px',
-                        background: 'transparent', color: 'var(--cyan-deep)',
-                        border: '1.5px solid var(--cyan-deep)', borderRadius: '7px',
-                        fontSize: '13.5px', fontWeight: 600, cursor: 'pointer',
-                        opacity: saving === table.id ? 0.6 : 1,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                      }}>
+                      <button
+                        {...(idx === 0 ? { 'data-tutorial': 'validate-button' } : {})}
+                        onClick={() => handleValidate(table)}
+                        disabled={saving === table.id || isDraft}
+                        title={isDraft ? '下書き中は入力できません。大会を開始してください' : undefined}
+                        style={{
+                          width: '100%', padding: '8px',
+                          background: 'transparent',
+                          color: isDraft ? 'var(--mist)' : 'var(--cyan-deep)',
+                          border: `1.5px solid ${isDraft ? 'var(--border-md)' : 'var(--cyan-deep)'}`,
+                          borderRadius: '7px',
+                          fontSize: '13.5px', fontWeight: 600,
+                          cursor: isDraft ? 'not-allowed' : 'pointer',
+                          opacity: saving === table.id ? 0.6 : 1,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                        }}
+                      >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12"/>
                         </svg>
-                        {saving === table.id ? '確定中...' : 'スコア確定'}
+                        {isDraft ? '下書き中は入力不可' : (saving === table.id ? '確定中...' : 'スコア確定')}
                       </button>
                     </>
                   )}
